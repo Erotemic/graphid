@@ -37,7 +37,6 @@ class InfrLoops(object):
             python -m graphid.internal.mixin_loops main_gen
 
         Doctest:
-            >>> from graphid.internal.mixin_loops import *
             >>> from graphid.internal.mixin_simulation import UserOracle
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('testdb1', aids='all',
@@ -267,12 +266,6 @@ class InfrLoops(object):
         # FIXME: should prioritize inconsistentices first
         count = -1
 
-        def thread_gen():
-            # This is probably not safe
-            new_edges = infr.find_pos_redun_candidate_edges()
-            for new_edges in buffered_add_candidate_edges(infr, 50, new_edges):
-                yield new_edges
-
         def serial_gen():
             # use this if threading does bad things
             if True:
@@ -291,8 +284,6 @@ class InfrLoops(object):
             # the user ASAP.
             # if infr.test_mode:
             candgen = serial_gen()
-            # else:
-            #     candgen = thread_gen()
             for new_edges in candgen:
                 if infr.ibs is not None:
                     ibs = infr.ibs

@@ -1852,9 +1852,6 @@ def scores_to_color(score_list, cmap_='hot', logscale=False, reverse_cmap=False,
     if logscale:
         # Hack
         score_list = apply_logscale(score_list)
-        #if loglogscale
-        #score_list = np.log2(np.log2(score_list + 2) + 1)
-    #if isinstance(cmap_, six.string_types):
     cmap = plt.get_cmap(cmap_)
     #else:
     #    cmap = cmap_
@@ -1913,7 +1910,7 @@ def reverse_colormap(cmap):
     else:
         reverse = []
         k = []
-        for key, channel in six.iteritems(cmap._segmentdata):
+        for key, channel in cmap._segmentdata.items():
             data = []
             for t in channel:
                 data.append((1 - t[0], t[1], t[2]))
@@ -2087,7 +2084,6 @@ class PlotNums(object):
             return nRows, nCols
         else:
             # This is the clamped num cols version
-            # probably used in ibeis.viz
             if max_cols is None:
                 max_cols = 5
                 if nSubplots in [4]:
