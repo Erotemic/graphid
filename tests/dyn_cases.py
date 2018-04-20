@@ -1,9 +1,7 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-from ibeis.algo.graph import demo
-import utool as ut
-from ibeis.algo.graph.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
-from ibeis.algo.graph.state import SAME, DIFF, NULL  # NOQA
-print, rrr, profile = ut.inject2(__name__)
+from graphid.internal import demo
+from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
+from graphid.internal.state import SAME, DIFF, NULL  # NOQA
+from graphid import util
 
 
 def do_infr_test(ccs, edges, new_edges):
@@ -15,12 +13,12 @@ def do_infr_test(ccs, edges, new_edges):
 
     infr = demo.make_demo_infr(ccs, edges)
 
-    if ut.show_was_requested():
+    if util.show_was_requested():
         pt.qtensure()
 
     # Preshow
     fnum = 1
-    if ut.show_was_requested():
+    if util.show_was_requested():
         infr.set_node_attrs('shape', 'circle')
         infr.show(pnum=(2, 1, 1), fnum=fnum, show_unreviewed_edges=True,
                   show_reviewed_cuts=True,
@@ -31,7 +29,7 @@ def do_infr_test(ccs, edges, new_edges):
         pt.gca().set_aspect('equal')
         infr.set_node_attrs('pin', 'true')
         # fig1 = pt.gcf()
-        # fig1.canvas.mpl_connect('pick_event', ut.partial(on_pick, infr=infr))
+        # fig1.canvas.mpl_connect('pick_event', util.partial(on_pick, infr=infr))
 
     infr1 = infr
     infr2 = infr.copy()
@@ -43,14 +41,14 @@ def do_infr_test(ccs, edges, new_edges):
     infr2.apply_nondynamic_update()
 
     # Postshow
-    if ut.show_was_requested():
+    if util.show_was_requested():
         infr2.show(pnum=(2, 1, 2), fnum=fnum, show_unreviewed_edges=True,
                    show_inferred_diff=True, show_labels=True)
         pt.gca().set_aspect('equal')
         pt.set_title('post-review')
         # fig2 = pt.gcf()
         # if fig2 is not fig1:
-        #     fig2.canvas.mpl_connect('pick_event', ut.partial(on_pick, infr=infr2))
+        #     fig2.canvas.mpl_connect('pick_event', util.partial(on_pick, infr=infr2))
 
     class Checker(object):
         """
@@ -69,7 +67,7 @@ def do_infr_test(ccs, edges, new_edges):
             got = data.get(key)
             if got != val:
                 msg1 = 'key=%s %r!=%r, ' % (key, got, val)
-                errmsg = ''.join([msg1, msg, '\nedge=', ut.repr2((u, v)), '\n',
+                errmsg = ''.join([msg1, msg, '\nedge=', ub.repr2((u, v)), '\n',
                                  infr.repr_edge_data(data)])
                 self._errors.append(errmsg)
 
@@ -89,13 +87,13 @@ def do_infr_test(ccs, edges, new_edges):
 
             errors = errors + self._errors
             if errors:
-                ut.cprint('PRINTING %d FAILURE' % (len(errors)), 'red')
+                util.cprint('PRINTING %d FAILURE' % (len(errors)), 'red')
                 for msg in errors:
                     print(msg)
-                ut.cprint('HAD %d FAILURE' % (len(errors)), 'red')
-            if ut.show_was_requested():
+                util.cprint('HAD %d FAILURE' % (len(errors)), 'red')
+            if util.show_was_requested():
                 pt.all_figures_tile(percent_w=.5)
-                ut.show_if_requested()
+                util.show_if_requested()
             if errors:
                 raise AssertionError('There were errors')
 
@@ -106,11 +104,11 @@ def do_infr_test(ccs, edges, new_edges):
 def case_negative_infr():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_negative_infr --show
+        python -m graphid.internal.tests.dyn_cases case_negative_infr --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_negative_infr()
     """
     # Initial positive reviews
@@ -137,11 +135,11 @@ def case_negative_infr():
 def case_match_infr():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_match_infr --show
+        python -m graphid.internal.tests.dyn_cases case_match_infr --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
 
         >>> case_match_infr()
     """
@@ -172,11 +170,11 @@ def case_match_infr():
 def case_inconsistent():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_inconsistent --show
+        python -m graphid.internal.tests.dyn_cases case_inconsistent --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_inconsistent()
     """
     ccs = [[1, 2], [3, 4, 5]]  # [6, 7]]
@@ -199,11 +197,11 @@ def case_inconsistent():
 def case_redo_incon():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_redo_incon --show
+        python -m graphid.internal.tests.dyn_cases case_redo_incon --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_redo_incon()
     """
     ccs = [[1, 2], [3, 4]]  # [6, 7]]
@@ -218,7 +216,7 @@ def case_redo_incon():
     maybe_splits = infr2.get_edge_attrs('maybe_error', default=None)
     print('maybe_splits = %r' % (maybe_splits,))
     if not any(maybe_splits.values()):
-        ut.cprint('FAILURE', 'red')
+        util.cprint('FAILURE', 'red')
         print('At least one edge should be marked as a split')
 
     check.after()
@@ -227,11 +225,11 @@ def case_redo_incon():
 def case_override_inference():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_override_inference --show
+        python -m graphid.internal.tests.dyn_cases case_override_inference --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_override_inference()
     """
     ccs = [[1, 2, 3, 4, 5]]
@@ -263,11 +261,11 @@ def case_override_inference():
 def case_undo_match():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_undo_match --show
+        python -m graphid.internal.tests.dyn_cases case_undo_match --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_undo_match()
     """
     ccs = [[1, 2]]
@@ -282,11 +280,11 @@ def case_undo_match():
 def case_undo_negative():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_undo_negative --show
+        python -m graphid.internal.tests.dyn_cases case_undo_negative --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_undo_negative()
     """
     ccs = [[1], [2]]
@@ -302,11 +300,11 @@ def case_undo_negative():
 def case_incon_removes_inference():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_incon_removes_inference --show
+        python -m graphid.internal.tests.dyn_cases case_incon_removes_inference --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_incon_removes_inference()
     """
     ccs = [[1, 2, 3], [4, 5, 6]]
@@ -329,11 +327,11 @@ def case_inferable_notcomp1():
     make sure notcomparable edges can be inferred
 
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_inferable_notcomp1 --show
+        python -m graphid.internal.tests.dyn_cases case_inferable_notcomp1 --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_inferable_notcomp1()
     """
     ccs = [[1, 2], [3, 4]]
@@ -351,11 +349,11 @@ def case_inferable_update_notcomp():
     make sure inference updates for nocomparable edges
 
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_inferable_update_notcomp --show
+        python -m graphid.internal.tests.dyn_cases case_inferable_update_notcomp --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_inferable_update_notcomp()
     """
     ccs = [[1, 2], [3, 4]]
@@ -373,11 +371,11 @@ def case_inferable_update_notcomp():
 def case_notcomp_remove_infr():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_notcomp_remove_infr --show
+        python -m graphid.internal.tests.dyn_cases case_notcomp_remove_infr --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_notcomp_remove_infr()
     """
     ccs = [[1, 2, 3], [4, 5, 6]]
@@ -398,11 +396,11 @@ def case_notcomp_remove_infr():
 def case_notcomp_remove_cuts():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_notcomp_remove_cuts --show
+        python -m graphid.internal.tests.dyn_cases case_notcomp_remove_cuts --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_notcomp_remove_cuts()
     """
     ccs = [[1, 2, 3], [4, 5, 6]]
@@ -426,11 +424,11 @@ def case_notcomp_remove_cuts():
 def case_keep_in_cc_infr_post_negative():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_keep_in_cc_infr_post_negative --show
+        python -m graphid.internal.tests.dyn_cases case_keep_in_cc_infr_post_negative --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_keep_in_cc_infr_post_negative()
     """
     ccs = [[1, 2, 3], [4]]
@@ -447,11 +445,11 @@ def case_keep_in_cc_infr_post_negative():
 def case_keep_in_cc_infr_post_notcomp():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_keep_in_cc_infr_post_notcomp --show
+        python -m graphid.internal.tests.dyn_cases case_keep_in_cc_infr_post_notcomp --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_keep_in_cc_infr_post_notcomp()
     """
     ccs = [[1, 2, 3], [4]]
@@ -468,11 +466,11 @@ def case_keep_in_cc_infr_post_notcomp():
 def case_out_of_subgraph_modification():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_out_of_subgraph_modification --show
+        python -m graphid.internal.tests.dyn_cases case_out_of_subgraph_modification --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_out_of_subgraph_modification()
     """
     # A case where a review between two ccs modifies state outside of
@@ -491,11 +489,11 @@ def case_out_of_subgraph_modification():
 def case_flag_merge():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_flag_merge --show
+        python -m graphid.internal.tests.dyn_cases case_flag_merge --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_flag_merge()
     """
     # A case where a review between two ccs modifies state outside of
@@ -523,11 +521,11 @@ def case_flag_merge():
 def case_all_types():
     """
     CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases case_all_types --show
+        python -m graphid.internal.tests.dyn_cases case_all_types --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.tests.dyn_cases import *  # NOQA
+        >>> from graphid.internal.tests.dyn_cases import *  # NOQA
         >>> case_all_types()
     """
     # A case where a review between two ccs modifies state outside of
@@ -638,12 +636,9 @@ def case_all_types():
 
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.tests.dyn_cases
-        python -m ibeis.algo.graph.tests.dyn_cases --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/tests/dyn_cases.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

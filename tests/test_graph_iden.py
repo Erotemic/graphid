@@ -1,6 +1,6 @@
-import utool as ut
-from ibeis.algo.graph import demo
-from ibeis.algo.graph.state import (POSTV, NEGTV, INCMP, UNREV)
+import ubelt as ub
+from graphid.internal import demo
+from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV)
 
 
 def test_incomp_inference():
@@ -42,7 +42,7 @@ def test_incomp_inference():
     infr.add_feedback((23, 21), INCMP)
     infr.add_feedback((12, 14), INCMP)
     print('Final state:')
-    print(ut.repr4(sorted(infr.gen_edge_attrs('decision'))))
+    print(ub.repr4(sorted(infr.gen_edge_attrs('decision'))))
 
 
 def test_unrev_inference():
@@ -84,7 +84,7 @@ def test_unrev_inference():
     infr.add_feedback((23, 21), UNREV)
     infr.add_feedback((12, 14), UNREV)
     print('Final state:')
-    print(ut.repr4(sorted(infr.gen_edge_attrs('decision'))))
+    print(ub.repr4(sorted(infr.gen_edge_attrs('decision'))))
 
 
 def test_pos_neg():
@@ -128,20 +128,13 @@ def test_pos_neg():
     infr.add_feedback((23, 21), POSTV)
     infr.add_feedback(( 1, 11), NEGTV)
     print('Final state:')
-    print(ut.repr4(sorted(infr.gen_edge_attrs('decision'))))
+    print(ub.repr4(sorted(infr.gen_edge_attrs('decision'))))
 
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        export PYTHONPATH=$PYTHONPATH:/home/joncrall/code/ibeis/ibeis/algo/graph/tests
-        python ~/code/ibeis/ibeis/algo/graph/tests/test_graph_iden.py test_pos_neg
-        python ~/code/ibeis/ibeis/algo/graph/tests/test_graph_iden.py test_unrev_inference
-        python ~/code/ibeis/ibeis/algo/graph/tests/test_graph_iden.py test_incomp_inference
-        python ~/code/ibeis/ibeis/algo/graph/tests/test_graph_iden.py --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
-    # import ubelt as ub
+    CommandLine:
+        python ~/code/graphid/tests/test_graph_iden.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

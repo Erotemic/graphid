@@ -632,7 +632,6 @@ class InfrReviewers(object):
 
         Example:
             >>> # SCRIPT
-            >>> import utool as ut
             >>> import ibeis
             >>> ibs = ibeis.opendb('PZ_MTEST')
             >>> infr = ibeis.AnnotInference(ibs, 'all', autoinit=True)

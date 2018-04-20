@@ -1,5 +1,5 @@
 import networkx as nx
-import utool as ut
+import ubelt as ub
 import pandas as pd
 
 edges = {
@@ -48,8 +48,8 @@ graph = nx.Graph(edges)
 graph.add_nodes_from(nodes.keys())
 
 df = pd.DataFrame.from_dict(nodes, orient='index')
-nx.set_node_attributes(graph, name='orig_name_label', values=ut.dzip(df['aid'], df['orig_name_label']))
-nx.set_node_attributes(graph, name='name_label', values=ut.dzip(df['aid'], df['name_label']))
+nx.set_node_attributes(graph, name='orig_name_label', values=ub.dzip(df['aid'], df['orig_name_label']))
+nx.set_node_attributes(graph, name='name_label', values=ub.dzip(df['aid'], df['name_label']))
 
 aug_graph = graph
 node_to_label = nx.get_node_attributes(graph, 'name_label')
@@ -57,7 +57,7 @@ node_to_label = nx.get_node_attributes(graph, 'name_label')
 
 aid1, aid2 = 2265, 2280
 
-label_to_nodes = ut.group_items(node_to_label.keys(),
+label_to_nodes = ub.group_items(node_to_label.keys(),
                                 node_to_label.values())
 
 aug_graph = graph.copy()
@@ -77,9 +77,9 @@ aug_graph.remove_edges_from(cut_edges)
 
 
 # Enumerate cliques inside labels
-unflat_edges = [list(ut.itertwo(nodes))
+unflat_edges = [list(ub.iter_window(nodes, 2))
                 for nodes in label_to_nodes.values()]
-node_pairs = [tup for tup in ut.iflatten(unflat_edges)
+node_pairs = [tup for tup in ub.flatten(unflat_edges)
               if tup[0] != tup[1]]
 
 # Remove candidate MST edges that exist in the original graph
@@ -98,10 +98,10 @@ nx.set_edge_attributes(aug_graph, name='weight', values={edge: 0.1 for edge in o
 
 try:
     # Try linking by time for lynx data
-    nodes = list(set(ut.iflatten(candidate_mst_edges)))
-    aids = ut.take(infr.node_to_aid, nodes)
+    nodes = list(set(ub.iflatten(candidate_mst_edges)))
+    aids = list(ub.take(infr.node_to_aid, nodes))
     times = infr.ibs.annots(aids).time
-    node_to_time = ut.dzip(nodes, times)
+    node_to_time = ub.dzip(nodes, times)
     time_deltas = np.array([
         abs(node_to_time[u] - node_to_time[v])
         for u, v in candidate_mst_edges

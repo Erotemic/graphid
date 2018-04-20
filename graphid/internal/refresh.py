@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
-import utool as ut
 import ubelt as ub
 import scipy as sp
-from graphid import util  # NOQA
+from graphid import util
 from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, NULL)  # NOQA
 
 
@@ -216,6 +214,7 @@ def demo_refresh():
         >>> util.show_if_requested()
     """
     from graphid.internal import demo
+    import utool as ut
     demokw = ut.argparse_dict({'num_pccs': 50, 'size': 4})
     refreshkw = ut.argparse_funckw(RefreshCriteria)
     # make an inference object
@@ -259,6 +258,7 @@ def demo_refresh():
                          demokw)
     thresh = refreshkw.pop('thresh')
     refreshkw['span'] = refreshkw.pop('window')
+    import utool as ut
     pt.relative_text((.02, .58 + .0), ut.get_cfg_lbl(demokw, sep=' ')[1:],
                      valign='bottom')
     pt.relative_text((.02, .68 + .0), ut.get_cfg_lbl(refreshkw, sep=' ')[1:],

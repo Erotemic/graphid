@@ -1,6 +1,5 @@
 import six
 import numpy as np
-import utool as ut
 import networkx as nx
 from graphid import util
 from graphid.internal import state as const
