@@ -39,7 +39,7 @@ def take_column(list_, colx):
         >>> list_ = [['a', 'b'], ['c', 'd']]
         >>> colx = [1, 0]
         >>> result = take_column(list_, colx)
-        >>> result = ub.repr4(result, nl=False)
+        >>> result = ub.repr2(result, nl=False)
         >>> print(result)
         [['b', 'a'], ['d', 'c']]
 
@@ -48,7 +48,7 @@ def take_column(list_, colx):
         >>> # colx can be a key or list of keys as well
         >>> colx = ['spam']
         >>> result = take_column(list_, colx)
-        >>> result = ub.repr4(result, nl=False)
+        >>> result = ub.repr2(result, nl=False)
         >>> print(result)
         [['EGGS'], ['JAM']]
     """
@@ -407,7 +407,7 @@ def demodata_tarjan_bridge():
     Example:
         >>> from graphid import util
         >>> G = demodata_tarjan_bridge()
-        >>> util.quit_if_noshow()
+        >>> # xdoc: +REQUIRES(--show)
         >>> util.show_nx(G)
         >>> util.show_if_requested()
     """
@@ -466,7 +466,7 @@ def random_k_edge_connected_graph(size, k, p=.1, rng=None):
         >>> for x in range(4):
         >>>     G = random_k_edge_connected_graph(size, k, p, rng)
         >>>     gs.append(G)
-        >>> util.quit_if_noshow()
+        >>> # xdoc: +REQUIRES(--show)
         >>> pnum_ = util.PlotNums(nRows=2, nSubplots=len(gs))
         >>> fnum = 1
         >>> for g in gs:

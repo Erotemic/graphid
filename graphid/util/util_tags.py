@@ -15,7 +15,6 @@ def build_alias_map(regex_map, tag_vocab):
     Constructs explicit mapping. Order of items in regex map matters.
     Items at top are given preference.
     """
-    import re
     from graphid import util
     alias_map = ub.odict([])
     for pats, new_tag in reversed(regex_map):
@@ -40,12 +39,6 @@ def alias_tags(tags_list, alias_map):
 
     Returns:
         list: updated tags
-
-    Example:
-        >>> tags_list = [['t1', 't2'], [], ['t3'], ['t4', 't5']]
-        >>> build_alias_map()
-        >>> result = alias_tags(tags_list, alias_map)
-        >>> print(result)
     """
     def _alias_dict(tags):
         tags_ = [alias_map.get(t, t) for t in tags]
@@ -94,7 +87,8 @@ def filterflags_general_tags(tags_list, has_any=None, has_all=None,
         >>> }
         >>> flags = filterflags_general_tags(tags_list, **kwargs)
         >>> filtered = list(ub.compress(tags_list, flags))
-        >>> result = ('result = %s' % (ub.repr2(filtered),))
+        >>> result = ('result = %s' % (ub.repr2(filtered, nl=0),))
+        >>> print(result)
         result = [['vn', 'no'], ['n', 'o'], ['n', 'N'], ['n'], ['n', 'nP']]
     """
 

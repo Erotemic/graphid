@@ -1,4 +1,5 @@
 import ubelt as ub
+import operator as op
 
 
 def sortedby(item_list, key_list, reverse=False):
@@ -59,6 +60,7 @@ def grouping_delta(old, new, pure=True):
         unchanged - which old groups are the same as new groups.
 
     Example:
+        >>> # xdoc: +IGNORE_WHITESPACE
         >>> old = [
         >>>     [20, 21, 22, 23], [1, 2], [12], [13, 14], [3, 4], [5, 6,11],
         >>>     [7], [8, 9], [10], [31, 32], [33, 34, 35], [41, 42, 43, 44, 45]
@@ -87,7 +89,7 @@ def grouping_delta(old, new, pure=True):
         hybrid: {
             old: {{10}, {3, 4}, {5, 6, 11}, {7}, {8, 9}},
             new: {{3, 5, 6}, {4}, {7, 8}, {9, 10, 11}},
-            splits: [{{7}}, {{11}, {5, 6}}, {{10}}, {{3}, {4}}, {{8}, {9}}],
+            splits: [{{7}}, {{11}, {5, 6}}, {{10}}, {{8}, {9}}, {{3}, {4}}],
             merges: [{{7}, {8}}, {{4}}, {{3}, {5, 6}}, {{10}, {11}, {9}}],
         },
 
@@ -101,8 +103,8 @@ def grouping_delta(old, new, pure=True):
         >>> ]
         >>> # every case here is hybrid
         >>> pure_delta = grouping_delta(old, new, pure=True)
-        >>> assert len(ub.flatten(pure_delta['merges'].values())) == 0
-        >>> assert len(ub.flatten(pure_delta['splits'].values())) == 0
+        >>> assert len(list(ub.flatten(pure_delta['merges'].values()))) == 0
+        >>> assert len(list(ub.flatten(pure_delta['splits'].values()))) == 0
         >>> delta = grouping_delta(old, new, pure=False)
         >>> delta = order_dict_by(delta, ['unchanged', 'splits', 'merges'])
         >>> result = ub.repr2(delta, nl=2, sk=True)
@@ -216,10 +218,10 @@ def grouping_delta(old, new, pure=True):
         merges = all_old_merges
 
         # Sort by split and merge sizes
-        splits = sortedby(splits, [len(ub.flatten(_)) for _ in splits])
-        merges = sortedby(merges, [len(ub.flatten(_)) for _ in merges])
-        splits = [sortedby(_, map(len, _)) for _ in splits]
-        merges = [sortedby(_, map(len, _)) for _ in merges]
+        splits = sortedby(splits, [len(list(ub.flatten(_))) for _ in splits])
+        merges = sortedby(merges, [len(list(ub.flatten(_))) for _ in merges])
+        splits = [sortedby(_, list(map(len, _))) for _ in splits]
+        merges = [sortedby(_, list(map(len, _))) for _ in merges]
 
         delta = ub.odict()
         delta['unchanged'] = unchanged
@@ -243,7 +245,7 @@ def order_dict_by(dict_, key_order):
         >>> dict_ = {1: 1, 2: 2, 3: 3, 4: 4}
         >>> key_order = [4, 2, 3, 1]
         >>> sorted_dict = order_dict_by(dict_, key_order)
-        >>> result = ('sorted_dict = %s' % (ub.repr4(sorted_dict, nl=False),))
+        >>> result = ('sorted_dict = %s' % (ub.repr2(sorted_dict, nl=False),))
         >>> print(result)
         >>> assert result == 'sorted_dict = {4: 4, 2: 2, 3: 3, 1: 1}'
     """
@@ -316,6 +318,6 @@ def sort_dict(dict_, part='keys', key=None, reverse=False):
     else:
         def _key(item):
             return key(item[index])
-    sorted_items = sorted(six.iteritems(dict_), key=_key, reverse=reverse)
-    sorted_dict = OrderedDict(sorted_items)
+    sorted_items = sorted(dict_.items(), key=_key, reverse=reverse)
+    sorted_dict = ub.odict(sorted_items)
     return sorted_dict

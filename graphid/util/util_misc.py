@@ -128,7 +128,7 @@ def make_index_lookup(list_, dict_factory=dict):
         >>> list_ = [5, 3, 8, 2]
         >>> idx2_item = make_index_lookup(list_)
         >>> result = ub.repr2(idx2_item, nl=False)
-        >>> assert ub.dict_take(idx2_item, list_) == list(range(len(list_)))
+        >>> assert list(ub.dict_take(idx2_item, list_)) == list(range(len(list_)))
         >>> print(result)
         {2: 3, 3: 1, 5: 0, 8: 2}
     """
@@ -153,16 +153,16 @@ def cprint(text, color=None):
         >>> import pygments.console
         >>> msg_list = list(pygments.console.codes.keys())
         >>> color_list = list(pygments.console.codes.keys())
-        >>> [colorprint(text, color) for text, color in zip(msg_list, color_list)]
+        >>> [cprint(text, color) for text, color in zip(msg_list, color_list)]
 
     Example1:
         >>> import pygments.console
         >>> print('line1')
-        >>> colorprint('line2', 'red')
-        >>> colorprint('line3', 'blue')
-        >>> colorprint('line4', 'fuchsia')
-        >>> colorprint('line5', 'reset')
-        >>> colorprint('line5', 'fuchsia')
+        >>> cprint('line2', 'red')
+        >>> cprint('line3', 'blue')
+        >>> cprint('line4', 'fuchsia')
+        >>> cprint('line5', 'reset')
+        >>> cprint('line5', 'fuchsia')
         >>> print('line6')
     """
     print(ub.color_text(text, color))
@@ -230,7 +230,7 @@ def setdiff(list1, list2):
     Example:
         >>> list1 = ['featweight_rowid', 'feature_rowid', 'config_rowid', 'featweight_forground_weight']
         >>> list2 = [u'featweight_rowid']
-        >>> new_list = setdiff_ordered(list1, list2)
+        >>> new_list = setdiff(list1, list2)
         >>> result = ub.repr2(new_list, nl=False)
         >>> print(result)
         ['feature_rowid', 'config_rowid', 'featweight_forground_weight']
@@ -345,7 +345,7 @@ def take_percentile_parts(arr, front=None, mid=None, back=None):
         slices += [snapped_slice(len(arr), 0.5, mid)]
     if back:
         slices += [snapped_slice(len(arr), 1.0, back)]
-    parts = flatten([arr[sl] for sl in slices])
+    parts = list(ub.flatten([arr[sl] for sl in slices]))
     return parts
 
 
@@ -484,7 +484,7 @@ def isect(list1, list2):
     Example:
         >>> list1 = ['featweight_rowid', 'feature_rowid', 'config_rowid', 'featweight_forground_weight']
         >>> list2 = [u'featweight_rowid']
-        >>> result = intersect_ordered(list1, list2)
+        >>> result = isect(list1, list2)
         >>> print(result)
         ['featweight_rowid']
     """
@@ -591,8 +591,8 @@ def safe_min(arr, fill=np.nan, finite=False, nans=True):
     return safe_extreme(arr, np.min, fill, finite, nans)
 
 
-def stats_dict(list_, axis=None, use_nan=False, use_sum=False, use_median=False,
-              size=False):
+def stats_dict(list_, axis=None, use_nan=False, use_sum=False,
+               use_median=False, size=False):
     """
     Args:
         list_ (listlike): values to get statistics of
@@ -602,15 +602,13 @@ def stats_dict(list_, axis=None, use_nan=False, use_sum=False, use_median=False,
         OrderedDict: stats: dictionary of common numpy statistics
             (min, max, mean, std, nMin, nMax, shape)
 
-    SeeAlso:
-        get_stats_str
-
     Examples0:
+        >>> # xdoctest: +IGNORE_WHITESPACE
         >>> import numpy as np
         >>> axis = 0
         >>> np.random.seed(0)
         >>> list_ = np.random.rand(10, 2).astype(np.float32)
-        >>> stats = get_stats(list_, axis, use_nan=False)
+        >>> stats = stats_dict(list_, axis, use_nan=False)
         >>> result = str(ub.repr2(stats, nl=1, precision=4, with_dtype=True))
         >>> print(result)
         {
@@ -629,10 +627,10 @@ def stats_dict(list_, axis=None, use_nan=False, use_sum=False, use_median=False,
         >>> rng = np.random.RandomState(0)
         >>> list_ = rng.randint(0, 42, size=100).astype(np.float32)
         >>> list_[4] = np.nan
-        >>> stats = get_stats(list_, axis, use_nan=True)
-        >>> result = str(ub.repr2(stats, precision=1, strkeys=True))
+        >>> stats = stats_dict(list_, axis, use_nan=True)
+        >>> result = str(ub.repr2(stats, precision=1, sk=True))
         >>> print(result)
-        {mean: 20.0, std: 13.2, max: 41.0, min: 0.0, nMin: 7, nMax: 3, shape: (100,), num_nan: 1}
+        {mean: 20.0, std: 13.2, max: 41.0, min: 0.0, nMin: 7, nMax: 3, shape: (100,), num_nan: 1,}
     """
     datacast = np.float32
     # Assure input is in numpy format
