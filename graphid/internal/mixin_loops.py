@@ -4,7 +4,7 @@ import numpy as np
 import ubelt as ub
 import pandas as pd
 import itertools as it
-import graphid.internal.state as const
+from graphid.internal import state as const
 from graphid import util
 from graphid.internal.state import (POSTV, NEGTV, INCMP, NULL)
 from graphid.internal.refresh import RefreshCriteria

@@ -12,6 +12,7 @@ if __DYNAMIC__:
 else:
     # <AUTOGEN_INIT>
     from graphid.util import mplutil
+    from graphid.util import name_rectifier
     from graphid.util import nx_dynamic_graph
     from graphid.util import nx_utils
     from graphid.util import priority_queue
@@ -34,6 +35,9 @@ else:
                                       save_parts, savefig2, scores_to_cmap,
                                       scores_to_color, set_figtitle,
                                       show_if_requested,)
+    from graphid.util.name_rectifier import (demodata_oldnames,
+                                             find_consistent_labeling,
+                                             simple_munkres,)
     from graphid.util.nx_dynamic_graph import (DynConnGraph, GraphHelperMixin,
                                                NiceGraph, nx_UnionFind,)
     from graphid.util.nx_utils import (assert_raises, bfs_conditional,

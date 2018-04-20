@@ -127,20 +127,6 @@ class Priority(object):
             >>> scores2 = np.array(util.take_column(order2, 1))
             >>> assert np.all(scores2[0:2] > 10)
             >>> assert np.all(scores2[2:] < 10)
-
-        Example:
-            import ibeis
-            infr = ibeis.AnnotInference('PZ_MTEST', aids='all', autoinit='staging')
-            infr.verbose = 1000
-            infr.load_published()
-            incon_edges = set(ub.flatten(infr.nid_to_errors.values()))
-            assert len(incon_edges) > 0
-            edges = list(infr.find_pos_redun_candidate_edges())
-            assert len(set(incon_edges).intersection(set(edges))) == 0
-            infr.add_candidate_edges(edges)
-
-            infr.prioritize()
-            print(ub.repr2(infr.status()))
         """
         if reset or infr.queue is None:
             infr.queue = util.PriorityQueue()

@@ -99,9 +99,6 @@ class AnnotInfrMatching(object):
         Args:
             prog_hook (None): (default = None)
 
-        CommandLine:
-            python -m graphid.internal.core exec_vsone_subset
-
         Example:
             >>> # ENABLE_DOCTEST
             >>> from graphid.internal.core import *  # NOQA
@@ -189,7 +186,7 @@ class AnnotInfrMatching(object):
 
             top_sortx = sortx[:ranks_top]
             bot_sortx = sortx[len(sortx) - ranks_bot:]
-            short_sortx = ub.unique(top_sortx + bot_sortx)
+            short_sortx = list(ub.unique(top_sortx + bot_sortx))
 
             daid_list = list(ub.take(cm.daid_list, short_sortx))
             for daid in daid_list:
@@ -204,9 +201,6 @@ class AnnotInfrMatching(object):
                            mid_gf=2, bot_gf=2, rand_gt=2, rand_gf=2, rng=None):
         """
         Constructs training data for a pairwise classifier
-
-        CommandLine:
-            python -m graphid.internal.core _cm_training_pairs
 
         Example:
             >>> # ENABLE_DOCTEST
@@ -238,9 +232,9 @@ class AnnotInfrMatching(object):
             all_gt_aids = cm.get_top_gt_aids(ibs)
             all_gf_aids = cm.get_top_gf_aids(ibs)
             gt_aids = util.take_percentile_parts(all_gt_aids, top_gt, mid_gt,
-                                               bot_gt)
+                                                 bot_gt)
             gf_aids = util.take_percentile_parts(all_gf_aids, top_gf, mid_gf,
-                                               bot_gf)
+                                                 bot_gf)
             # get unscored examples
             unscored_gt_aids = [aid for aid in qreq_.daids[cm.qnid == dnids]
                                 if aid not in cm.daid2_idx]
@@ -250,8 +244,8 @@ class AnnotInfrMatching(object):
             _gf_aids = qreq_.daids.compress(cm.qnid != dnids)
             # gf_aids = ibs.get_annot_groundfalse(cm.qaid, daid_list=qreq_.daids)
             rand_gf_aids = util.random_sample(_gf_aids, rand_gf, rng=rng).tolist()
-            chosen_daids = ub.unique(gt_aids + gf_aids + rand_gf_aids +
-                                     rand_gt_aids)
+            chosen_daids = list(ub.unique(gt_aids + gf_aids + rand_gf_aids +
+                                          rand_gt_aids))
             aid_pairs.extend([(cm.qaid, aid) for aid in chosen_daids if cm.qaid != aid])
 
         return aid_pairs
@@ -312,9 +306,6 @@ class AnnotInfrMatching(object):
         Applies precomputed matching scores to edges that already exist in the
         graph. Typically you should run infr.apply_match_edges() before running
         this.
-
-        CommandLine:
-            python -m graphid.internal.core apply_match_scores --show
 
         Example:
             >>> # ENABLE_DOCTEST
@@ -393,9 +384,6 @@ class InfrLearning(object):
         """
         Creates a cross-validated ensemble of classifiers to evaluate
         verifier error cases and groundtruth errors.
-
-        CommandLine:
-            python -m graphid.internal.mixin_matching learn_evaluation_verifiers
 
         Doctest:
             >>> import ibeis
@@ -590,7 +578,6 @@ class _RedundancyAugmentation(object):
         Searches for augmenting edges that would make PCCs k-positive redundant
 
         Doctest:
-            >>> from graphid.internal.mixin_matching import *  # NOQA
             >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(ccs=[(1, 2, 3, 4, 5), (7, 8, 9, 10)])
             >>> infr.add_feedback((2, 5), 'match')
@@ -619,7 +606,6 @@ class _RedundancyAugmentation(object):
         Finds edges that might complete them.
 
         Example:
-            >>> from graphid.internal.mixin_matching import *  # NOQA
             >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(ccs=[(1,), (2,), (3,)], ignore_pair=True)
             >>> edges = list(infr.find_neg_redun_candidate_edges())
@@ -709,11 +695,7 @@ class CandidateSearch(_RedundancyAugmentation):
         This gaurentees that infr.task_probs contains data for edges.
         (Currently only the primary task is actually ensured)
 
-        CommandLine:
-            python -m graphid.internal.mixin_matching ensure_task_probs
-
         Doctest:
-            >>> from graphid.internal.mixin_matching import *
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids='all',
             >>>                             autoinit='staging')
@@ -726,7 +708,6 @@ class CandidateSearch(_RedundancyAugmentation):
             >>> assert len(infr.task_probs['match_state']) == 3
 
         Doctest:
-            >>> from graphid.internal.mixin_matching import *
             >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=6, p_incon=.5, size_std=2)
             >>> edges = list(infr.edges())
