@@ -922,7 +922,6 @@ class _RedundancyComputers(object):
         Get pairs of PCCs that are not complete.
 
         Example:
-            >>> from graphid.internal.mixin_matching import *  # NOQA
             >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(pcc_sizes=[1, 1, 2, 3, 5, 8], ignore_pair=True)
             >>> non_neg_pccs = list(infr.find_non_neg_redun_pccs(k=2))

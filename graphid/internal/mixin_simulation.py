@@ -9,7 +9,6 @@ import itertools as it
 import ubelt as ub
 import pandas as pd
 from functools import partial
-from graphid.util import nx_utils as nxu
 from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN, NULL)
 from graphid import util
 
@@ -121,64 +120,6 @@ class SimulationHelpers(object):
 
         pred_n_pcc_mst_edges = n_true_merges
 
-        if 0:
-            import ubelt as ub
-            for timer in ub.Timerit(10):
-                with timer:
-                    # Find undetectable errors
-                    num_undetectable_fn = 0
-                    for nid1, nid2 in infr.neg_redun_metagraph.edges():
-                        cc1 = infr.pos_graph.component(nid1)
-                        cc2 = infr.pos_graph.component(nid2)
-                        neg_edges = nxu.edges_cross(infr.neg_graph, cc1, cc2)
-                        for u, v in neg_edges:
-                            real_nid1 = infr.node_truth[u]
-                            real_nid2 = infr.node_truth[v]
-                            if real_nid1 == real_nid2:
-                                num_undetectable_fn += 1
-                                break
-
-                    # Find undetectable errors
-                    num_undetectable_fp = 0
-                    for nid in infr.pos_redun_nids:
-                        cc = infr.pos_graph.component(nid)
-                        if not ub.allsame(ub.take(infr.node_truth, cc)):
-                            num_undetectable_fp += 1
-
-            print('num_undetectable_fn = %r' % (num_undetectable_fn,))
-            print('num_undetectable_fp = %r' % (num_undetectable_fp,))
-
-        if 0:
-            n_error_edges2 = 0
-            n_fn2 = 0
-            n_fp2 = 0
-            for edge, data in infr.edges(data=True):
-                decision = data.get('evidence_decision', UNREV)
-                true_state = infr.edge_truth[edge]
-                if true_state == decision and true_state == POSTV:
-                    real_pos_edges.append(edge)
-                elif decision != UNREV:
-                    if true_state != decision:
-                        n_error_edges2 += 1
-                        if true_state == POSTV:
-                            n_fn2 += 1
-                        elif true_state == NEGTV:
-                            n_fp2 += 1
-            assert n_error_edges2 == n_error_edges
-            assert n_tp == len(real_pos_edges)
-            assert n_fn == n_fn2
-            assert n_fp == n_fp2
-            # pred_n_pcc_mst_edges2 = sum(
-            #     len(cc) - 1 for cc in infr.test_gt_pos_graph.connected_components()
-            # )
-        if False:
-            import networkx as nx
-            # set(infr.test_gt_pos_graph.edges()) == set(real_pos_edges)
-            pred_n_pcc_mst_edges = 0
-            for cc in nx.connected_components(nx.Graph(real_pos_edges)):
-                pred_n_pcc_mst_edges += len(cc) - 1
-            assert n_true_merges == pred_n_pcc_mst_edges
-
         # Find all annotations involved in a mistake
         assert n_error_edges == len(infr.mistake_edges)
         direct_mistake_aids = {a for edge in infr.mistake_edges for a in edge}
@@ -274,19 +215,6 @@ class SimulationHelpers(object):
             infr.print('[ACTION] ' + x, level=2, **kw)
         # test_print = lambda *a, **kw: None  # NOQA
 
-        if 0:
-            num = infr.recover_graph.number_of_components()
-            old_data = infr.get_nonvisual_edge_data(edge)
-            # print('old_data = %s' % (ub.repr2(old_data, stritems=True),))
-            print('n_prev_reviews = %r' % (old_data['num_reviews'],))
-            print('prev_decision = %r' % (prev_decision,))
-            print('decision = %r' % (decision,))
-            print('was_gt_pos = %r' % (was_gt_pos,))
-            print('was_within_pred = %r' % (was_within_pred,))
-            print('was_within_gt = %r' % (was_within_gt,))
-            print('num inconsistent = %r' % (num,))
-            # is_recovering = infr.is_recovering()
-
         if decision == POSTV:
             if is_correct:
                 if not was_gt_pos:
@@ -304,14 +232,8 @@ class SimulationHelpers(object):
         confusion = infr.test_state['confusion']
         if confusion is None:
             # initialize dynamic confusion matrix
-            # import pandas as pd
             states = (POSTV, NEGTV, INCMP, UNREV, UNKWN)
             confusion = {r: {c: 0 for c in states} for r in states}
-            # pandas takes a really long time doing this
-            # confusion = pd.DataFrame(columns=states, index=states)
-            # confusion[:] = 0
-            # confusion.index.name = 'real'
-            # confusion.columns.name = 'pred'
             infr.test_state['confusion'] = confusion
 
         if was_reviewed:
@@ -403,7 +325,6 @@ class UserOracle(object):
         else:
             oracle.normal_accuracy = accuracy
             oracle.recover_accuracy = accuracy
-        # .5
 
         oracle.rng = rng
         oracle.states = {POSTV, NEGTV, INCMP}

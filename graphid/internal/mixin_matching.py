@@ -101,7 +101,6 @@ class AnnotInfrMatching(object):
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.internal.core import *  # NOQA
             >>> infr = testdata_infr('testdb1')
             >>> infr.ensure_full()
             >>> edges = [(1, 2), (2, 3)]
@@ -165,7 +164,6 @@ class AnnotInfrMatching(object):
 
     def _cm_breaking(infr, cm_list=None, review_cfg={}):
         """
-            >>> from graphid.internal.core import *  # NOQA
             >>> review_cfg = {}
         """
         if cm_list is None:
@@ -204,7 +202,6 @@ class AnnotInfrMatching(object):
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.internal.core import *  # NOQA
             >>> infr = testdata_infr('PZ_MTEST')
             >>> infr.exec_matching(cfgdict={
             >>>     'can_match_samename': True,
@@ -213,7 +210,6 @@ class AnnotInfrMatching(object):
             >>>     'prescore_method': 'csum',
             >>>     'score_method': 'csum'
             >>> })
-            >>> from graphid.internal.core import *  # NOQA
             >>> exec(ut.execstr_funckw(infr._cm_training_pairs))
             >>> rng = np.random.RandomState(42)
             >>> aid_pairs = np.array(infr._cm_training_pairs(rng=rng))
@@ -309,7 +305,6 @@ class AnnotInfrMatching(object):
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.internal.core import *  # NOQA
             >>> infr = testdata_infr('PZ_MTEST')
             >>> infr.exec_matching()
             >>> infr.apply_match_edges()
@@ -440,34 +435,6 @@ class InfrLearning(object):
 
 
 class _RedundancyAugmentation(object):
-
-    # def rand_neg_check_edges(infr, c1_nodes, c2_nodes):
-    #     """
-    #     Find enough edges to between two pccs to make them k-negative complete
-    #     """
-    #     k = infr.params['redun.neg']
-    #     existing_edges = nxu.edges_cross(infr.graph, c1_nodes, c2_nodes)
-    #     reviewed_edges = {
-    #         edge: state
-    #         for edge, state in infr.get_edge_attrs(
-    #             'decision', existing_edges,
-    #             default=UNREV).items()
-    #         if state != UNREV
-    #     }
-    #     n_neg = sum([state == NEGTV for state in reviewed_edges.values()])
-    #     if n_neg < k:
-    #         # Find k random negative edges
-    #         check_edges = existing_edges - set(reviewed_edges)
-    #         if len(check_edges) < k:
-    #             edges = it.starmap(nxu.e_, it.product(c1_nodes, c2_nodes))
-    #             for edge in edges:
-    #                 if edge not in reviewed_edges:
-    #                     check_edges.add(edge)
-    #                     if len(check_edges) == k:
-    #                         break
-    #     else:
-    #         check_edges = {}
-    #     return check_edges
 
     def find_neg_augment_edges(infr, cc1, cc2, k=None):
         """

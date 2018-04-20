@@ -1,2 +1,2 @@
 # flake8: noqa
-import annot_inference
+# import annot_inference

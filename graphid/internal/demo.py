@@ -5,19 +5,20 @@ TODO: separate out the tests and make this file just generate the demo data
 from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
 import numpy as np
+import pandas as pd
 from graphid import util
+from graphid.util import nx_utils as nxu
 from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV
 from graphid.internal.state import SAME, DIFF, NULL  # NOQA
 import ubelt as ub
 
 
 def make_dummy_infr(annots_per_name):
-    import ibeis
     nids = [val for val, num in enumerate(annots_per_name, start=1)
             for _ in range(num)]
     aids = range(len(nids))
-    infr = ibeis.AnnotInference(None, aids, nids=nids, autoinit=True,
-                                verbose=1)
+    from graphid.internal.annot_inference import AnnotInference
+    infr = AnnotInference(None, aids, nids=nids, autoinit=True, verbose=1)
     return infr
 
 
@@ -28,7 +29,8 @@ def demodata_mtest_infr(state='empty'):
     names = list(annots.group_items(annots.nids).values())
     util.shuffle(names, rng=321)
     test_aids = list(ub.flatten(names[1::2]))
-    infr = ibeis.AnnotInference(ibs, test_aids, autoinit=True)
+    from graphid.internal.annot_inference import AnnotInference
+    infr = AnnotInference(ibs, test_aids, autoinit=True)
     infr.reset(state=state)
     return infr
 
@@ -50,7 +52,8 @@ def demodata_infr2(defaultdb='PZ_MTEST'):
         for c in range(1, 4)
     }
     aids = list(ub.flatten(names))
-    infr = ibeis.AnnotInference(ibs, aids, autoinit=True)
+    from graphid.internal.annot_inference import AnnotInference
+    infr = AnnotInference(ibs, aids, autoinit=True)
     infr.init_termination_criteria(phis)
     infr.init_refresh_criteria()
 
@@ -77,12 +80,6 @@ def demo2():
         >>> result = demo2()
         >>> print(result)
     """
-    import plottool as pt
-
-    from ibeis.scripts.thesis import TMP_RC
-    import matplotlib as mpl
-    mpl.rcParams.update(TMP_RC)
-
     # ---- Synthetic data params
     params = {
         'redun.pos': 2,
@@ -201,9 +198,7 @@ def demo2():
         ax.set_aspect('equal')
 
         # ax.xaxis.label.set_color('red')
-
         from os.path import join
-
         fpath = join(dpath, 'demo_{:04d}.png'.format(next(fig_counter)))
         fig.savefig(fpath, dpi=300,
                     # transparent=True,
@@ -239,7 +234,8 @@ def demo2():
 
     def on_new_candidate_edges(infr, edges):
         # hack updateing visual attrs as a callback
-        infr.update_visual_attrs()
+        if VISUALIZE:
+            infr.update_visual_attrs()
 
     infr.on_new_candidate_edges = on_new_candidate_edges
 
@@ -334,9 +330,11 @@ def demo2():
 
     #     show_graph(infr, 'post-re-review', final=True)
 
-    if not getattr(infr, 'EMBEDME', False):
-        pt.all_figures_tile()
-        util.show_if_requested()
+    if VISUALIZE:
+        if not getattr(infr, 'EMBEDME', False):
+            # import plottool as pt
+            util.mplutil.all_figures_tile()
+            util.mplutil.show_if_requested()
 
 
 valid_views = ['L', 'F', 'R', 'B']
@@ -398,14 +396,13 @@ def make_demo_infr(ccs, edges=[], nodes=[], infer=True):
     """
     Depricate in favor of demodata_infr
     """
-
-    import ibeis
+    from graphid.internal.annot_inference import AnnotInference
     import networkx as nx
 
     if nx.__version__.startswith('1'):
         nx.add_path = nx.Graph.add_path
 
-    G = ibeis.AnnotInference._graph_cls()
+    G = AnnotInference._graph_cls()
     G.add_nodes_from(nodes)
     for cc in ccs:
         if len(cc) == 1:
@@ -416,7 +413,7 @@ def make_demo_infr(ccs, edges=[], nodes=[], infer=True):
     #     u, v, d = edge if len(edge) == 3 else tuple(edge) + ({},)
 
     G.add_edges_from(edges)
-    infr = ibeis.AnnotInference.from_netx(G, infer=infer)
+    infr = AnnotInference.from_netx(G, infer=infer)
     infr.verbose = 3
 
     infr.relabel_using_reviews(rectify=False)
@@ -441,11 +438,10 @@ def demodata_infr(**kwargs):
         python -m graphid.internal.demo demodata_infr --profile --num_pccs=100
 
     Example:
-        >>> from graphid.internal.demo import *  # NOQA
         >>> from graphid.internal import demo
         >>> import networkx as nx
         >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
-        >>> kwargs = ut.argparse_dict(kwargs)
+        >>> #kwargs = ut.argparse_dict(kwargs)
         >>> infr = demo.demodata_infr(**kwargs)
         >>> pccs = list(infr.positive_components())
         >>> assert len(pccs) == kwargs['num_pccs']
@@ -466,7 +462,6 @@ def demodata_infr(**kwargs):
         }
     """
     import networkx as nx
-    from graphid.internal import nx_utils
 
     def kwalias(*args):
         params = args[0:-1]
@@ -516,7 +511,7 @@ def demodata_infr(**kwargs):
         want_connectivity = min(size - 1, want_connectivity)
 
         # Create basic graph of positive edges with desired connectivity
-        g = nx_utils.random_k_edge_connected_graph(
+        g = nxu.random_k_edge_connected_graph(
             size, k=want_connectivity, p=p, rng=rng)
         nx.set_edge_attributes(g, name='evidence_decision', values=POSTV)
         nx.set_edge_attributes(g, name='truth', values=POSTV)
@@ -535,8 +530,8 @@ def demodata_infr(**kwargs):
         # The probability any edge is inconsistent is `p_incon`
         # This is 1 - P(all edges consistent)
         # which means p(edge is consistent) = (1 - p_incon) / N
-        complement_edges = util.estarmap(nx_utils.e_,
-                                       nx_utils.complement_edges(g))
+        complement_edges = util.estarmap(nxu.e_,
+                                         nxu.complement_edges(g))
         if len(complement_edges) > 0:
             # compute probability that any particular edge is inconsistent
             # to achieve probability the PCC is inconsistent
@@ -613,7 +608,7 @@ def demodata_infr(**kwargs):
             for cc1, cc2 in cc_combos if len(cc1) and len(cc2)
         ]
         for cc1, cc2 in ub.ProgIter(valid_cc_combos, desc='make neg-demo'):
-            possible_edges = util.estarmap(nx_utils.e_, it.product(cc1, cc2))
+            possible_edges = util.estarmap(nxu.e_, it.product(cc1, cc2))
             # probability that any edge between these PCCs is negative
             n_edges = len(possible_edges)
             p_edge_neg   = 1 - (1 - p_pair_neg)   ** (1 / n_edges)
@@ -642,12 +637,12 @@ def demodata_infr(**kwargs):
     else:
         print('ignoring pairs')
 
-    import ibeis
-    G = ibeis.AnnotInference._graph_cls()
+    from graphid.internal.annot_inference import AnnotInference
+    G = AnnotInference._graph_cls()
     G.add_nodes_from(pos_g.nodes(data=True))
     G.add_edges_from(pos_g.edges(data=True))
     G.add_edges_from(neg_edges)
-    infr = ibeis.AnnotInference.from_netx(G, infer=kwargs.get('infer', True))
+    infr = AnnotInference.from_netx(G, infer=kwargs.get('infer', True))
     infr.verbose = 3
 
     infr.relabel_using_reviews(rectify=False)
@@ -855,8 +850,6 @@ class DummyVerif(object):
                 for edge, probs in zip(group, zip(probs0, probs1, probs2)):
                     prob_cache[edge] = ub.dzip(states, probs)
 
-        from graphid.internal import nx_utils as nxu
-        import pandas as pd
         probs = pd.DataFrame(
             list(ub.take(prob_cache, edges)),
             index=nxu.ensure_multi_index(edges, ('aid1', 'aid2'))

@@ -12,7 +12,6 @@ import ubelt as ub
 from graphid.internal import state as const
 from graphid.util import nx_dynamic_graph
 from graphid import util
-from graphid.util import name_recitifer
 from graphid.internal import mixin_viz
 from graphid.internal import mixin_helpers
 from graphid.internal import mixin_dynamic
@@ -474,7 +473,7 @@ class NameRelabel(object):
         grouped_oldnames = [
             [n for n in oldgroup if n is not None]
             for oldgroup in grouped_oldnames_]
-        new_names = name_recitifer.find_consistent_labeling(
+        new_names = util.name_recitifer.find_consistent_labeling(
             grouped_oldnames, verbose=infr.verbose >= 3, extra_prefix=None)
 
         unknown_labels = list(ub.compress(unique_newlabels, still_unknown))
@@ -504,7 +503,7 @@ class NameRelabel(object):
         ]
         infr.print('begin rectification of %d grouped old names' % (
             len(grouped_oldnames)), 2)
-        new_labels = name_recitifer.find_consistent_labeling(
+        new_labels = util.name_recitifer.find_consistent_labeling(
             grouped_oldnames, verbose=infr.verbose >= 3)
         infr.print('done rectifying new names', 2)
         new_flags = [

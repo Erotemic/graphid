@@ -527,11 +527,10 @@ class GraphVisualization(object):
         Example:
             >>> # ENABLE_DOCTEST
             >>> from graphid.internal import demo
-            >>> import plottool as pt
             >>> infr = demo.demodata_infr(ccs=util.estarmap(
             >>>    range, [(1, 6), (6, 10), (10, 13), (13, 15), (15, 16),
             >>>            (17, 20)]))
-            >>> pnum_ = pt.make_pnum_nextgen(nRows=1, nCols=3)
+            >>> pnum_ = util.PlotNums(nRows=1, nCols=3)
             >>> infr.show_graph(show_cand=True, simple_labels=True, pickable=True, fnum=1, pnum=pnum_())
             >>> infr.add_feedback((1, 5), INCMP)
             >>> infr.add_feedback((14, 18), INCMP)
