@@ -2,18 +2,20 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import warnings
-import utool as ut
-import vtool as vt  # NOQA
 import ubelt as ub
 import networkx as nx
-from ibeis.algo.graph.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)
-from ibeis.algo.graph.state import (SAME, DIFF, NULL)  # NOQA
+from functools import partial
+from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)
+from graphid.internal.state import (SAME, DIFF, NULL)  # NOQA
+from graphid import util
 
 
 class GraphVisualization(object):
     """ contains plotting related code """
 
     def _get_truth_colors(infr):
+        # TODO: change to cs4 colors with util.Color
+        # util.Color('dodgerblue')
         import plottool as pt
         truth_colors = {
             POSTV: pt.TRUE_BLUE,
@@ -53,11 +55,6 @@ class GraphVisualization(object):
                               [ 0.2       ,  0.54946918,  0.90949295],
                               [ 0.25697101,  0.44185497,  0.8138502 ]])
             cmap = pt.mpl.colors.ListedColormap(cpool, 'indexed')
-            # cmap = pt.interpolated_colormap([
-            #     (pt.FALSE_RED, 0.0),
-            #     (pt.YELLOW, 0.5),
-            #     (pt.TRUE_BLUE, 1.0),
-            # ], resolution=128)
             infr._cmap = cmap
             return infr._cmap
 
@@ -69,11 +66,11 @@ class GraphVisualization(object):
             graph = infr.graph
 
         # nx.set_node_attributes(graph, name='framewidth', values=3.0)
-        # nx.set_node_attributes(graph, name='shape', values=ut.dzip(annot_nodes, ['rect']))
-        ut.nx_delete_node_attr(graph, 'size')
-        ut.nx_delete_node_attr(graph, 'width')
-        ut.nx_delete_node_attr(graph, 'height')
-        ut.nx_delete_node_attr(graph, 'radius')
+        # nx.set_node_attributes(graph, name='shape', values=ub.dzip(annot_nodes, ['rect']))
+        util.nx_delete_node_attr(graph, 'size')
+        util.nx_delete_node_attr(graph, 'width')
+        util.nx_delete_node_attr(graph, 'height')
+        util.nx_delete_node_attr(graph, 'radius')
 
         infr._viz_init_nodes = True
         infr._viz_image_config_dirty = False
@@ -96,13 +93,13 @@ class GraphVisualization(object):
 
         if infr.ibs is not None:
             nx.set_node_attributes(graph, name='framewidth', values=3.0)
-            nx.set_node_attributes(graph, name='shape', values=ut.dzip(aid_list, ['rect']))
+            nx.set_node_attributes(graph, name='shape', values=ub.dzip(aid_list, ['rect']))
             if infr.ibs is None:
                 raise ValueError('Cannot show images when ibs is None')
             imgpath_list = infr.ibs.depc_annot.get('chipthumb', aid_list, 'img',
                                                    config=infr._viz_image_config,
                                                    read_extern=False)
-            nx.set_node_attributes(graph, name='image', values=ut.dzip(aid_list, imgpath_list))
+            nx.set_node_attributes(graph, name='image', values=ub.dzip(aid_list, imgpath_list))
         if graph is infr.graph:
             infr._viz_image_config_dirty = False
 
@@ -134,7 +131,7 @@ class GraphVisualization(object):
         else:
             edges = list(graph.edges())
             edge_to_weight = nx.get_edge_attributes(graph, 'normscore')
-            weights = np.array(ut.dict_take(edge_to_weight, edges, np.nan))
+            weights = np.array(list(ub.dict_take(edge_to_weight, edges, np.nan)))
             nan_idxs = []
             if len(weights) > 0:
                 # give nans threshold value
@@ -153,13 +150,7 @@ class GraphVisualization(object):
 
     def get_colored_weights(infr, weights):
         import plottool as pt
-        #pt.rrrr()
-        # cmap_ = 'viridis'
-        # cmap_ = 'plasma'
-        # cmap_ = pt.plt.cm.RdYlBu
         cmap_ = infr._get_cmap()
-        # cmap_ = pt.plt.cm.RdYlBu
-        #cmap_ = pt.plt.get_cmap(cmap_)
         thresh = .5
         weights[np.isnan(weights)] = thresh
         #colors = pt.scores_to_color(weights, cmap_=cmap_, logscale=True)
@@ -195,13 +186,14 @@ class GraphVisualization(object):
         if graph is None:
             graph = infr.graph
         simple = graph.copy() if copy else graph
-        ut.nx_delete_edge_attr(simple, infr.visual_edge_attrs)
-        ut.nx_delete_node_attr(simple, infr.visual_node_attrs + ['pin'])
+        util.nx_delete_edge_attr(simple, infr.visual_edge_attrs)
+        util.nx_delete_node_attr(simple, infr.visual_node_attrs + ['pin'])
         return simple
 
     @staticmethod
     def make_viz_config(use_image, small_graph):
         import dtool as dt
+        import utool as ut
         class GraphVizConfig(dt.Config):
             _param_info_list = [
                 # Appearance
@@ -285,12 +277,12 @@ class GraphVisualization(object):
 
         # Ensure we are starting from a clean slate
         # if reposition:
-        ut.nx_delete_edge_attr(graph, infr.visual_edge_attrs_appearance)
+        util.nx_delete_edge_attr(graph, infr.visual_edge_attrs_appearance)
 
         # Set annotation node labels
         node_to_nid = None
         if not show_labels:
-            nx.set_node_attributes(graph, name='label', values=ut.dzip(graph.nodes(), ['']))
+            nx.set_node_attributes(graph, name='label', values=ub.dzip(graph.nodes(), ['']))
         else:
             if simple_labels:
                 nx.set_node_attributes(graph, name='label', values={n: str(n) for n in graph.nodes()})
@@ -312,7 +304,7 @@ class GraphVisualization(object):
                 nx.set_node_attributes(graph, name='label', values=annotnode_to_label)
 
         # NODE_COLOR: based on name_label
-        ut.color_nodes(graph, labelattr=colorby,
+        color_nodes(graph, labelattr=colorby,
                        outof=kwargs.get('outof', None), sat_adjust=-.4)
 
         # EDGES:
@@ -330,7 +322,7 @@ class GraphVisualization(object):
         recheck_edges = [edge for edge, split in
                          nx.get_edge_attributes(graph, 'maybe_error').items()
                          if split]
-        decision_to_edge = ut.group_pairs(reviewed_states.items())
+        decision_to_edge = util.group_pairs(reviewed_states.items())
         neg_edges = decision_to_edge[NEGTV]
         pos_edges = decision_to_edge[POSTV]
         incomp_edges = decision_to_edge[INCMP]
@@ -348,16 +340,16 @@ class GraphVisualization(object):
 
         reviewed_edges = incomp_edges + pos_edges + neg_edges
         compared_edges = pos_edges + neg_edges
-        uncompared_edges = ut.setdiff(edges, compared_edges)
-        nontrivial_inferred_same = ut.setdiff(inferred_same, pos_edges +
-                                              neg_edges + incomp_edges)
-        nontrivial_inferred_diff = ut.setdiff(inferred_diff, pos_edges +
-                                              neg_edges + incomp_edges)
+        uncompared_edges = util.setdiff(edges, compared_edges)
+        nontrivial_inferred_same = util.setdiff(inferred_same, pos_edges +
+                                                neg_edges + incomp_edges)
+        nontrivial_inferred_diff = util.setdiff(inferred_diff, pos_edges +
+                                                neg_edges + incomp_edges)
         nontrivial_inferred_edges = (nontrivial_inferred_same +
                                      nontrivial_inferred_diff)
 
         # EDGE_COLOR: based on edge_weight
-        nx.set_edge_attributes(graph, name='color', values=ut.dzip(edges, edge_colors))
+        nx.set_edge_attributes(graph, name='color', values=ub.dzip(edges, edge_colors))
 
         # LINE_WIDTH: based on review_state
         # unreviewed_width = 2.0
@@ -365,95 +357,95 @@ class GraphVisualization(object):
         unreviewed_width = 1.0
         reviewed_width = 2.0
         if highlight_reviews:
-            nx.set_edge_attributes(graph, name='linewidth', values=ut.dzip(reviewed_edges, [reviewed_width]))
-            nx.set_edge_attributes(graph, name='linewidth', values=ut.dzip(unreviewed_edges, [unreviewed_width]))
+            nx.set_edge_attributes(graph, name='linewidth', values=ub.dzip(reviewed_edges, [reviewed_width]))
+            nx.set_edge_attributes(graph, name='linewidth', values=ub.dzip(unreviewed_edges, [unreviewed_width]))
         else:
-            nx.set_edge_attributes(graph, name='linewidth', values=ut.dzip(edges, [unreviewed_width]))
+            nx.set_edge_attributes(graph, name='linewidth', values=ub.dzip(edges, [unreviewed_width]))
 
         # EDGE_STROKE: based on decision and maybe_error
         # fg = pt.WHITE if dark_background else pt.BLACK
-        # nx.set_edge_attributes(graph, name='stroke', values=ut.dzip(reviewed_edges, [{'linewidth': 3, 'foreground': fg}]))
+        # nx.set_edge_attributes(graph, name='stroke', values=ub.dzip(reviewed_edges, [{'linewidth': 3, 'foreground': fg}]))
         if show_inconsistency:
-            nx.set_edge_attributes(graph, name='stroke', values=ut.dzip(recheck_edges, [{'linewidth': 5, 'foreground': infr._error_color}]))
+            nx.set_edge_attributes(graph, name='stroke', values=ub.dzip(recheck_edges, [{'linewidth': 5, 'foreground': infr._error_color}]))
 
         # Set linestyles to emphasize PCCs
         # Dash lines between PCCs inferred to be different
-        nx.set_edge_attributes(graph, name='linestyle', values=ut.dzip(inferred_diff, ['dashed']))
+        nx.set_edge_attributes(graph, name='linestyle', values=ub.dzip(inferred_diff, ['dashed']))
 
         # Treat incomparable/incon-external inference as different
-        nx.set_edge_attributes(graph, name='linestyle', values=ut.dzip(inferred_notcomp, ['dashed']))
-        nx.set_edge_attributes(graph, name='linestyle', values=ut.dzip(inconsistent_external, ['dashed']))
+        nx.set_edge_attributes(graph, name='linestyle', values=ub.dzip(inferred_notcomp, ['dashed']))
+        nx.set_edge_attributes(graph, name='linestyle', values=ub.dzip(inconsistent_external, ['dashed']))
 
         # Dot lines that we are unsure of
-        nx.set_edge_attributes(graph, name='linestyle', values=ut.dzip(unreviewed_edges, ['dotted']))
+        nx.set_edge_attributes(graph, name='linestyle', values=ub.dzip(unreviewed_edges, ['dotted']))
 
         # Cut edges are implicit and dashed
-        # nx.set_edge_attributes(graph, name='implicit', values=ut.dzip(cut_edges, [True]))
-        # nx.set_edge_attributes(graph, name='linestyle', values=ut.dzip(cut_edges, ['dashed']))
-        # nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(cut_edges, [alpha_med]))
+        # nx.set_edge_attributes(graph, name='implicit', values=ub.dzip(cut_edges, [True]))
+        # nx.set_edge_attributes(graph, name='linestyle', values=ub.dzip(cut_edges, ['dashed']))
+        # nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(cut_edges, [alpha_med]))
 
-        nx.set_edge_attributes(graph, name='implicit', values=ut.dzip(uncompared_edges, [True]))
+        nx.set_edge_attributes(graph, name='implicit', values=ub.dzip(uncompared_edges, [True]))
 
         # Only matching edges should impose constraints on the graph layout
-        nx.set_edge_attributes(graph, name='implicit', values=ut.dzip(neg_edges, [True]))
-        nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(neg_edges, [alpha_med]))
-        nx.set_edge_attributes(graph, name='implicit', values=ut.dzip(incomp_edges, [True]))
-        nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(incomp_edges, [alpha_med]))
+        nx.set_edge_attributes(graph, name='implicit', values=ub.dzip(neg_edges, [True]))
+        nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(neg_edges, [alpha_med]))
+        nx.set_edge_attributes(graph, name='implicit', values=ub.dzip(incomp_edges, [True]))
+        nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(incomp_edges, [alpha_med]))
 
         # Ensure reviewed edges are visible
-        nx.set_edge_attributes(graph, name='implicit', values=ut.dzip(reviewed_edges, [False]))
-        nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(reviewed_edges, [alpha_high]))
+        nx.set_edge_attributes(graph, name='implicit', values=ub.dzip(reviewed_edges, [False]))
+        nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(reviewed_edges, [alpha_high]))
 
         if True:
             # Infered same edges can be allowed to constrain in order
             # to make things look nice sometimes
-            nx.set_edge_attributes(graph, name='implicit', values=ut.dzip(inferred_same, [False]))
-            nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(inferred_same, [alpha_high]))
+            nx.set_edge_attributes(graph, name='implicit', values=ub.dzip(inferred_same, [False]))
+            nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(inferred_same, [alpha_high]))
 
         if not kwargs.get('show_same', True):
-            nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(inferred_same, [0]))
+            nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(inferred_same, [0]))
 
         if not kwargs.get('show_diff', True):
-            nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(inferred_diff, [0]))
+            nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(inferred_diff, [0]))
 
         if not kwargs.get('show_positive_edges', True):
-            nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(pos_edges, [0]))
+            nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(pos_edges, [0]))
 
         if not kwargs.get('show_negative_edges', True):
-            nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(neg_edges, [0]))
+            nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(neg_edges, [0]))
 
         if not kwargs.get('show_incomparable_edges', True):
-            nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(incomp_edges, [0]))
+            nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(incomp_edges, [0]))
 
         if not kwargs.get('show_between', True):
             if node_to_nid is None:
                 node_to_nid = nx.get_node_attributes(graph, 'name_label')
             between_edges = [(u, v) for u, v in edges
                              if node_to_nid[u] != node_to_nid[v]]
-            nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(between_edges, [0]))
+            nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(between_edges, [0]))
 
         # SKETCH: based on inferred_edges
         # Make inferred edges wavy
         if wavy:
             # dict(scale=3.0, length=18.0, randomness=None)]
-            nx.set_edge_attributes(graph, name='sketch', values=ut.dzip(nontrivial_inferred_edges, [dict(scale=10.0, length=64.0, randomness=None)]))
+            nx.set_edge_attributes(graph, name='sketch', values=ub.dzip(nontrivial_inferred_edges, [dict(scale=10.0, length=64.0, randomness=None)]))
 
         # Make dummy edges more transparent
-        # nx.set_edge_attributes(graph, name='alpha', values=ut.dzip(dummy_edges, [alpha_low]))
+        # nx.set_edge_attributes(graph, name='alpha', values=ub.dzip(dummy_edges, [alpha_low]))
         selected_edges = kwargs.pop('selected_edges', None)
 
         # SHADOW: based on most recent
         # Increase visibility of nodes with the most recently changed timestamp
         if show_recent_review and edge_to_reviewid and selected_edges is None:
             review_ids = list(edge_to_reviewid.values())
-            recent_idxs = ut.argmax(review_ids, multi=True)
-            recent_edges = ut.take(list(edge_to_reviewid.keys()), recent_idxs)
+            recent_idxs = ub.argmax(review_ids, multi=True)
+            recent_edges = list(ub.take(list(edge_to_reviewid.keys()), recent_idxs))
             selected_edges = recent_edges
 
         if selected_edges is not None:
             # TODO: add photoshop-like parameters like
             # spread and size. offset is the same as angle and distance.
-            nx.set_edge_attributes(graph, name='shadow', values=ut.dzip(selected_edges, [{
+            nx.set_edge_attributes(graph, name='shadow', values=ub.dzip(selected_edges, [{
                 'rho': .3,
                 'alpha': .6,
                 'shadow_color': 'w' if dark_background else 'k',
@@ -463,31 +455,31 @@ class GraphVisualization(object):
 
         # Z_ORDER: make sure nodes are on top
         nodes = list(graph.nodes())
-        nx.set_node_attributes(graph, name='zorder', values=ut.dzip(nodes, [10]))
-        nx.set_edge_attributes(graph, name='zorder', values=ut.dzip(edges, [0]))
-        nx.set_edge_attributes(graph, name='picker', values=ut.dzip(edges, [10]))
+        nx.set_node_attributes(graph, name='zorder', values=ub.dzip(nodes, [10]))
+        nx.set_edge_attributes(graph, name='zorder', values=ub.dzip(edges, [0]))
+        nx.set_edge_attributes(graph, name='picker', values=ub.dzip(edges, [10]))
 
         # VISIBILITY: Set visibility of edges based on arguments
         if not show_reviewed_edges:
             infr.print('Making reviewed edges invisible', 10)
-            nx.set_edge_attributes(graph, name='style', values=ut.dzip(reviewed_edges, ['invis']))
+            nx.set_edge_attributes(graph, name='style', values=ub.dzip(reviewed_edges, ['invis']))
 
         if not show_unreviewed_edges:
             infr.print('Making un-reviewed edges invisible', 10)
-            nx.set_edge_attributes(graph, name='style', values=ut.dzip(unreviewed_edges, ['invis']))
+            nx.set_edge_attributes(graph, name='style', values=ub.dzip(unreviewed_edges, ['invis']))
 
         if not show_inferred_same:
             infr.print('Making nontrivial_same edges invisible', 10)
-            nx.set_edge_attributes(graph, name='style', values=ut.dzip(nontrivial_inferred_same, ['invis']))
+            nx.set_edge_attributes(graph, name='style', values=ub.dzip(nontrivial_inferred_same, ['invis']))
 
         if not show_inferred_diff:
             infr.print('Making nontrivial_diff edges invisible', 10)
-            nx.set_edge_attributes(graph, name='style', values=ut.dzip(nontrivial_inferred_diff, ['invis']))
+            nx.set_edge_attributes(graph, name='style', values=ub.dzip(nontrivial_inferred_diff, ['invis']))
 
         if selected_edges is not None:
             # Always show the most recent review (remove setting of invis)
             # infr.print('recent_edges = %r' % (recent_edges,))
-            nx.set_edge_attributes(graph, name='style', values=ut.dzip(selected_edges, ['']))
+            nx.set_edge_attributes(graph, name='style', values=ub.dzip(selected_edges, ['']))
 
         if reposition:
             # LAYOUT: update the positioning layout
@@ -504,7 +496,7 @@ class GraphVisualization(object):
                 nodesep=.1
             )
             layoutkw.update(kwargs)
-            # print(ut.repr3(graph.edges))
+            # print(ub.repr2(graph.edges))
             pt.nx_agraph_layout(graph, inplace=True, **layoutkw)
 
         if edge_overrides:
@@ -532,15 +524,11 @@ class GraphVisualization(object):
                       hacknoedge, hacknode, node_labels, arrow_width, fontsize,
                       fontweight, fontname, fontfamilty, fontproperties
 
-        CommandLine:
-            python -m ibeis.algo.graph.mixin_viz GraphVisualization.show_graph --show
-
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_viz import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> import plottool as pt
-            >>> infr = demo.demodata_infr(ccs=ut.estarmap(
+            >>> infr = demo.demodata_infr(ccs=util.estarmap(
             >>>    range, [(1, 6), (6, 10), (10, 13), (13, 15), (15, 16),
             >>>            (17, 20)]))
             >>> pnum_ = pt.make_pnum_nextgen(nRows=1, nCols=3)
@@ -552,7 +540,7 @@ class GraphVisualization(object):
             >>> infr.add_feedback((17, 18), NEGTV)  # add inconsistency
             >>> infr.apply_nondynamic_update()
             >>> infr.show_graph(show_cand=True, simple_labels=True, pickable=True, fnum=1, pnum=pnum_())
-            >>> ut.show_if_requested()
+            >>> util.show_if_requested()
         """
         import plottool as pt
         if graph is None:
@@ -560,9 +548,6 @@ class GraphVisualization(object):
         # kwargs['fontsize'] = kwargs.get('fontsize', 8)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            # default_update_kw = ut.get_func_kwargs(infr.update_visual_attrs)
-            # update_kw = ut.update_existing(default_update_kw, kwargs)
-            # infr.update_visual_attrs(**update_kw)
             if update_attrs:
                 infr.update_visual_attrs(graph=graph, **kwargs)
             verbose = kwargs.pop('verbose', infr.verbose)
@@ -597,7 +582,7 @@ class GraphVisualization(object):
 
         if pickable:
             fig = pt.gcf()
-            fig.canvas.mpl_connect('pick_event', ut.partial(on_pick, infr=infr))
+            fig.canvas.mpl_connect('pick_event', partial(on_pick, infr=infr))
 
     def show_edge(infr, edge, fnum=None, pnum=None, **kwargs):
         import plottool as pt
@@ -644,7 +629,7 @@ class GraphVisualization(object):
     def repr_edge_data(infr, all_edge_data, visual=True):
         visual_edge_data = {k: v for k, v in all_edge_data.items()
                             if k in infr.visual_edge_attrs}
-        edge_data = ut.delete_dict_keys(all_edge_data.copy(), infr.visual_edge_attrs)
+        edge_data = util.delete_dict_keys(all_edge_data.copy(), infr.visual_edge_attrs)
         lines = []
         if visual:
             lines += [('visual_edge_data: ' + ub.repr2(visual_edge_data, nl=1))]
@@ -723,25 +708,102 @@ def on_pick(event, infr=None):
     plotdat = pt.get_plotdat_dict(artist)
     if plotdat:
         if 'node' in plotdat:
-            all_node_data = ut.sort_dict(plotdat['node_data'].copy())
-            visual_node_data = ut.dict_subset(all_node_data, infr.visual_node_attrs, None)
-            node_data = ut.delete_dict_keys(all_node_data, infr.visual_node_attrs)
+            all_node_data = util.sort_dict(plotdat['node_data'].copy())
+            visual_node_data = ub.dict_subset(all_node_data, infr.visual_node_attrs, None)
+            node_data = util.delete_dict_keys(all_node_data, infr.visual_node_attrs)
             node = plotdat['node']
             node_data['degree'] = infr.graph.degree(node)
             node_label = infr.pos_graph.node_label(node)
             print('visual_node_data: ' + ub.repr2(visual_node_data, nl=1))
             print('node_data: ' + ub.repr2(node_data, nl=1))
-            ut.cprint('node: ' + ub.repr2(plotdat['node']), 'blue')
+            util.cprint('node: ' + ub.repr2(plotdat['node']), 'blue')
             print('(pcc) node_label = %r' % (node_label,))
             print('artist = %r' % (artist,))
         elif 'edge' in plotdat:
-            all_edge_data = ut.sort_dict(plotdat['edge_data'].copy())
+            all_edge_data = util.sort_dict(plotdat['edge_data'].copy())
             print(infr.repr_edge_data(all_edge_data))
-            ut.cprint('edge: ' + ub.repr2(plotdat['edge']), 'blue')
+            util.cprint('edge: ' + ub.repr2(plotdat['edge']), 'blue')
             print('artist = %r' % (artist,))
         else:
             print('???: ' + ub.repr2(plotdat))
-    print(ut.get_timestamp())
+    print(ub.timestamp())
+
+
+def color_nodes(graph, labelattr='label', brightness=.878,
+                outof=None, sat_adjust=None):
+    """ Colors edges and nodes by nid """
+    import plottool as pt
+    node_to_lbl = nx.get_node_attributes(graph, labelattr)
+    unique_lbls = sorted(set(node_to_lbl.values()))
+    ncolors = len(unique_lbls)
+    if outof is None:
+        if (ncolors) == 1:
+            unique_colors = [pt.LIGHT_BLUE]
+        elif (ncolors) == 2:
+            # https://matplotlib.org/examples/color/named_colors.html
+            unique_colors = ['royalblue', 'orange']
+            unique_colors = list(map(pt.color_funcs.ensure_base01, unique_colors))
+        else:
+            unique_colors = pt.distinct_colors(ncolors, brightness=brightness)
+    else:
+        unique_colors = pt.distinct_colors(outof, brightness=brightness)
+
+    if sat_adjust:
+        unique_colors = [
+            pt.color_funcs.adjust_hsv_of_rgb(c, sat_adjust=sat_adjust)
+            for c in unique_colors
+        ]
+    # Find edges and aids strictly between two nids
+    if outof is None:
+        lbl_to_color = ub.dzip(unique_lbls, unique_colors)
+    else:
+        gray = pt.color_funcs.ensure_base01('lightgray')
+        unique_colors = [gray] + unique_colors
+        offset = max(1, min(unique_lbls)) - 1
+        node_to_lbl = ub.map_vals(lambda nid: max(0, nid - offset), node_to_lbl)
+        lbl_to_color = ub.dzip(range(outof + 1), unique_colors)
+    node_to_color = ub.map_vals(lbl_to_color, node_to_lbl)
+    util.set_node_attributes(graph, name='color', values=node_to_color)
+    nx_ensure_agraph_color(graph)
+
+
+def nx_ensure_agraph_color(graph):
+    """ changes colors to hex strings on graph attrs """
+    from plottool import color_funcs
+    import plottool as pt
+    #import six
+    def _fix_agraph_color(data):
+        try:
+            orig_color = data.get('color', None)
+            alpha = data.get('alpha', None)
+            color = orig_color
+            if color is None and alpha is not None:
+                color = [0, 0, 0]
+            if color is not None:
+                color = pt.ensure_nonhex_color(color)
+                #if isinstance(color, np.ndarray):
+                #    color = color.tolist()
+                color = list(color_funcs.ensure_base255(color))
+                if alpha is not None:
+                    if len(color) == 3:
+                        color += [int(alpha * 255)]
+                    else:
+                        color[3] = int(alpha * 255)
+                color = tuple(color)
+                if len(color) == 3:
+                    data['color'] = '#%02x%02x%02x' % color
+                else:
+                    data['color'] = '#%02x%02x%02x%02x' % color
+        except Exception as ex:
+            raise
+
+    for node, node_data in graph.nodes(data=True):
+        data = node_data
+        _fix_agraph_color(data)
+
+    for u, v, edge_data in graph.edges(data=True):
+        data = edge_data
+        _fix_agraph_color(data)
 
 
 if __name__ == '__main__':

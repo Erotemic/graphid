@@ -5,15 +5,12 @@ import networkx as nx
 import operator
 import numpy as np
 import ubelt as ub
+from graphid import util
 from graphid.internal import state as const
 from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
 from graphid.internal.state import SAME, DIFF, NULL  # NOQA
 from graphid.util import nx_utils as nxu
 from graphid.util.nx_utils import e_
-import six
-
-import utool as ut
-import vtool as vt
 
 
 DEBUG_INCON = True
@@ -22,49 +19,49 @@ DEBUG_INCON = True
 class AttrAccess(object):
     """ Contains non-core helper functions """
 
-    def gen_node_attrs(infr, key, nodes=None, default=ut.NoParam):
-        return ut.util_graph.nx_gen_node_attrs(
+    def gen_node_attrs(infr, key, nodes=None, default=ub.NoParam):
+        return util.nx_gen_node_attrs(
                 infr.graph, key, nodes=nodes, default=default)
 
-    def gen_edge_attrs(infr, key, edges=None, default=ut.NoParam,
+    def gen_edge_attrs(infr, key, edges=None, default=ub.NoParam,
                        on_missing=None):
         """ maybe change to gen edge items """
-        return ut.util_graph.nx_gen_edge_attrs(
+        return util.nx_gen_edge_attrs(
                 infr.graph, key, edges=edges, default=default,
                 on_missing=on_missing)
 
-    def gen_node_values(infr, key, nodes, default=ut.NoParam):
-        return ut.util_graph.nx_gen_node_values(
+    def gen_node_values(infr, key, nodes, default=ub.NoParam):
+        return util.nx_gen_node_values(
             infr.graph, key, nodes, default=default)
 
-    def gen_edge_values(infr, key, edges=None, default=ut.NoParam,
+    def gen_edge_values(infr, key, edges=None, default=ub.NoParam,
                         on_missing='error', on_keyerr='default'):
-        return ut.util_graph.nx_gen_edge_values(
+        return util.nx_gen_edge_values(
             infr.graph, key, edges, default=default, on_missing=on_missing,
             on_keyerr=on_keyerr)
 
-    def get_node_attrs(infr, key, nodes=None, default=ut.NoParam):
+    def get_node_attrs(infr, key, nodes=None, default=ub.NoParam):
         """ Networkx node getter helper """
         return dict(infr.gen_node_attrs(key, nodes=nodes, default=default))
 
-    def get_edge_attrs(infr, key, edges=None, default=ut.NoParam,
+    def get_edge_attrs(infr, key, edges=None, default=ub.NoParam,
                        on_missing=None):
         """ Networkx edge getter helper """
         return dict(infr.gen_edge_attrs(key, edges=edges, default=default,
                                         on_missing=on_missing))
 
-    def _get_edges_where(infr, key, op, val, edges=None, default=ut.NoParam,
+    def _get_edges_where(infr, key, op, val, edges=None, default=ub.NoParam,
                          on_missing=None):
         edge_to_attr = infr.gen_edge_attrs(key, edges=edges, default=default,
                                            on_missing=on_missing)
         return (e for e, v in edge_to_attr if op(v, val))
 
-    def get_edges_where_eq(infr, key, val, edges=None, default=ut.NoParam,
+    def get_edges_where_eq(infr, key, val, edges=None, default=ub.NoParam,
                            on_missing=None):
         return infr._get_edges_where(key, operator.eq, val, edges=edges,
                                      default=default, on_missing=on_missing)
 
-    def get_edges_where_ne(infr, key, val, edges=None, default=ut.NoParam,
+    def get_edges_where_ne(infr, key, val, edges=None, default=ub.NoParam,
                            on_missing=None):
         return infr._get_edges_where(key, operator.ne, val, edges=edges,
                                      default=default, on_missing=on_missing)
@@ -77,7 +74,7 @@ class AttrAccess(object):
         """ Networkx edge setter helper """
         return nx.set_edge_attributes(infr.graph, name=key, values=edge_to_prop)
 
-    def get_edge_attr(infr, edge, key, default=ut.NoParam, on_missing='error'):
+    def get_edge_attr(infr, edge, key, default=ub.NoParam, on_missing='error'):
         """ single edge getter helper """
         return infr.get_edge_attrs(key, [edge], default=default,
                                    on_missing=on_missing)[edge]
@@ -110,7 +107,7 @@ class AttrAccess(object):
     def get_nonvisual_edge_data(infr, edge, on_missing='filter'):
         data = infr.get_edge_data(edge)
         if data is not None:
-            data = ut.delete_dict_keys(data.copy(), infr.visual_edge_attrs)
+            data = util.delete_dict_keys(data.copy(), infr.visual_edge_attrs)
         else:
             if on_missing == 'filter':
                 data = None
@@ -130,7 +127,7 @@ class AttrAccess(object):
         edge_df = pd.DataFrame.from_dict(edge_datas, orient='index')
 
         part = ['evidence_decision', 'meta_decision', 'tags', 'user_id']
-        neworder = ut.partial_order(edge_df.columns, part)
+        neworder = util.partial_order(edge_df.columns, part)
         edge_df = edge_df.reindex_axis(neworder, axis=1)
         if not all:
             edge_df = edge_df.drop(['review_id', 'timestamp', 'timestamp_s1',
@@ -142,11 +139,11 @@ class AttrAccess(object):
         df = infr.get_edge_dataframe(edges)
         df_str = df.to_string()
         if highlight:
-            df_str = ut.highlight_regex(df_str, ut.regex_word(SAME), color='blue')
-            df_str = ut.highlight_regex(df_str, ut.regex_word(POSTV), color='blue')
-            df_str = ut.highlight_regex(df_str, ut.regex_word(DIFF), color='red')
-            df_str = ut.highlight_regex(df_str, ut.regex_word(NEGTV), color='red')
-            df_str = ut.highlight_regex(df_str, ut.regex_word(INCMP), color='yellow')
+            df_str = util.highlight_regex(df_str, util.regex_word(SAME), color='blue')
+            df_str = util.highlight_regex(df_str, util.regex_word(POSTV), color='blue')
+            df_str = util.highlight_regex(df_str, util.regex_word(DIFF), color='red')
+            df_str = util.highlight_regex(df_str, util.regex_word(NEGTV), color='red')
+            df_str = util.highlight_regex(df_str, util.regex_word(INCMP), color='yellow')
         return df_str
 
 
@@ -176,7 +173,7 @@ class Convenience(object):
         return infr.review_graphs[UNKWN]
 
     def print_graph_info(infr):
-        print(ub.repr2(ut.graph_info(infr.simplify_graph())))
+        print(ub.repr2(util.graph_info(infr.simplify_graph())))
 
     def print_graph_connections(infr, label='orig_name_label'):
         """
@@ -250,19 +247,19 @@ class Convenience(object):
                     for u, v in list(df.index)])
                 df = df.assign(nid1=nids.T[0], nid2=nids.T[1])
                 part = ['nid1', 'nid2', 'evidence_decision', 'tags', 'user_id']
-                neworder = ut.partial_order(df.columns, part)
+                neworder = util.partial_order(df.columns, part)
                 df = df.reindex_axis(neworder, axis=1)
                 df = df.drop(['review_id', 'timestamp'], axis=1)
             return df
 
         def print_df(df, lbl):
             df_str = df.to_string()
-            df_str = ut.highlight_regex(df_str, ut.regex_word(str(aid1)), color='blue')
-            df_str = ut.highlight_regex(df_str, ut.regex_word(str(aid2)), color='red')
+            df_str = util.highlight_regex(df_str, util.regex_word(str(aid1)), color='blue')
+            df_str = util.highlight_regex(df_str, util.regex_word(str(aid2)), color='red')
             if nid1 not in {aid1, aid2}:
-                df_str = ut.highlight_regex(df_str, ut.regex_word(str(nid1)), color='darkblue')
+                df_str = util.highlight_regex(df_str, util.regex_word(str(nid1)), color='darkblue')
             if nid2 not in {aid1, aid2}:
-                df_str = ut.highlight_regex(df_str, ut.regex_word(str(nid2)), color='darkred')
+                df_str = util.highlight_regex(df_str, util.regex_word(str(nid2)), color='darkred')
             print('\n\n=====')
             print(lbl)
             print('=====')
@@ -282,9 +279,9 @@ class Convenience(object):
             print('INFR cc2 = %r' % (sorted(cc2),))
 
         if (nid1 == nid2) != (nid1_ == nid2_):
-            ut.cprint('DISAGREEMENT IN GRAPH AND DB', 'red')
+            util.cprint('DISAGREEMENT IN GRAPH AND DB', 'red')
         else:
-            ut.cprint('GRAPH AND DB AGREE', 'green')
+            util.cprint('GRAPH AND DB AGREE', 'green')
 
         print('IBS  NAMES: nid1, nid2 = %r, %r' % (nid1_, nid2_))
         if nid1_ == nid2_:
@@ -334,17 +331,15 @@ class Convenience(object):
 
     def node_tag_hist(infr):
         tags_list = infr.ibs.get_annot_case_tags(infr.aids)
-        tag_hist = ut.util_tags.tag_hist(tags_list)
+        tag_hist = util.tag_hist(tags_list)
         return tag_hist
 
     def edge_tag_hist(infr):
         tags_list = list(infr.gen_edge_values('tags', None))
-        tag_hist = ut.util_tags.tag_hist(tags_list)
-        # ut.util_tags.tag_coocurrence(tags_list)
+        tag_hist = util.tag_hist(tags_list)
         return tag_hist
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class DummyEdges(object):
 
     def ensure_mst(infr, label='name_label', meta_decision=SAME):
@@ -357,25 +352,6 @@ class DummyEdges(object):
                 items with this decision. Otherwise the edges are only
                 explicitly added to the graph.  This makes feedback items with
                 user_id=algo:mst and with a confidence of guessing.
-
-        Ignore:
-            annots = ibs.annots(infr.aids)
-            def fix_name(n):
-                import re
-                n = re.sub('  *', ' ', n)
-                return re.sub(' *-? *BBQ[0-9]*', '', n)
-
-            ut.fix_embed_globals()
-            new_names = [fix_name(n) for n in annots.names]
-            set(new_names)
-
-            annots.names = new_names
-
-            infr.set_node_attrs('name_fix', ut.dzip(infr.aids, new_names))
-            label = 'name_fix'
-            infr.ensure_mst(label)
-
-            infr.set_node_attrs('name_label', ut.dzip(infr.aids, annots.nids))
 
         Ignore:
             label = 'name_label'
@@ -478,7 +454,7 @@ class DummyEdges(object):
                 cliques.
         """
         node_to_label = infr.get_node_attrs(label)
-        label_to_nodes = ut.group_items(node_to_label.keys(),
+        label_to_nodes = ub.group_items(node_to_label.keys(),
                                         node_to_label.values())
         new_edges = []
         for label, nodes in label_to_nodes.items():
@@ -553,8 +529,8 @@ class DummyEdges(object):
             if 'time_weight' in enabled_heuristics:
                 # Prefer linking annotations closer in time
                 times = list(ub.take(node_to_time, nodes))
-                maxtime = vt.safe_max(times, fill=1, nans=False)
-                mintime = vt.safe_min(times, fill=0, nans=False)
+                maxtime = util.safe_max(times, fill=1, nans=False)
+                mintime = util.safe_min(times, fill=0, nans=False)
                 time_denom = maxtime - mintime
                 # Try linking by time for lynx data
                 time_delta = np.array([
@@ -718,15 +694,6 @@ class AssertInvariants(object):
         # infr.print('assert_recovery_invariant', 200)
         inconsistent_ccs = list(infr.inconsistent_components())
         incon_cc = set(ub.flatten(inconsistent_ccs))  # NOQA
-        # import utool
-        # with utool.embed_on_exception_context:
-        #     assert infr.recovery_cc.issuperset(incon_cc), 'diff incon'
-        #     if False:
-        #         # nid_to_cc2 = ub.group_items(
-        #         #     incon_cc,
-        #         #     map(pos_graph.node_label, incon_cc))
-        #         infr.print('infr.recovery_cc = %r' % (infr.recovery_cc,))
-        #         infr.print('incon_cc = %r' % (incon_cc,))
 
 if __name__ == '__main__':
     """

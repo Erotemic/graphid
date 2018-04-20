@@ -22,7 +22,7 @@ import networkx as nx
 import itertools as it
 from functools import partial
 from graphid.internal import state as const
-from graphid.internal import nx_utils as nxu
+from graphid.util import nx_utils as nxu
 from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN,
                                     UNINFERABLE)
 from graphid.internal.state import (SAME, DIFF, NULL)  # NOQA

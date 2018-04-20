@@ -5,9 +5,9 @@ TODO: separate out the tests and make this file just generate the demo data
 from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
 import numpy as np
+from graphid import util
 from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV
 from graphid.internal.state import SAME, DIFF, NULL  # NOQA
-import utool as ut
 import ubelt as ub
 
 
@@ -26,7 +26,7 @@ def demodata_mtest_infr(state='empty'):
     ibs = ibeis.opendb(db='PZ_MTEST')
     annots = ibs.annots()
     names = list(annots.group_items(annots.nids).values())
-    ut.shuffle(names, rng=321)
+    util.shuffle(names, rng=321)
     test_aids = list(ub.flatten(names[1::2]))
     infr = ibeis.AnnotInference(ibs, test_aids, autoinit=True)
     infr.reset(state=state)
@@ -99,9 +99,11 @@ def demo2():
     VISUALIZE = ub.argflag('--viz')
     # QUIT_OR_EMEBED = 'embed'
     QUIT_OR_EMEBED = 'quit'
-    TARGET_REVIEW = ut.get_argval('--target', type_=int, default=None)
-    START = ut.get_argval('--start', type_=int, default=None)
-    END = ut.get_argval('--end', type_=int, default=None)
+    def asint(p):
+        return p if p is None else int(p)
+    TARGET_REVIEW = asint(ub.argval('--target', default=None))
+    START = asint(ub.argval('--start', default=None))
+    END = asint(ub.argval('--end', default=None))
 
     # ------------------
 
@@ -124,7 +126,7 @@ def demo2():
     # infr_gt = infr.copy()
 
     dpath = ub.ensuredir(ub.truepath('~/Desktop/demo'))
-    ut.remove_files_in_dir(dpath)
+    ub.delete(dpath)
 
     fig_counter = it.count(0)
 
@@ -213,7 +215,7 @@ def demo2():
     if VISUALIZE:
         infr.update_visual_attrs(groupby='name_label')
         infr.set_node_attrs('pin', 'true')
-        node_dict = ut.nx_node_dict(infr.graph)
+        node_dict = infr.graph.nodes
         print(ub.repr2(node_dict[1]))
 
     if VISUALIZE:
@@ -283,8 +285,6 @@ def demo2():
 
         SHOW_CANDIATE_POP = True
         if SHOW_CANDIATE_POP and (VIZ_ALL or AT_TARGET):
-            # import utool
-            # utool.embed()
             infr.print(ub.repr2(infr.task_probs['match_state'][edge], precision=4, si=True))
             infr.print('len(queue) = %r' % (len(infr.queue)))
             # Show edge selection
@@ -335,11 +335,8 @@ def demo2():
     #     show_graph(infr, 'post-re-review', final=True)
 
     if not getattr(infr, 'EMBEDME', False):
-        if ut.get_computer_name().lower() in ['hyrule', 'ooo']:
-            pt.all_figures_tile(monitor_num=0, percent_w=.5)
-        else:
-            pt.all_figures_tile()
-        ut.show_if_requested()
+        pt.all_figures_tile()
+        util.show_if_requested()
 
 
 valid_views = ['L', 'F', 'R', 'B']
@@ -350,7 +347,7 @@ adjacent_views = {
 
 
 def get_edge_truth(infr, n1, n2):
-    node_dict = ut.nx_node_dict(infr.graph)
+    node_dict = infr.graph.nodes
     nid1 = node_dict[n1]['orig_name_label']
     nid2 = node_dict[n2]['orig_name_label']
     try:
@@ -390,7 +387,7 @@ def apply_dummy_viewpoints(infr):
                 self.state += self.dir_
             return valid_views[self.state]
     mkv = MarkovView()
-    nid_to_aids = ut.group_pairs([
+    nid_to_aids = util.group_pairs([
         (n, d['name_label']) for n, d in infr.graph.nodes(data=True)])
     grouped_nodes = list(nid_to_aids.values())
     node_to_view = {node: mkv() for nodes in grouped_nodes for node in nodes}
@@ -458,17 +455,16 @@ def demodata_infr(**kwargs):
         >>> # TODO can test that we our sample num incon agrees with pop mean
         >>> #sample_mean = n_incon / len(nonfull_pccs)
         >>> #pop_mean = kwargs['p_incon']
-        >>> print('status = ' + ut.repr4(infr.status(extended=True)))
-        >>> ut.quit_if_noshow()
+        >>> print('status = ' + ub.repr2(infr.status(extended=True)))
+        >>> # xdoctest: +REQUIRES(--show)
         >>> infr.show(pickable=True, groupby='name_label')
-        >>> ut.show_if_requested()
+        >>> util.show_if_requested()
 
     Ignore:
         kwargs = {
             'ccs': [[1, 2, 3], [4, 5]]
         }
     """
-    import vtool as vt
     import networkx as nx
     from graphid.internal import nx_utils
 
@@ -489,7 +485,7 @@ def demodata_infr(**kwargs):
     pcc_sizes = kwalias('pcc_sizes', None)
 
     pos_redun = kwalias('pos_redun', [1, 2, 3])
-    pos_redun = ut.ensure_iterable(pos_redun)
+    pos_redun = util.ensure_iterable(pos_redun)
 
     # number of maximum inconsistent edges per pcc
     max_n_incon = kwargs.get('n_incon', 3)
@@ -539,7 +535,7 @@ def demodata_infr(**kwargs):
         # The probability any edge is inconsistent is `p_incon`
         # This is 1 - P(all edges consistent)
         # which means p(edge is consistent) = (1 - p_incon) / N
-        complement_edges = ut.estarmap(nx_utils.e_,
+        complement_edges = util.estarmap(nx_utils.e_,
                                        nx_utils.complement_edges(g))
         if len(complement_edges) > 0:
             # compute probability that any particular edge is inconsistent
@@ -617,7 +613,7 @@ def demodata_infr(**kwargs):
             for cc1, cc2 in cc_combos if len(cc1) and len(cc2)
         ]
         for cc1, cc2 in ub.ProgIter(valid_cc_combos, desc='make neg-demo'):
-            possible_edges = ut.estarmap(nx_utils.e_, it.product(cc1, cc2))
+            possible_edges = util.estarmap(nx_utils.e_, it.product(cc1, cc2))
             # probability that any edge between these PCCs is negative
             n_edges = len(possible_edges)
             p_edge_neg   = 1 - (1 - p_pair_neg)   ** (1 / n_edges)
@@ -634,7 +630,7 @@ def demodata_infr(**kwargs):
             stateful_states = states.compress(flags)
             stateful_edges = list(ub.compress(possible_edges, flags))
 
-            unique_states, groupxs_list = vt.group_indices(stateful_states)
+            unique_states, groupxs_list = util.group_indices(stateful_states)
             for state, groupxs in zip(unique_states, groupxs_list):
                 # print('state = %r' % (state,))
                 # Add in candidate edges
@@ -737,7 +733,7 @@ class DummyVerif(object):
             >>> infr = ibeis.AnnotInference(None)
             >>> verif = DummyVerif(infr)
             >>> verif.show_score_probs()
-            >>> ut.show_if_requested()
+            >>> util.show_if_requested()
         """
         import plottool as pt
         dist = verif.score_dist
@@ -812,7 +808,7 @@ class DummyVerif(object):
         infr = verif.infr
         if edge in infr.edge_truth:
             return infr.edge_truth[edge]
-        node_dict = ut.nx_node_dict(infr.graph)
+        node_dict = infr.graph.nodes
         nid1 = node_dict[edge[0]]['orig_name_label']
         nid2 = node_dict[edge[1]]['orig_name_label']
         return POSTV if nid1 == nid2 else NEGTV

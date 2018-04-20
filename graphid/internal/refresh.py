@@ -4,6 +4,7 @@ import numpy as np
 import utool as ut
 import ubelt as ub
 import scipy as sp
+from graphid import util  # NOQA
 from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, NULL)  # NOQA
 
 
@@ -94,10 +95,10 @@ class RefreshCriteria(object):
             >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=50, size=4, size_std=2)
             >>> edges = list(infr.dummy_verif.find_candidate_edges(K=100))
-            >>> #edges = ut.shuffle(sorted(edges), rng=321)
+            >>> #edges = util.shuffle(sorted(edges), rng=321)
             >>> scores = np.array(infr.dummy_verif.predict_edges(edges))
             >>> sortx = scores.argsort()[::-1]
-            >>> edges = ut.take(edges, sortx)
+            >>> edges = list(ub.take(edges, sortx))
             >>> scores = scores[sortx]
             >>> ys = infr.match_state_df(edges)[POSTV].values
             >>> y_remainsum = ys[::-1].cumsum()[::-1]
@@ -115,7 +116,7 @@ class RefreshCriteria(object):
             >>>     n_real_list.append(n_real)
             >>>     n_pred_list.append(n_pred)
             >>>     xdata.append(count + 1)
-            >>> ut.quit_if_noshow()
+            >>> # xdoctest: +REQUIRES(--show)
             >>> import plottool as pt
             >>> pt.qtensure()
             >>> n_pred_list = n_pred_list[10:]
@@ -155,15 +156,13 @@ class RefreshCriteria(object):
 
     def ave(refresh, method='exp'):
         """
-            >>> # ENABLE_DOCTEST
-            >>> from graphid.internal.refresh import *  # NOQA
             >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=40, size=4, size_std=2, ignore_pair=True)
             >>> edges = list(infr.dummy_verif.find_candidate_edges(K=100))
             >>> scores = np.array(infr.dummy_verif.predict_edges(edges))
-            >>> #sortx = ut.shuffle(np.arange(len(edges)), rng=321)
+            >>> #sortx = util.shuffle(np.arange(len(edges)), rng=321)
             >>> sortx = scores.argsort()[::-1]
-            >>> edges = ut.take(edges, sortx)
+            >>> edges = list(ub.take(edges, sortx))
             >>> scores = scores[sortx]
             >>> ys = infr.match_state_df(edges)[POSTV].values
             >>> y_remainsum = ys[::-1].cumsum()[::-1]
@@ -179,7 +178,7 @@ class RefreshCriteria(object):
             >>>     n_real = y_remainsum[count] / (len(edges) - count)
             >>>     reals.append(n_real)
             >>>     xdata.append(count + 1)
-            >>> ut.quit_if_noshow()
+            >>> # xdoctest: +REQUIRES(--show)
             >>> import plottool as pt
             >>> pt.qtensure()
             >>> pt.multi_plot(xdata, [ma1, ma2, reals], marker='',
@@ -214,7 +213,7 @@ def demo_refresh():
         >>> # ENABLE_DOCTEST
         >>> from graphid.internal.refresh import *  # NOQA
         >>> demo_refresh()
-        >>> ut.show_if_requested()
+        >>> util.show_if_requested()
     """
     from graphid.internal import demo
     demokw = ut.argparse_dict({'num_pccs': 50, 'size': 4})
@@ -246,7 +245,7 @@ def demo_refresh():
         ('Fraction remaining', rfrac_any),
     ])
 
-    ut.quit_if_noshow()
+    # xdoctest: +REQUIRES(--show)
     import plottool as pt
     pt.qtensure()
     from ibeis.scripts.thesis import TMP_RC
@@ -256,7 +255,7 @@ def demo_refresh():
         xdata, ydatas, xlabel='# manual reviews', rcParams=TMP_RC, marker='',
         ylim=(0, 1), use_legend=False,
     )
-    demokw = ut.map_keys({'num_pccs': '#PCC', 'size': 'PCC size'},
+    demokw = ub.map_keys({'num_pccs': '#PCC', 'size': 'PCC size'},
                          demokw)
     thresh = refreshkw.pop('thresh')
     refreshkw['span'] = refreshkw.pop('window')
@@ -329,7 +328,7 @@ def _dev_iters_until_threshold():
     binom_i = 1 - (1 - mu_i) ** a
 
     # Expand probabilities to be a function of i, s, and a
-    part = ut.delete_dict_keys(available_subs.copy(), [a, s])
+    part = util.delete_dict_keys(available_subs.copy(), [a, s])
     mu_i = subs(mu_i, d=part)
     poisson_i = subs(poisson_i, d=part)
     binom_i = subs(binom_i, d=part)

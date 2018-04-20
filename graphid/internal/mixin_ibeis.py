@@ -4,10 +4,11 @@ import networkx as nx
 import pandas as pd
 import ubelt as ub
 import numpy as np
-from ibeis.algo.graph import nx_utils as nxu
-from ibeis.algo.graph.state import POSTV, NEGTV, INCMP, UNREV, UNKWN  # NOQA
-
-import utool as ut
+from functools import partial
+import itertools as it
+from graphid.util import nx_utils as nxu
+from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV, UNKWN  # NOQA
+from graphid import util
 
 
 class IBEISIO(object):
@@ -46,7 +47,7 @@ class IBEISIO(object):
         state_flags = edge_delta_df['old_evidence_decision'] != edge_delta_df['new_evidence_decision']
         is_added_to_am = edge_delta_df['am_rowid'].isnull()
         is_new = edge_delta_df['is_new']
-        info = ut.odict([
+        info = ub.odict([
             # Technically num_edges_added only cares if the edge exists in the
             # annotmatch table.
             ('num_edges_added_to_am' , is_added_to_am.sum()),
@@ -70,7 +71,7 @@ class IBEISIO(object):
         """
         aids = infr.aids
         name_labels = list(infr.gen_node_values('name_label', aids))
-        old_ccs = list(ut.group_items(aids, name_labels).values())
+        old_ccs = list(ub.group_items(aids, name_labels).values())
         new_ccs = list(infr.positive_components())
         df =  infr.name_group_delta_stats(old_ccs, new_ccs)
         return df
@@ -81,18 +82,18 @@ class IBEISIO(object):
         """
         aids = infr.aids
         new_names = list(infr.gen_node_values('name_label', aids))
-        new_ccs = list(ut.group_items(aids, new_names).values())
+        new_ccs = list(ub.group_items(aids, new_names).values())
 
         old_names = infr.ibs.get_annot_name_texts(
             aids, distinguish_unknowns=True)
-        old_ccs = list(ut.group_items(aids, old_names).values())
+        old_ccs = list(ub.group_items(aids, old_names).values())
 
         df = infr.name_group_delta_stats(old_ccs, new_ccs, verbose)
         return df
 
     def name_group_stats(infr, verbose=None):
-        stats = ut.odict()
-        statsmap = ut.partial(lambda x: ut.stats_dict(map(len, x), size=True))
+        stats = ub.odict()
+        statsmap = partial(lambda x: ub.stats_dict(map(len, x), size=True))
         stats['pos_redun'] = statsmap(infr.find_pos_redundant_pccs())
         stats['non_pos_redun'] = statsmap(infr.find_non_pos_redundant_pccs())
         stats['inconsistent'] = statsmap(infr.inconsistent_components())
@@ -105,18 +106,18 @@ class IBEISIO(object):
         return df
 
     def name_group_delta_stats(infr, old_ccs, new_ccs, verbose=False):
-        group_delta = ut.grouping_delta(old_ccs, new_ccs)
+        group_delta = util.grouping_delta(old_ccs, new_ccs)
 
-        stats = ut.odict()
+        stats = ub.odict()
         unchanged = group_delta['unchanged']
         splits = group_delta['splits']
         merges = group_delta['merges']
         hybrid = group_delta['hybrid']
-        statsmap = ut.partial(lambda x: ut.stats_dict(map(len, x), size=True))
+        statsmap = partial(lambda x: ub.stats_dict(map(len, x), size=True))
         stats['unchanged'] = statsmap(unchanged)
         stats['old_split'] = statsmap(splits['old'])
-        stats['new_split'] = statsmap(ut.flatten(splits['new']))
-        stats['old_merge'] = statsmap(ut.flatten(merges['old']))
+        stats['new_split'] = statsmap(ub.flatten(splits['new']))
+        stats['old_merge'] = statsmap(ub.flatten(merges['old']))
         stats['new_merge'] = statsmap(merges['new'])
         stats['old_hybrid'] = statsmap(hybrid['old'])
         stats['new_hybrid'] = statsmap(hybrid['new'])
@@ -129,8 +130,7 @@ class IBEISIO(object):
 
     def find_unjustified_splits(infr):
         """
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_helpers import *  # NOQA
+            >>> from graphid.internal.mixin_helpers import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb(defaultdb='GZ_Master1')
             >>> ibs = ibeis.opendb(defaultdb='PZ_Master1')
@@ -154,7 +154,7 @@ class IBEISIO(object):
         annots = ibs.annots(infr.aids)
         ibs_ccs = [a.aids for a in annots.group(annots.nids)[1]]
         infr_ccs = list(infr.positive_components())
-        delta = ut.grouping_delta(ibs_ccs, infr_ccs)
+        delta = util.grouping_delta(ibs_ccs, infr_ccs)
 
         hyrbid_splits = [ccs for ccs in delta['hybrid']['splits']
                          if len(ccs) > 1]
@@ -163,7 +163,7 @@ class IBEISIO(object):
         new_splits = hyrbid_splits + pure_splits
         unjustified = []
         for ccs in new_splits:
-            for cc1, cc2 in ut.combinations(ccs, 2):
+            for cc1, cc2 in it.combinations(ccs, 2):
                 edges = list(nxu.edges_between(infr.graph, cc1, cc2))
                 df = infr.get_edge_dataframe(edges)
                 if len(df) == 0 or not (df['evidence_decision'] == NEGTV).any(axis=0):
@@ -188,7 +188,7 @@ class IBEISIO(object):
     def reset_labels_to_ibeis(infr):
         """ Sets to IBEIS de-facto labels if available """
         nids = infr.ibs.get_annot_nids(infr.aids)
-        infr.set_node_attrs('name_label', ut.dzip(infr.aids, nids))
+        infr.set_node_attrs('name_label', ub.dzip(infr.aids, nids))
 
     def _prepare_write_ibeis_staging_feedback(infr, feedback):
         r"""
@@ -196,25 +196,6 @@ class IBEISIO(object):
 
         Returns:
             tuple: (aid_1_list, aid_2_list, add_review_kw)
-
-        CommandLine:
-            python -m ibeis.algo.graph.mixin_ibeis _prepare_write_ibeis_staging_feedback
-
-        Doctest:
-            >>> from ibeis.algo.graph.mixin_ibeis import *  # NOQA
-            >>> import ibeis
-            >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
-            >>>                             autoinit='annotmatch', verbose=4)
-            >>> infr.add_feedback((6, 7), NEGTV, user_id='user:foobar')
-            >>> infr.add_feedback((5, 8), NEGTV, tags=['photobomb'])
-            >>> infr.add_feedback((4, 5), POSTV, confidence='absolutely_sure')
-            >>> feedback = infr.internal_feedback
-            >>> tup = infr._prepare_write_ibeis_staging_feedback(feedback)
-            >>> (aid_1_list, aid_2_list, add_review_kw) = tup
-            >>> expected = set(ut.get_func_argspec(infr.ibs.add_review).args)
-            >>> got = set(add_review_kw.keys())
-            >>> overlap = ut.set_overlap_items(expected, got)
-            >>> assert got.issubset(expected), ut.repr4(overlap, nl=2)
         """
         import uuid
         # Map what add_review expects to the keys used by feedback items
@@ -276,7 +257,7 @@ class IBEISIO(object):
 
         ibs = infr.ibs
         review_id_list = ibs.add_review(aid_1_list, aid_2_list, **add_review_kw)
-        duplicates = ut.find_duplicate_items(review_id_list)
+        duplicates = ub.find_duplicates(review_id_list)
         if len(duplicates) != 0:
             raise AssertionError(
                 'Staging should only be appended to but we found a duplicate'
@@ -334,15 +315,15 @@ class IBEISIO(object):
         edge_delta_df_.loc[is_add, 'am_rowid'] = add_ams
 
         # Set residual matching data
-        new_evidence_decisions = ut.take(
+        new_evidence_decisions = list(ub.take(
             ibs.const.EVIDENCE_DECISION.CODE_TO_INT,
-            edge_delta_df_['new_evidence_decision'])
-        new_meta_decisions = ut.take(
+            edge_delta_df_['new_evidence_decision']))
+        new_meta_decisions = list(ub.take(
             ibs.const.META_DECISION.CODE_TO_INT,
-            edge_delta_df_['new_meta_decision'])
+            edge_delta_df_['new_meta_decision']))
         new_tags = ['' if tags is None else ';'.join(tags)
                     for tags in edge_delta_df_['new_tags']]
-        new_conf = ut.dict_take(ibs.const.CONFIDENCE.CODE_TO_INT,
+        new_conf = ub.dict_take(ibs.const.CONFIDENCE.CODE_TO_INT,
                                 edge_delta_df_['new_confidence'], None)
         new_timestamp = edge_delta_df_['new_timestamp']
         new_reviewer = edge_delta_df_['new_user_id']
@@ -400,10 +381,10 @@ class IBEISIO(object):
             infr.write_ibeis_name_assignment
 
         CommandLine:
-            python -m ibeis.algo.graph.mixin_ibeis get_ibeis_name_delta
+            python -m graphid.internal.mixin_ibeis get_ibeis_name_delta
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_ibeis import *  # NOQA
+            >>> from graphid.internal.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
             >>>                             autoinit='annotmatch', verbose=4)
@@ -431,7 +412,7 @@ class IBEISIO(object):
             6     07_061         06_410
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_ibeis import *  # NOQA
+            >>> from graphid.internal.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
             >>>                             autoinit='annotmatch', verbose=4)
@@ -447,7 +428,7 @@ class IBEISIO(object):
             4     06_410   07_061
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_ibeis import *  # NOQA
+            >>> from graphid.internal.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
             >>>                             autoinit='annotmatch', verbose=4)
@@ -519,11 +500,11 @@ class IBEISIO(object):
             ?: feedback
 
         CommandLine:
-            python -m ibeis.algo.graph.mixin_ibeis read_ibeis_staging_feedback
+            python -m graphid.internal.mixin_ibeis read_ibeis_staging_feedback
 
         Example:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_ibeis import *  # NOQA
+            >>> from graphid.internal.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb('GZ_Master1')
             >>> infr = ibeis.AnnotInference(ibs=ibs, aids='all')
@@ -541,7 +522,7 @@ class IBEISIO(object):
         hack_create_aidpair_index(ibs)
 
         if edges:
-            review_ids = ut.flatten(ibs.get_review_rowids_from_edges(edges))
+            review_ids = list(ub.flatten(ibs.get_review_rowids_from_edges(edges)))
         else:
             review_ids = ibs.get_review_rowids_between(infr.aids)
 
@@ -556,7 +537,7 @@ class IBEISIO(object):
             REVIEW_TAGS, REVIEW_TIME_CLIENT_START, REVIEW_TIME_CLIENT_END,
             REVIEW_TIME_SERVER_START, REVIEW_TIME_SERVER_END)
 
-        add_review_alias = ut.odict([
+        add_review_alias = ub.odict([
             (REVIEW_AID1              , 'aid1'),
             (REVIEW_AID2              , 'aid2'),
             # (REVIEW_UUID              , 'uuid'),
@@ -582,7 +563,7 @@ class IBEISIO(object):
         lookup_meta = ibs.const.META_DECISION.INT_TO_CODE
         lookup_conf = ibs.const.CONFIDENCE.INT_TO_CODE
 
-        feedback = ut.ddict(list)
+        feedback = ub.ddict(list)
         for data in review_data:
             feedback_item = dict(zip(feedback_keys, data))
             aid1 = feedback_item.pop('aid1')
@@ -607,11 +588,10 @@ class IBEISIO(object):
             only_existing_edges (bool): if True only reads info existing edges
 
         CommandLine:
-            python -m ibeis.algo.graph.core read_ibeis_annotmatch_feedback
+            python -m graphid.internal.core read_ibeis_annotmatch_feedback
 
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.core import *  # NOQA
             >>> infr = testdata_infr('testdb1')
             >>> feedback = infr.read_ibeis_annotmatch_feedback()
             >>> items = feedback[(2, 3)]
@@ -671,22 +651,22 @@ class IBEISIO(object):
     def _pandas_feedback_format(infr, feedback):
         import pandas as pd
         aid_pairs = list(feedback.keys())
-        aids1 = ut.take_column(aid_pairs, 0)
-        aids2 = ut.take_column(aid_pairs, 1)
+        aids1 = util.take_column(aid_pairs, 0)
+        aids2 = util.take_column(aid_pairs, 1)
         ibs = infr.ibs
         am_rowids = ibs.get_annotmatch_rowid_from_undirected_superkey(aids1,
                                                                       aids2)
         rectified_feedback_ = infr._rectify_feedback(feedback)
         rectified_feedback = list(ub.take(rectified_feedback_, aid_pairs))
-        decision = ut.dict_take_column(rectified_feedback, 'evidence_decision')
-        tags = ut.dict_take_column(rectified_feedback, 'tags')
-        confidence = ut.dict_take_column(rectified_feedback, 'confidence')
-        timestamp_c1 = ut.dict_take_column(rectified_feedback, 'timestamp_c1')
-        timestamp_c2 = ut.dict_take_column(rectified_feedback, 'timestamp_c2')
-        timestamp_s1 = ut.dict_take_column(rectified_feedback, 'timestamp_s1')
-        timestamp = ut.dict_take_column(rectified_feedback, 'timestamp')
-        user_id = ut.dict_take_column(rectified_feedback, 'user_id')
-        meta_decision = ut.dict_take_column(rectified_feedback, 'meta_decision')
+        decision = util.dict_take_column(rectified_feedback, 'evidence_decision')
+        tags = util.dict_take_column(rectified_feedback, 'tags')
+        confidence = util.dict_take_column(rectified_feedback, 'confidence')
+        timestamp_c1 = util.dict_take_column(rectified_feedback, 'timestamp_c1')
+        timestamp_c2 = util.dict_take_column(rectified_feedback, 'timestamp_c2')
+        timestamp_s1 = util.dict_take_column(rectified_feedback, 'timestamp_s1')
+        timestamp = util.dict_take_column(rectified_feedback, 'timestamp')
+        user_id = util.dict_take_column(rectified_feedback, 'user_id')
+        meta_decision = util.dict_take_column(rectified_feedback, 'meta_decision')
         df = pd.DataFrame([])
         df['evidence_decision'] = decision
         df['meta_decision'] = meta_decision
@@ -707,8 +687,7 @@ class IBEISIO(object):
     def _feedback_df(infr, key):
         """
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.core import *  # NOQA
             >>> import pandas as pd
             >>> infr = testdata_infr('testdb1')
             >>> assert 'meta_decision' in infr._feedback_df('annotmatch').columns
@@ -759,10 +738,10 @@ class IBEISIO(object):
                 of the changed edge attributes.
 
         CommandLine:
-            python -m ibeis.algo.graph.core match_state_delta
+            python -m graphid.internal.core match_state_delta
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_ibeis import *  # NOQA
+            >>> from graphid.internal.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
             >>>                             autoinit='annotmatch', verbose=4)
@@ -794,13 +773,11 @@ class IBEISIO(object):
     def _make_state_delta(AnnotInference, old_feedback, new_feedback):
         r"""
         CommandLine:
-            python -m ibeis.algo.graph.mixin_ibeis IBEISIO._make_state_delta
-            python -m ibeis.algo.graph.mixin_ibeis IBEISIO._make_state_delta:0
+            python -m graphid.internal.mixin_ibeis IBEISIO._make_state_delta
+            python -m graphid.internal.mixin_ibeis IBEISIO._make_state_delta:0
 
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.core import *  # NOQA
-            >>> import pandas as pd
+            >>> from graphid.internal.core import *  # NOQA
             >>> columns = ['evidence_decision', 'aid1', 'aid2', 'am_rowid', 'tags']
             >>> new_feedback = old_feedback = pd.DataFrame([
             >>> ], columns=columns).set_index(['aid1', 'aid2'], drop=True)
@@ -814,9 +791,7 @@ class IBEISIO(object):
             Index: []
 
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.core import *  # NOQA
-            >>> import pandas as pd
+            >>> from graphid.internal.core import *  # NOQA
             >>> columns = ['evidence_decision', 'meta_decision', 'aid1', 'aid2', 'am_rowid', 'tags']
             >>> old_feedback = pd.DataFrame([
             >>>     [NEGTV, 'diff', 100, 101, 1000, []],
@@ -863,7 +838,7 @@ class IBEISIO(object):
         # If any important column is different we mark the row as changed
         data_columns = ibeis.AnnotInference.feedback_data_keys
         important_columns = ['meta_decision', 'evidence_decision', 'tags']
-        other_columns = ut.setdiff(data_columns, important_columns)
+        other_columns = ub.setdiff(data_columns, important_columns)
         if len(isect_edges) > 0:
             changed_gen = [isect_new[c] != isect_old[c]
                            for c in important_columns]
@@ -897,7 +872,7 @@ class IBEISIO(object):
                      'old_tags', 'new_tags', 'old_meta_decision',
                      'new_meta_decision']
         edge_delta_df = merged_df.reindex(columns=(
-            ut.setdiff(merged_df.columns.values, col_order) + col_order))
+            ub.setdiff(merged_df.columns.values, col_order) + col_order))
         edge_delta_df.set_index(['aid1', 'aid2'], inplace=True, drop=True)
         edge_delta_df = edge_delta_df.assign(is_new=False)
         if len(add_edges):
@@ -951,7 +926,12 @@ class IBEISIO(object):
             'server_end_time_posix': 'ts_s2',
             'server_start_time_posix': 'ts_s1',
         })
-        df_s = ut.pandas_reorder(df_s, [
+
+        def pandas_reorder(df, order):
+            new_order = util.partial_order(df.columns, order)
+            new_df = df.reindex_axis(new_order, axis=1)
+            return new_df
+        df_s = pandas_reorder(df_s, [
             'rowid', 'aid1', 'aid2', 'count', 'evidence_decision', 'meta_decision',
             'tags', 'confidence', 'user_id', 'ts_s1', 'ts_c1',
             'ts_c2', 'ts_s2', 'uuid'])
@@ -967,7 +947,6 @@ class IBEISGroundtruth(object):
     Methods for generating training labels for classifiers
     """
 
-    @profile
     def ibeis_guess_if_comparable(infr, aid_pairs):
         """
         Takes a guess as to which annots are not comparable based on scores and
@@ -996,7 +975,7 @@ class IBEISGroundtruth(object):
             is_comp = np.full(len(aid_pairs), np.nan)
         # But use information that we have
         am_rowids = ibs.get_annotmatch_rowid_from_edges(aid_pairs)
-        truths = ut.replace_nones(ibs.get_annotmatch_evidence_decision(am_rowids), np.nan)
+        truths = util.replace_nones(ibs.get_annotmatch_evidence_decision(am_rowids), np.nan)
         truths = np.asarray(truths)
         is_notcomp_have = truths == ibs.const.EVIDENCE_DECISION.INCOMPARABLE
         is_comp_have = ((truths == ibs.const.EVIDENCE_DECISION.POSITIVE) |
@@ -1009,7 +988,7 @@ class IBEISGroundtruth(object):
         ibs = infr.ibs
         am_rowids = ibs.get_annotmatch_rowid_from_edges(aid_pairs)
         am_tags = ibs.get_annotmatch_case_tags(am_rowids)
-        is_pb = ut.filterflags_general_tags(am_tags, has_any=['photobomb'])
+        is_pb = util.filterflags_general_tags(am_tags, has_any=['photobomb'])
         return is_pb
 
     def ibeis_is_same(infr, aid_pairs):
@@ -1081,9 +1060,9 @@ def fix_annotmatch_to_undirected_upper(ibs):
     print(is_lower.sum())
     print(is_upper.sum())
 
-    upper_edges = ut.estarmap(nxu.e_, df[is_upper].index.tolist())
-    lower_edges = ut.estarmap(nxu.e_, df[is_lower].index.tolist())
-    both_edges = ut.isect(upper_edges, lower_edges)
+    upper_edges = util.estarmap(nxu.e_, df[is_upper].index.tolist())
+    lower_edges = util.estarmap(nxu.e_, df[is_lower].index.tolist())
+    both_edges = util.isect(upper_edges, lower_edges)
     if len(both_edges) > 0:
         both_upper = both_edges
         both_lower = [tuple(e[::-1]) for e in both_edges]
@@ -1147,9 +1126,9 @@ def fix_annotmatch_to_undirected_upper(ibs):
     assert not np.any(is_equal)
 
     bad_lower_edges = df[is_lower].index.tolist()
-    upper_edges = ut.estarmap(nxu.e_, df[is_upper].index.tolist())
-    fix_lower_edges = ut.estarmap(nxu.e_, bad_lower_edges)
-    both_edges = ut.isect(upper_edges, fix_lower_edges)
+    upper_edges = util.estarmap(nxu.e_, df[is_upper].index.tolist())
+    fix_lower_edges = util.estarmap(nxu.e_, bad_lower_edges)
+    both_edges = util.isect(upper_edges, fix_lower_edges)
     assert len(both_edges) == 0, 'should not have any both edges anymore'
 
     lower_rowids = ibs.get_annotmatch_rowid_from_superkey(*list(zip(*bad_lower_edges)))

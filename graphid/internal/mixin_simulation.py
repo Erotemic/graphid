@@ -5,12 +5,13 @@ This includes recordings measures used to generate plots in JC's thesis.
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 import six
-import utool as ut
+import itertools as it
 import ubelt as ub
 import pandas as pd
-import itertools as it
+from functools import partial
 from graphid.util import nx_utils as nxu
 from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN, NULL)
+from graphid import util
 
 
 class SimulationHelpers(object):
@@ -33,7 +34,7 @@ class SimulationHelpers(object):
         # keeps track of edges where the decision != the groundtruth
         infr.mistake_edges = set()
 
-        infr.queue = ut.PriorityQueue()
+        infr.queue = util.PriorityQueue()
 
         infr.oracle = UserOracle(oracle_accuracy, rng=infr.name)
 
@@ -78,7 +79,7 @@ class SimulationHelpers(object):
 
         # infr.real_n_pcc_mst_edges = sum(
         #     len(cc) - 1 for cc in infr.nid_to_gt_cc.values())
-        # ut.cprint('real_n_pcc_mst_edges = %r' % (
+        # util.cprint('real_n_pcc_mst_edges = %r' % (
         #     infr.real_n_pcc_mst_edges,), 'red')
 
         infr.metrics_list = []
@@ -98,7 +99,6 @@ class SimulationHelpers(object):
                                       ('pred', pred_state)])
                     yield edge, error
 
-    @profile
     def measure_metrics(infr):
         real_pos_edges = []
 
@@ -116,7 +116,7 @@ class SimulationHelpers(object):
         n_fp = sum(ub.take(confusion[NEGTV], non_negtv))
 
         n_error_edges = sum(confusion[r][c] + confusion[c][r] for r, c in
-                            ut.combinations(reviewd_cols, 2))
+                            it.combinations(reviewd_cols, 2))
         # assert n_fn + n_fp == n_error_edges
 
         pred_n_pcc_mst_edges = n_true_merges
@@ -225,32 +225,31 @@ class SimulationHelpers(object):
         history = infr.metrics_list[-count:]
         recover_blocks = ub.group_items([
             (k, sum(1 for i in g))
-            for k, g in it.groupby(ut.take_column(history, 'recovering'))
+            for k, g in it.groupby(util.take_column(history, 'recovering'))
         ]).get(True, [])
         infr.print((
             'Recovery mode entered {} times, '
             'made {} recovery decisions.').format(
                 len(recover_blocks), sum(recover_blocks)), color='green')
-        testaction_hist = ub.dict_hist(ut.take_column(history, 'test_action'))
+        testaction_hist = ub.dict_hist(util.take_column(history, 'test_action'))
         infr.print(
             'Test Action Histogram: {}'.format(
                 ub.repr2(testaction_hist, si=True)), color='yellow')
         if infr.params['inference.enabled']:
             action_hist = ub.dict_hist(
-                ut.emap(frozenset, ut.take_column(history, 'action')))
+                util.emap(frozenset, util.take_column(history, 'action')))
             infr.print(
                 'Inference Action Histogram: {}'.format(
                     ub.repr2(action_hist, si=True)), color='yellow')
         infr.print(
             'Decision Histogram: {}'.format(ub.repr2(ub.dict_hist(
-                ut.take_column(history, 'pred_decision')
+                util.take_column(history, 'pred_decision')
             ), si=True)), color='yellow')
         infr.print(
             'User Histogram: {}'.format(ub.repr2(ub.dict_hist(
-                ut.take_column(history, 'user_id')
+                util.take_column(history, 'user_id')
             ), si=True)), color='yellow')
 
-    @profile
     def _dynamic_test_callback(infr, edge, decision, prev_decision, user_id):
         was_gt_pos = infr.test_gt_pos_graph.has_edge(*edge)
 
@@ -278,7 +277,7 @@ class SimulationHelpers(object):
         if 0:
             num = infr.recover_graph.number_of_components()
             old_data = infr.get_nonvisual_edge_data(edge)
-            # print('old_data = %s' % (ut.repr4(old_data, stritems=True),))
+            # print('old_data = %s' % (ub.repr2(old_data, stritems=True),))
             print('n_prev_reviews = %r' % (old_data['num_reviews'],))
             print('prev_decision = %r' % (prev_decision,))
             print('decision = %r' % (decision,))
@@ -396,7 +395,7 @@ class UserOracle(object):
     def __init__(oracle, accuracy, rng):
         if isinstance(rng, six.string_types):
             rng = sum(map(ord, rng))
-        rng = ut.ensure_rng(rng, impl='python')
+        rng = util.ensure_rng(rng, api='python')
 
         if isinstance(accuracy, tuple):
             oracle.normal_accuracy = accuracy[0]
@@ -415,9 +414,9 @@ class UserOracle(object):
             'confidence': 'absolutely_sure',
             'evidence_decision': None,
             'meta_decision': NULL,
-            'timestamp_s1': ut.get_timestamp('int', isutc=True),
-            'timestamp_c1': ut.get_timestamp('int', isutc=True),
-            'timestamp_c2': ut.get_timestamp('int', isutc=True),
+            'timestamp_s1': util.get_timestamp('int', isutc=True),
+            'timestamp_c1': util.get_timestamp('int', isutc=True),
+            'timestamp_c2': util.get_timestamp('int', isutc=True),
             'tags': [],
         }
         is_recovering = infr.is_recovering()

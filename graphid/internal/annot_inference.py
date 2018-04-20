@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
-import utool as ut
 import itertools as it
 import copy
 import six
@@ -10,8 +9,9 @@ import pandas as pd
 import networkx as nx
 import logging
 import ubelt as ub
-from ibeis import constants as const
-from graphid.internal import nx_dynamic_graph
+from graphid.internal import state as const
+from graphid.util import nx_dynamic_graph
+from graphid import util
 from graphid.internal import mixin_viz
 from graphid.internal import mixin_helpers
 from graphid.internal import mixin_dynamic
@@ -178,7 +178,6 @@ class Feedback(object):
         if confidence is None:
             confidence = const.CONFIDENCE.CODE.UNKNOWN
         if timestamp is None:
-            # timestamp = ut.get_timestamp('int', isutc=True)
             timestamp = ub.timestamp()
 
         msg = 'add_feedback ({}, {}), '.format(aid1, aid2)
@@ -278,12 +277,12 @@ class Feedback(object):
             for cc in sorted_ccs]) + ']'
         print(msg)
 
-    @ut.classproperty
+    @util.classproperty
     def feedback_keys(Infr):
         """ edge attribute keys used for feedback """
         return Infr.feedback_data_keys + ['num_reviews', 'review_id']
 
-    @ut.classproperty
+    @util.classproperty
     def feedback_data_keys(Infr):
         """ edge attribute keys used for feedback """
         return [
@@ -325,8 +324,8 @@ class Feedback(object):
             set2 = set(attr_lists.keys())
             if set1 != set2:
                 raise AssertionError(
-                    'Bad feedback keys: ' +
-                    ub.repr2(ut.set_overlap_items(set1, set2, 'got', 'want'), nl=1)
+                    'Bad feedback keys: '  # +
+                    # ub.repr2(util.set_overlap_items(set1, set2, 'got', 'want'), nl=1)
                     # ub.repr2(sorted(feedback_item.keys()), sv=True) + ' ' +
                     # ub.repr2(sorted(attr_lists.keys()), sv=True)
                 )
@@ -389,7 +388,7 @@ class Feedback(object):
 
         # Kill all feedback, remote edge labels, but leave graph edges alone
         keys = infr.feedback_keys + ['inferred_state']
-        ut.nx_delete_edge_attr(infr.graph, keys, edges)
+        util.nx_delete_edge_attr(infr.graph, keys, edges)
 
         # Move reviewed edges back into the unreviewed graph
         for key in (POSTV, NEGTV, INCMP):
@@ -543,7 +542,7 @@ class NameRelabel(object):
             for n in new_labels
         ]
 
-        for idx in ut.where(new_flags):
+        for idx in util.where(new_flags):
             new_labels[idx] = infr._next_nid()
 
         for idx, label in enumerate(new_labels):
@@ -590,7 +589,7 @@ class NameRelabel(object):
         if infr.verbose >= 2:
             cc_sizes = list(map(len, cc_subgraphs))
             pcc_size_hist = ub.dict_hist(cc_sizes)
-            pcc_size_stats = ut.get_stats(cc_sizes)
+            pcc_size_stats = util.stats_dict(cc_sizes)
             if len(pcc_size_hist) < 8:
                 infr.print('PCC size hist = %s' % (ub.repr2(pcc_size_hist),))
             infr.print('PCC size stats = %s' % (ub.repr2(pcc_size_stats),))
@@ -658,22 +657,22 @@ class MiscHelpers(object):
                 nids = [-aid for aid in aids]
             else:
                 nids = infr.ibs.get_annot_nids(aids)
-        elif ut.isscalar(nids):
+        elif not ub.iterable(nids):
             nids = [nids] * len(aids)
         return nids
 
     def remove_aids(infr, aids):
-        remove_idxs = list(ub.take(ut.make_index_lookup(infr.aids), aids))
-        ut.delete_items_by_index(infr.orig_name_labels, remove_idxs)
-        ut.delete_items_by_index(infr.aids, remove_idxs)
+        remove_idxs = list(ub.take(util.make_index_lookup(infr.aids), aids))
+        util.delete_items_by_index(infr.orig_name_labels, remove_idxs)
+        util.delete_items_by_index(infr.aids, remove_idxs)
         infr.graph.remove_nodes_from(aids)
         infr.aids_set = set(infr.aids)
         remove_edges = [(u, v) for u, v in infr.external_feedback.keys()
                         if u not in infr.aids_set or v not in infr.aids_set]
-        ut.delete_dict_keys(infr.external_feedback, remove_edges)
+        util.delete_dict_keys(infr.external_feedback, remove_edges)
         remove_edges = [(u, v) for u, v in infr.internal_feedback.keys()
                         if u not in infr.aids_set or v not in infr.aids_set]
-        ut.delete_dict_keys(infr.internal_feedback, remove_edges)
+        util.delete_dict_keys(infr.internal_feedback, remove_edges)
 
         infr.pos_graph.remove_nodes_from(aids)
         infr.neg_graph.remove_nodes_from(aids)
@@ -705,9 +704,9 @@ class MiscHelpers(object):
             infr.aids_set = set(infr.aids)
             infr.orig_name_labels = nids
         else:
-            aid_to_idx = ut.make_index_lookup(infr.aids)
-            orig_idxs = ut.dict_take(aid_to_idx, aids, None)
-            new_flags = ut.flag_None_items(orig_idxs)
+            aid_to_idx = util.make_index_lookup(infr.aids)
+            orig_idxs = list(ub.dict_take(aid_to_idx, aids, None))
+            new_flags = util.flag_None_items(orig_idxs)
             new_aids = list(ub.compress(aids, new_flags))
             new_nids = list(ub.compress(nids, new_flags))
             # Extend object attributes
@@ -731,7 +730,7 @@ class MiscHelpers(object):
         assert nids is not None, 'must have nids'
         node_to_aid = {aid: aid for aid in aids}
         node_to_nid = {aid: nid for aid, nid in zip(aids, nids)}
-        ut.assert_eq_len(node_to_nid, node_to_aid)
+        assert len(node_to_nid) == len(node_to_aid)
 
         infr.graph.add_nodes_from(aids)
         for subgraph in infr.review_graphs.values():
@@ -772,8 +771,9 @@ class MiscHelpers(object):
             color = 'blue'
 
         if True:
+            from xdoctest.dynamic_analysis import get_parent_frame
             # Record the name of the calling function
-            parent_name = ut.get_parent_frame().f_code.co_name
+            parent_name = get_parent_frame().f_code.co_name
             msg = '[{}] '.format(parent_name) + msg
 
         if True:
@@ -785,7 +785,7 @@ class MiscHelpers(object):
         if infr.verbose >= level:
             # Print the message to stdout
             loglevel = logging.INFO
-            ut.cprint('[infr] ' + msg, color)
+            util.cprint('[infr] ' + msg, color)
         else:
             loglevel = logging.DEBUG
         if infr.logger:
@@ -805,7 +805,7 @@ class MiscHelpers(object):
     def dump_logs(infr):
         print('--- <LOG DUMP> ---')
         for msg, color in infr.logs:
-            ut.cprint('[infr] ' + msg, color)
+            util.cprint('[infr] ' + msg, color)
         print('--- <\LOG DUMP> ---')
 
 
@@ -920,7 +920,6 @@ class AltConstructors(object):
             # )
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class AnnotInference(ub.NiceRepr,
                      # Old internal stuffs
                      AltConstructors,
@@ -975,12 +974,12 @@ class AnnotInference(ub.NiceRepr,
         >>> infr = AnnotInference(ibs, aids, autoinit=True, verbose=1000)
         >>> result = ('infr = %s' % (infr,))
         >>> print(result)
-        >>> ut.quit_if_noshow()
+        >>> util.quit_if_noshow()
         >>> use_image = True
         >>> infr.initialize_visual_node_attrs()
         >>> # Note that there are initially no edges
         >>> infr.show_graph(use_image=use_image)
-        >>> ut.show_if_requested()
+        >>> util.show_if_requested()
         infr = <AnnotInference(nNodes=6, nEdges=0, nCCs=6)>
 
     Example:
@@ -992,7 +991,7 @@ class AnnotInference(ub.NiceRepr,
         >>> infr = AnnotInference(ibs, aids, autoinit=True)
         >>> result = ('infr = %s' % (infr,))
         >>> print(result)
-        >>> ut.quit_if_noshow()
+        >>> util.quit_if_noshow()
         >>> use_image = False
         >>> infr.initialize_visual_node_attrs()
         >>> # Note that there are initially no edges
@@ -1004,7 +1003,7 @@ class AnnotInference(ub.NiceRepr,
         >>> infr.add_feedback((1, 4), NEGTV)
         >>> infr.apply_feedback_edges()
         >>> infr.show_graph(use_image=use_image)
-        >>> ut.show_if_requested()
+        >>> util.show_if_requested()
 
     Example:
         >>> # SCRIPT
@@ -1015,7 +1014,7 @@ class AnnotInference(ub.NiceRepr,
         >>> infr = AnnotInference(ibs, aids, autoinit=True)
         >>> result = ('infr = %s' % (infr,))
         >>> print(result)
-        >>> ut.quit_if_noshow()
+        >>> util.quit_if_noshow()
         >>> use_image = False
         >>> infr.initialize_visual_node_attrs()
         >>> infr.ensure_mst()
@@ -1031,17 +1030,7 @@ class AnnotInference(ub.NiceRepr,
         >>>     pass
         >>> infr.apply_feedback_edges()
         >>> infr.show_graph(use_image=use_image)
-        >>> ut.show_if_requested()
-
-    Ignore:
-        >>> import ibeis
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
-        >>> infr = ibeis.AnnotInference(ibs, 'all')
-        >>> class_ = infr
-        >>> fpath = None
-        >>> static_attrs = ut.check_static_member_vars(class_, fpath)
-        >>> uninitialized = set(infr.__dict__.keys()) - set(static_attrs)
-
+        >>> util.show_if_requested()
     """
 
     def __getstate__(self):
@@ -1111,7 +1100,7 @@ class AnnotInference(ub.NiceRepr,
         }
 
         # Criterion
-        infr.queue = ut.PriorityQueue()
+        infr.queue = util.PriorityQueue()
         infr.refresh = None
 
         infr.review_counter = it.count(0)

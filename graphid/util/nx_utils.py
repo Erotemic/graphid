@@ -1,20 +1,71 @@
 # -*- coding: utf-8 -*-
-"""
-TODO: the k-components will soon be implemented in networkx 2.0 use those instead
-"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import networkx as nx
 import itertools as it
-from ibeis.algo.graph import nx_edge_augmentation as nx_aug
 import ubelt as ub
-import netharn as nh  # NOQA
+import pandas as pd
+import functools
+import collections
 
 
 def _dz(a, b):
     a = a.tolist() if isinstance(a, np.ndarray) else list(a)
     b = b.tolist() if isinstance(b, np.ndarray) else list(b)
     return ub.dzip(a, b)
+
+
+def take_column(list_, colx):
+    r"""
+    accepts a list of (indexables) and returns a list of indexables
+    can also return a list of list of indexables if colx is a list
+
+    Args:
+        list_ (list):  list of lists
+        colx (int or list): index or key in each sublist get item
+
+    Returns:
+        list: list of selected items
+
+    Example0:
+        >>> list_ = [['a', 'b'], ['c', 'd']]
+        >>> colx = 0
+        >>> result = take_column(list_, colx)
+        >>> result = ub.repr2(result, nl=False)
+        >>> print(result)
+        ['a', 'c']
+
+    Example1:
+        >>> list_ = [['a', 'b'], ['c', 'd']]
+        >>> colx = [1, 0]
+        >>> result = take_column(list_, colx)
+        >>> result = ub.repr4(result, nl=False)
+        >>> print(result)
+        [['b', 'a'], ['d', 'c']]
+
+    Example2:
+        >>> list_ = [{'spam': 'EGGS', 'ham': 'SPAM'}, {'spam': 'JAM', 'ham': 'PRAM'}]
+        >>> # colx can be a key or list of keys as well
+        >>> colx = ['spam']
+        >>> result = take_column(list_, colx)
+        >>> result = ub.repr4(result, nl=False)
+        >>> print(result)
+        [['EGGS'], ['JAM']]
+    """
+    return list(itake_column(list_, colx))
+
+
+def dict_take_column(list_of_dicts_, colkey, default=None):
+    return [dict_.get(colkey, default) for dict_ in list_of_dicts_]
+
+
+def itake_column(list_, colx):
+    """ iterator version of get_list_column """
+    if isinstance(colx, list):
+        # multi select
+        return ([row[colx_] for colx_ in colx] for row in list_)
+    else:
+        return (row[colx] for row in list_)
 
 
 def list_roll(list_, n):
@@ -354,11 +405,11 @@ def demodata_bridge():
 def demodata_tarjan_bridge():
     """
     Example:
+        >>> from graphid import util
         >>> G = demodata_tarjan_bridge()
-        >>> nh.util.quit_if_noshow()
-        >>> import plottool as pt
-        >>> pt.show_nx(G)
-        >>> nh.util.show_if_requested()
+        >>> util.quit_if_noshow()
+        >>> util.show_nx(G)
+        >>> util.show_if_requested()
     """
     # define 2-connected compoments and bridges
     cc2 = [(1, 2, 4, 3, 1, 4), (5, 6, 7, 5), (8, 9, 10, 8),
@@ -377,16 +428,17 @@ def demodata_tarjan_bridge():
 
 
 def is_k_edge_connected(G, k):
-    return nx_aug.is_k_edge_connected(G, k)
+    return nx.is_k_edge_connected(G, k)
 
 
 def complement_edges(G):
-    return it.starmap(e_, nx_aug.complement_edges(G))
+    from nx.algorithms.connectivity.edge_augmentation import complement_edges
+    return it.starmap(e_, complement_edges(G))
 
 
 def k_edge_augmentation(G, k, avail=None, partial=False):
-    return it.starmap(e_, nx_aug.k_edge_augmentation(G, k, avail=avail,
-                                                     partial=partial))
+    return it.starmap(e_, nx.k_edge_augmentation(G, k, avail=avail,
+                                                 partial=partial))
 
 
 def is_complete(G, self_loops=False):
@@ -407,19 +459,18 @@ def random_k_edge_connected_graph(size, k, p=.1, rng=None):
     Super hacky way of getting a random k-connected graph
 
     Example:
-        >>> from ibeis.algo.graph.nx_utils import *  # NOQA
+        >>> from graphid import util
         >>> size, k, p = 25, 3, .1
-        >>> rng = nh.util.ensure_rng(0)
+        >>> rng = util.ensure_rng(0)
         >>> gs = []
         >>> for x in range(4):
         >>>     G = random_k_edge_connected_graph(size, k, p, rng)
         >>>     gs.append(G)
-        >>> nh.util.quit_if_noshow()
-        >>> import plottool as pt
-        >>> pnum_ = pt.make_pnum_nextgen(nRows=2, nSubplots=len(gs))
+        >>> util.quit_if_noshow()
+        >>> pnum_ = util.PlotNums(nRows=2, nSubplots=len(gs))
         >>> fnum = 1
         >>> for g in gs:
-        >>>     pt.show_nx(g, fnum=fnum, pnum=pnum_())
+        >>>     util.show_nx(g, fnum=fnum, pnum=pnum_())
     """
     import sys
     for count in it.count(0):
@@ -444,7 +495,6 @@ def random_k_edge_connected_graph(size, k, p=.1, rng=None):
 
 
 def edge_df(graph, edges, ignore=None):
-    import pandas as pd
     edge_dict = {e: graph.get_edge_data(*e) for e in edges}
     df = pd.DataFrame.from_dict(edge_dict, orient='index')
 
@@ -457,6 +507,385 @@ def edge_df(graph, edges, ignore=None):
         except Exception:
             pass
     return df
+
+
+def nx_delete_node_attr(graph, name, nodes=None):
+    """
+    Removes node attributes
+
+    Doctest:
+        >>> G = nx.karate_club_graph()
+        >>> nx.set_node_attributes(G, name='foo', values='bar')
+        >>> datas = nx.get_node_attributes(G, 'club')
+        >>> assert len(nx.get_node_attributes(G, 'club')) == 34
+        >>> assert len(nx.get_node_attributes(G, 'foo')) == 34
+        >>> nx_delete_node_attr(G, ['club', 'foo'], nodes=[1, 2])
+        >>> assert len(nx.get_node_attributes(G, 'club')) == 32
+        >>> assert len(nx.get_node_attributes(G, 'foo')) == 32
+        >>> nx_delete_node_attr(G, ['club'])
+        >>> assert len(nx.get_node_attributes(G, 'club')) == 0
+        >>> assert len(nx.get_node_attributes(G, 'foo')) == 32
+    """
+    if nodes is None:
+        nodes = list(graph.nodes())
+    removed = 0
+    # names = [name] if not isinstance(name, list) else name
+    node_dict = graph.nodes
+
+    if isinstance(name, list):
+        for node in nodes:
+            for name_ in name:
+                try:
+                    del node_dict[node][name_]
+                    removed += 1
+                except KeyError:
+                    pass
+    else:
+        for node in nodes:
+            try:
+                del node_dict[node][name]
+                removed += 1
+            except KeyError:
+                pass
+    return removed
+
+
+def nx_delete_edge_attr(graph, name, edges=None):
+    """
+    Removes an attributes from specific edges in the graph
+
+    Doctest:
+        >>> G = nx.karate_club_graph()
+        >>> nx.set_edge_attributes(G, name='spam', values='eggs')
+        >>> nx.set_edge_attributes(G, name='foo', values='bar')
+        >>> assert len(nx.get_edge_attributes(G, 'spam')) == 78
+        >>> assert len(nx.get_edge_attributes(G, 'foo')) == 78
+        >>> nx_delete_edge_attr(G, ['spam', 'foo'], edges=[(1, 2)])
+        >>> assert len(nx.get_edge_attributes(G, 'spam')) == 77
+        >>> assert len(nx.get_edge_attributes(G, 'foo')) == 77
+        >>> nx_delete_edge_attr(G, ['spam'])
+        >>> assert len(nx.get_edge_attributes(G, 'spam')) == 0
+        >>> assert len(nx.get_edge_attributes(G, 'foo')) == 77
+
+    Doctest:
+        >>> G = nx.MultiGraph()
+        >>> G.add_edges_from([(1, 2), (2, 3), (3, 4), (4, 5), (4, 5), (1, 2)])
+        >>> nx.set_edge_attributes(G, name='spam', values='eggs')
+        >>> nx.set_edge_attributes(G, name='foo', values='bar')
+        >>> assert len(nx.get_edge_attributes(G, 'spam')) == 6
+        >>> assert len(nx.get_edge_attributes(G, 'foo')) == 6
+        >>> nx_delete_edge_attr(G, ['spam', 'foo'], edges=[(1, 2, 0)])
+        >>> assert len(nx.get_edge_attributes(G, 'spam')) == 5
+        >>> assert len(nx.get_edge_attributes(G, 'foo')) == 5
+        >>> nx_delete_edge_attr(G, ['spam'])
+        >>> assert len(nx.get_edge_attributes(G, 'spam')) == 0
+        >>> assert len(nx.get_edge_attributes(G, 'foo')) == 5
+    """
+    removed = 0
+    keys = [name] if not isinstance(name, (list, tuple)) else name
+    if edges is None:
+        if graph.is_multigraph():
+            edges = graph.edges(keys=True)
+        else:
+            edges = graph.edges()
+    if graph.is_multigraph():
+        for u, v, k in edges:
+            for key_ in keys:
+                try:
+                    del graph[u][v][k][key_]
+                    removed += 1
+                except KeyError:
+                    pass
+    else:
+        for u, v in edges:
+            for key_ in keys:
+                try:
+                    del graph[u][v][key_]
+                    removed += 1
+                except KeyError:
+                    pass
+    return removed
+
+
+def nx_gen_node_values(G, key, nodes, default=ub.NoParam):
+    """
+    Generates attributes values of specific nodes
+    """
+    node_dict = G.nodes
+    if default is ub.NoParam:
+        return (node_dict[n][key] for n in nodes)
+    else:
+        return (node_dict[n].get(key, default) for n in nodes)
+
+
+def nx_gen_node_attrs(G, key, nodes=None, default=ub.NoParam,
+                      on_missing='error', on_keyerr='default'):
+    """
+    Improved generator version of nx.get_node_attributes
+
+    Args:
+        on_missing (str): Strategy for handling nodes missing from G.
+            Can be {'error', 'default', 'filter'}.  defaults to 'error'.
+        on_keyerr (str): Strategy for handling keys missing from node dicts.
+            Can be {'error', 'default', 'filter'}.  defaults to 'default'
+            if default is specified, otherwise defaults to 'error'.
+
+    Notes:
+        strategies are:
+            error - raises an error if key or node does not exist
+            default - returns node, but uses value specified by default
+            filter - skips the node
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from graphid import util
+        >>> G = nx.Graph([(1, 2), (2, 3)])
+        >>> nx.set_node_attributes(G, name='part', values={1: 'bar', 3: 'baz'})
+        >>> nodes = [1, 2, 3, 4]
+        >>> #
+        >>> assert len(list(nx_gen_node_attrs(G, 'part', default=None, on_missing='error', on_keyerr='default'))) == 3
+        >>> assert len(list(nx_gen_node_attrs(G, 'part', default=None, on_missing='error', on_keyerr='filter'))) == 2
+        >>> assert_raises(KeyError, list, nx_gen_node_attrs(G, 'part', on_missing='error', on_keyerr='error'))
+        >>> #
+        >>> assert len(list(nx_gen_node_attrs(G, 'part', nodes, default=None, on_missing='filter', on_keyerr='default'))) == 3
+        >>> assert len(list(nx_gen_node_attrs(G, 'part', nodes, default=None, on_missing='filter', on_keyerr='filter'))) == 2
+        >>> assert_raises(KeyError, list, nx_gen_node_attrs(G, 'part', nodes, on_missing='filter', on_keyerr='error'))
+        >>> #
+        >>> assert len(list(nx_gen_node_attrs(G, 'part', nodes, default=None, on_missing='default', on_keyerr='default'))) == 4
+        >>> assert len(list(nx_gen_node_attrs(G, 'part', nodes, default=None, on_missing='default', on_keyerr='filter'))) == 2
+        >>> assert_raises(KeyError, list, nx_gen_node_attrs(G, 'part', nodes, on_missing='default', on_keyerr='error'))
+
+    Example:
+        >>> # DISABLE_DOCTEST
+        >>> # ALL CASES
+        >>> from graphid import util
+        >>> G = nx.Graph([(1, 2), (2, 3)])
+        >>> nx.set_node_attributes(G, name='full', values={1: 'A', 2: 'B', 3: 'C'})
+        >>> nx.set_node_attributes(G, name='part', values={1: 'bar', 3: 'baz'})
+        >>> nodes = [1, 2, 3, 4]
+        >>> attrs = dict(nx_gen_node_attrs(G, 'full'))
+        >>> input_grid = {
+        >>>     'nodes': [None, (1, 2, 3, 4)],
+        >>>     'key': ['part', 'full'],
+        >>>     'default': [ub.NoParam, None],
+        >>> }
+        >>> inputs = util.all_dict_combinations(input_grid)
+        >>> kw_grid = {
+        >>>     'on_missing': ['error', 'default', 'filter'],
+        >>>     'on_keyerr': ['error', 'default', 'filter'],
+        >>> }
+        >>> kws = util.all_dict_combinations(kw_grid)
+        >>> for in_ in inputs:
+        >>>     for kw in kws:
+        >>>         kw2 = ub.dict_union(kw, in_)
+        >>>         #print(kw2)
+        >>>         on_missing = kw['on_missing']
+        >>>         on_keyerr = kw['on_keyerr']
+        >>>         if on_keyerr == 'default' and in_['default'] is ub.NoParam:
+        >>>             on_keyerr = 'error'
+        >>>         will_miss = False
+        >>>         will_keyerr = False
+        >>>         if on_missing == 'error':
+        >>>             if in_['key'] == 'part' and in_['nodes'] is not None:
+        >>>                 will_miss = True
+        >>>             if in_['key'] == 'full' and in_['nodes'] is not None:
+        >>>                 will_miss = True
+        >>>         if on_keyerr == 'error':
+        >>>             if in_['key'] == 'part':
+        >>>                 will_keyerr = True
+        >>>             if on_missing == 'default':
+        >>>                 if in_['key'] == 'full' and in_['nodes'] is not None:
+        >>>                     will_keyerr = True
+        >>>         want_error = will_miss or will_keyerr
+        >>>         gen = nx_gen_node_attrs(G, **kw2)
+        >>>         try:
+        >>>             attrs = list(gen)
+        >>>         except KeyError:
+        >>>             if not want_error:
+        >>>                 raise AssertionError('should not have errored')
+        >>>         else:
+        >>>             if want_error:
+        >>>                 raise AssertionError('should have errored')
+
+    """
+    if on_missing is None:
+        on_missing = 'error'
+    if default is ub.NoParam and on_keyerr == 'default':
+        on_keyerr = 'error'
+    if nodes is None:
+        nodes = G.nodes()
+    # Generate `node_data` nodes and data dictionary
+    node_dict = G.nodes
+    if on_missing == 'error':
+        node_data = ((n, node_dict[n]) for n in nodes)
+    elif on_missing == 'filter':
+        node_data = ((n, node_dict[n]) for n in nodes if n in G)
+    elif on_missing == 'default':
+        node_data = ((n, node_dict.get(n, {})) for n in nodes)
+    else:
+        raise KeyError('on_missing={} must be error, filter or default'.format(
+            on_missing))
+    # Get `node_attrs` desired value out of dictionary
+    if on_keyerr == 'error':
+        node_attrs = ((n, d[key]) for n, d in node_data)
+    elif on_keyerr == 'filter':
+        node_attrs = ((n, d[key]) for n, d in node_data if key in d)
+    elif on_keyerr == 'default':
+        node_attrs = ((n, d.get(key, default)) for n, d in node_data)
+    else:
+        raise KeyError('on_keyerr={} must be error filter or default'.format(on_keyerr))
+    return node_attrs
+
+
+def graph_info(graph, ignore=None, stats=False, verbose=False):
+    from graphid import util
+    import pandas as pd
+
+    node_dict = graph.nodes
+    node_attrs = list(node_dict.values())
+    edge_attrs = list(take_column(graph.edges(data=True), 2))
+
+    if stats:
+        node_df = pd.DataFrame(node_attrs)
+        edge_df = pd.DataFrame(edge_attrs)
+        if ignore is not None:
+            util.delete_dict_keys(node_df, ignore)
+            util.delete_dict_keys(edge_df, ignore)
+        # Not really histograms anymore
+        try:
+            node_attr_hist = node_df.describe().to_dict()
+        except ValueError:
+            node_attr_hist
+        try:
+            edge_attr_hist = edge_df.describe().to_dict()
+        except ValueError:
+            edge_attr_hist = {}
+        key_order = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
+        node_attr_hist = ub.map_dict_vals(lambda x: util.order_dict_by(x, key_order), node_attr_hist)
+        edge_attr_hist = ub.map_dict_vals(lambda x: util.order_dict_by(x, key_order), edge_attr_hist)
+    else:
+        node_attr_hist = ub.dict_hist(ub.flatten([attr.keys() for attr in node_attrs]))
+        edge_attr_hist = ub.dict_hist(ub.flatten([attr.keys() for attr in edge_attrs]))
+        if ignore is not None:
+            util.delete_dict_keys(edge_attr_hist, ignore)
+            util.delete_dict_keys(node_attr_hist, ignore)
+    node_type_hist = ub.dict_hist(list(map(type, graph.nodes())))
+    info_dict = ub.odict([
+        ('directed', graph.is_directed()),
+        ('multi', graph.is_multigraph()),
+        ('num_nodes', len(graph)),
+        ('num_edges', len(list(graph.edges()))),
+        ('edge_attr_hist', util.sort_dict(edge_attr_hist)),
+        ('node_attr_hist', util.sort_dict(node_attr_hist)),
+        ('node_type_hist', util.sort_dict(node_type_hist)),
+        ('graph_attrs', graph.graph),
+        ('graph_name', graph.name),
+    ])
+    if verbose:
+        print(ub.repr2(info_dict))
+    return info_dict
+
+
+def assert_raises(ex_type, func, *args, **kwargs):
+    """
+    Checks that a function raises an error when given specific arguments.
+
+    Args:
+        ex_type (Exception): exception type
+        func (callable): live python function
+
+    Example:
+        >>> ex_type = AssertionError
+        >>> func = len
+        >>> assert_raises(ex_type, assert_raises, ex_type, func, [])
+        >>> assert_raises(ValueError, [].index, 0)
+    """
+    try:
+        func(*args, **kwargs)
+    except Exception as ex:
+        assert isinstance(ex, ex_type), (
+            'Raised %r but type should have been %r' % (ex, ex_type))
+        return True
+    else:
+        raise AssertionError('No error was raised')
+
+
+def bfs_conditional(G, source, reverse=False, keys=True, data=False,
+                    yield_nodes=True, yield_if=None,
+                    continue_if=None, visited_nodes=None,
+                    yield_source=False):
+    """
+    Produce edges in a breadth-first-search starting at source, but only return
+    nodes that satisfiy a condition, and only iterate past a node if it
+    satisfies a different condition.
+
+    conditions are callables that take (G, child, edge) and return true or false
+
+    Example:
+        >>> import networkx as nx
+        >>> G = nx.Graph()
+        >>> G.add_edges_from([(1, 2), (1, 3), (2, 3), (2, 4)])
+        >>> continue_if = lambda G, child, edge: True
+        >>> result = list(bfs_conditional(G, 1, yield_nodes=False))
+        >>> print(result)
+        [(1, 2), (1, 3), (2, 1), (2, 3), (2, 4), (3, 1), (3, 2), (4, 2)]
+
+    Example:
+        >>> import networkx as nx
+        >>> G = nx.Graph()
+        >>> continue_if = lambda G, child, edge: (child % 2 == 0)
+        >>> yield_if = lambda G, child, edge: (child % 2 == 1)
+        >>> G.add_edges_from([(0, 1), (1, 3), (3, 5), (5, 10),
+        >>>                   (4, 3), (3, 6),
+        >>>                   (0, 2), (2, 4), (4, 6), (6, 10)])
+        >>> result = list(bfs_conditional(G, 0, continue_if=continue_if,
+        >>>                                  yield_if=yield_if))
+        >>> print(result)
+        [1, 3, 5]
+    """
+    if reverse and hasattr(G, 'reverse'):
+        G = G.reverse()
+    if isinstance(G, nx.Graph):
+        neighbors = functools.partial(G.edges, data=data)
+    else:
+        neighbors = functools.partial(G.edges, keys=keys, data=data)
+
+    queue = collections.deque([])
+
+    if visited_nodes is None:
+        visited_nodes = set([])
+    else:
+        visited_nodes = set(visited_nodes)
+
+    if source not in visited_nodes:
+        if yield_nodes and yield_source:
+            yield source
+        visited_nodes.add(source)
+        new_edges = neighbors(source)
+        if isinstance(new_edges, list):
+            new_edges = iter(new_edges)
+        queue.append((source, new_edges))
+
+    while queue:
+        parent, edges = queue[0]
+        for edge in edges:
+            child = edge[1]
+            if yield_nodes:
+                if child not in visited_nodes:
+                    if yield_if is None or yield_if(G, child, edge):
+                        yield child
+            else:
+                if yield_if is None or yield_if(G, child, edge):
+                    yield edge
+            if child not in visited_nodes:
+                visited_nodes.add(child)
+                # Add new children to queue if the condition is satisfied
+                if continue_if is None or continue_if(G, child, edge):
+                    new_edges = neighbors(child)
+                    if isinstance(new_edges, list):
+                        new_edges = iter(new_edges)
+                    queue.append((child, new_edges))
+        queue.popleft()
 
 
 if __name__ == '__main__':

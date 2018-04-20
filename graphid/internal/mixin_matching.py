@@ -4,12 +4,11 @@ import numpy as np
 import pandas as pd
 import itertools as it
 import networkx as nx
+import ubelt as ub
+from graphid import util
 from graphid.util import nx_utils as nxu
 from graphid.util.nx_utils import e_
 from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
-
-import utool as ut
-import vtool as vt
 
 
 class AnnotInfrMatching(object):
@@ -41,7 +40,7 @@ class AnnotInfrMatching(object):
         ibs = infr.ibs
         if qaids is None:
             qaids = infr.aids
-        qaids = ut.ensure_iterable(qaids)
+        qaids = util.ensure_iterable(qaids)
         if daids is None:
             daids = infr.aids
         if cfgdict is None:
@@ -58,7 +57,7 @@ class AnnotInfrMatching(object):
             cfgdict.update(infr.ranker_params)
         # hack for using current nids
         if name_method == 'node':
-            aids = sorted(set(ut.aslist(qaids) + ut.aslist(daids)))
+            aids = sorted(set(util.aslist(qaids) + util.aslist(daids)))
             custom_nid_lookup = infr.get_node_attrs('name_label', aids)
         elif name_method == 'edge':
             custom_nid_lookup = {
@@ -131,7 +130,7 @@ class AnnotInfrMatching(object):
         if infr.cm_list is None:
             return None, aid1, aid2
         # TODO: keep chip matches in dictionary by default?
-        aid2_idx = ut.make_index_lookup(
+        aid2_idx = util.make_index_lookup(
             [cm.qaid for cm in infr.cm_list])
         switch_order = False
 
@@ -185,14 +184,14 @@ class AnnotInfrMatching(object):
 
         for count, cm in enumerate(cm_list):
             score_list = cm.annot_score_list
-            rank_list = ut.argsort(score_list)[::-1]
-            sortx = ut.argsort(rank_list)
+            rank_list = ub.argsort(score_list)[::-1]
+            sortx = ub.argsort(rank_list)
 
             top_sortx = sortx[:ranks_top]
             bot_sortx = sortx[len(sortx) - ranks_bot:]
-            short_sortx = ut.unique(top_sortx + bot_sortx)
+            short_sortx = ub.unique(top_sortx + bot_sortx)
 
-            daid_list = ut.take(cm.daid_list, short_sortx)
+            daid_list = list(ub.take(cm.daid_list, short_sortx))
             for daid in daid_list:
                 u, v = (cm.qaid, daid)
                 if v < u:
@@ -234,24 +233,24 @@ class AnnotInfrMatching(object):
         aid_pairs = []
         dnids = qreq_.get_qreq_annot_nids(qreq_.daids)
         # dnids = qreq_.get_qreq_annot_nids(qreq_.daids)
-        rng = ut.ensure_rng(rng)
-        for cm in ut.ProgIter(cm_list, lbl='building pairs'):
+        rng = util.ensure_rng(rng)
+        for cm in ub.ProgIter(cm_list, desc='building pairs'):
             all_gt_aids = cm.get_top_gt_aids(ibs)
             all_gf_aids = cm.get_top_gf_aids(ibs)
-            gt_aids = ut.take_percentile_parts(all_gt_aids, top_gt, mid_gt,
+            gt_aids = util.take_percentile_parts(all_gt_aids, top_gt, mid_gt,
                                                bot_gt)
-            gf_aids = ut.take_percentile_parts(all_gf_aids, top_gf, mid_gf,
+            gf_aids = util.take_percentile_parts(all_gf_aids, top_gf, mid_gf,
                                                bot_gf)
             # get unscored examples
             unscored_gt_aids = [aid for aid in qreq_.daids[cm.qnid == dnids]
                                 if aid not in cm.daid2_idx]
-            rand_gt_aids = ut.random_sample(unscored_gt_aids, rand_gt, rng=rng)
+            rand_gt_aids = util.random_sample(unscored_gt_aids, rand_gt, rng=rng)
             # gf_aids = cm.get_groundfalse_daids()
             _gf_aids = qreq_.daids[cm.qnid != dnids]
             _gf_aids = qreq_.daids.compress(cm.qnid != dnids)
             # gf_aids = ibs.get_annot_groundfalse(cm.qaid, daid_list=qreq_.daids)
-            rand_gf_aids = ut.random_sample(_gf_aids, rand_gf, rng=rng).tolist()
-            chosen_daids = ut.unique(gt_aids + gf_aids + rand_gf_aids +
+            rand_gf_aids = util.random_sample(_gf_aids, rand_gf, rng=rng).tolist()
+            chosen_daids = ub.unique(gt_aids + gf_aids + rand_gf_aids +
                                      rand_gt_aids)
             aid_pairs.extend([(cm.qaid, aid) for aid in chosen_daids if cm.qaid != aid])
 
@@ -259,7 +258,7 @@ class AnnotInfrMatching(object):
 
     def _get_cm_agg_aid_ranking(infr, cc):
         aid_to_cm = {cm.qaid: cm for cm in infr.cm_list}
-        all_scores = ut.ddict(list)
+        all_scores = ub.ddict(list)
         for qaid in cc:
             cm = aid_to_cm[qaid]
             # should we be doing nids?
@@ -268,7 +267,7 @@ class AnnotInfrMatching(object):
 
         max_scores = sorted((max(scores), aid)
                             for aid, scores in all_scores.items())[::-1]
-        ranked_aids = ut.take_column(max_scores, 1)
+        ranked_aids = util.take_column(max_scores, 1)
         return ranked_aids
 
     def _get_cm_edge_data(infr, edges, cm_list=None):
@@ -277,7 +276,7 @@ class AnnotInfrMatching(object):
         if cm_list is None:
             cm_list = infr.cm_list
         # Find scores for the edges that exist in the graph
-        edge_to_data = ut.ddict(dict)
+        edge_to_data = ub.ddict(dict)
         aid_to_cm = {cm.qaid: cm for cm in cm_list}
         for u, v in edges:
             if symmetric:
@@ -286,7 +285,7 @@ class AnnotInfrMatching(object):
             cm2 = aid_to_cm.get(v, None)
             scores = []
             ranks = []
-            for cm in ut.filter_Nones([cm1, cm2]):
+            for cm in util.filter_Nones([cm1, cm2]):
                 for aid in [u, v]:
                     idx = cm.daid2_idx.get(aid, None)
                     if idx is None:
@@ -300,7 +299,7 @@ class AnnotInfrMatching(object):
                 rank = None
             else:
                 # Choose whichever one gave the best score
-                idx = vt.safe_argmax(scores, nans=False)
+                idx = util.safe_argmax(scores, nans=False)
                 score = scores[idx]
                 rank = ranks[idx]
             edge_to_data[(u, v)]['score'] = score
@@ -334,25 +333,25 @@ class AnnotInfrMatching(object):
         edge_to_data = infr._get_cm_edge_data(edges)
 
         # Remove existing attrs
-        ut.nx_delete_edge_attr(infr.graph, 'score')
-        ut.nx_delete_edge_attr(infr.graph, 'rank')
-        ut.nx_delete_edge_attr(infr.graph, 'normscore')
+        util.nx_delete_edge_attr(infr.graph, 'score')
+        util.nx_delete_edge_attr(infr.graph, 'rank')
+        util.nx_delete_edge_attr(infr.graph, 'normscore')
 
         edges = list(edge_to_data.keys())
-        edge_scores = list(ut.take_column(edge_to_data.values(), 'score'))
-        edge_scores = ut.replace_nones(edge_scores, np.nan)
+        edge_scores = list(util.take_column(edge_to_data.values(), 'score'))
+        edge_scores = util.replace_nones(edge_scores, np.nan)
         edge_scores = np.array(edge_scores)
-        edge_ranks = np.array(ut.take_column(edge_to_data.values(), 'rank'))
+        edge_ranks = np.array(util.take_column(edge_to_data.values(), 'rank'))
         # take the inf-norm
-        normscores = edge_scores / vt.safe_max(edge_scores, nans=False)
+        normscores = edge_scores / util.safe_max(edge_scores, nans=False)
 
         # Add new attrs
-        infr.set_edge_attrs('score', ut.dzip(edges, edge_scores))
-        infr.set_edge_attrs('rank', ut.dzip(edges, edge_ranks))
+        infr.set_edge_attrs('score', ub.dzip(edges, edge_scores))
+        infr.set_edge_attrs('rank', ub.dzip(edges, edge_ranks))
 
         # Hack away zero probabilites
         # probs = np.vstack([p_nomatch, p_match, p_notcomp]).T + 1e-9
-        # probs = vt.normalize(probs, axis=1, ord=1, out=probs)
+        # probs = util.normalize(probs, axis=1, ord=1, out=probs)
         # entropy = -(np.log2(probs) * probs).sum(axis=1)
         infr.set_edge_attrs('normscore', dict(zip(edges, normscores)))
 
@@ -433,10 +432,11 @@ class InfrLearning(object):
 
     def load_latest_classifiers(infr, dpath):
         from ibeis.algo.verif import deploy
+        import pickle
         task_clf_fpaths = deploy.Deployer(dpath).find_latest_local()
         classifiers = {}
         for task_key, fpath in task_clf_fpaths.items():
-            clf_info = ut.load_data(fpath)
+            clf_info = pickle.load(open(fpath, 'rb'))
             assert clf_info['metadata']['task_key'] == task_key, (
                 'bad saved clf at fpath={}'.format(fpath))
             classifiers[task_key] = clf_info
@@ -446,8 +446,8 @@ class InfrLearning(object):
     def photobomb_samples(infr):
         edges = list(infr.edges())
         tags_list = list(infr.gen_edge_values('tags', edges=edges, default=[]))
-        flags = ut.filterflags_general_tags(tags_list, has_any=['photobomb'])
-        pb_edges = ut.compress(edges, flags)
+        flags = util.filterflags_general_tags(tags_list, has_any=['photobomb'])
+        pb_edges = list(ub.compress(edges, flags))
         return pb_edges
 
 
@@ -536,9 +536,9 @@ class _RedundancyAugmentation(object):
             except Exception:
                 pass
             rng = np.random.RandomState(seed)
-            cc1 = ut.shuffle(list(cc1), rng=rng)
-            cc2 = ut.shuffle(list(cc2), rng=rng)
-            cc1 = ut.shuffle(list(cc1), rng=rng)
+            cc1 = util.shuffle(list(cc1), rng=rng)
+            cc2 = util.shuffle(list(cc2), rng=rng)
+            cc1 = util.shuffle(list(cc1), rng=rng)
             for edge in it.starmap(nxu.e_, nxu.diag_product(cc1, cc2)):
                 if edge not in existing_edges:
                     num += 1
@@ -570,7 +570,7 @@ class _RedundancyAugmentation(object):
         if not check_edges:
             # Allow new edges to be introduced
             full_sub = infr.graph.subgraph(pcc).copy()
-            new_avail = ut.estarmap(infr.e_, nx.complement(full_sub).edges())
+            new_avail = util.estarmap(infr.e_, nx.complement(full_sub).edges())
             full_avail = unrev_avail + new_avail
             n_max = (len(pos_sub) * (len(pos_sub) - 1)) // 2
             n_complement = n_max - pos_sub.number_of_edges()
@@ -597,7 +597,7 @@ class _RedundancyAugmentation(object):
             >>> infr.add_feedback((1, 5), 'notcomp')
             >>> infr.params['redun.pos'] = 2
             >>> candidate_edges = list(infr.find_pos_redun_candidate_edges())
-            >>> result = ('candidate_edges = ' + ut.repr2(candidate_edges))
+            >>> result = ('candidate_edges = ' + ub.repr2(candidate_edges))
             >>> print(result)
             candidate_edges = [(1, 3), (7, 10)]
         """
@@ -606,7 +606,7 @@ class _RedundancyAugmentation(object):
             k = infr.params['redun.pos']
         # infr.find_non_pos_redundant_pccs(k=k, relax=True)
         pcc_gen = list(infr.positive_components())
-        prog = ut.ProgIter(pcc_gen, enabled=verbose, freq=1, adjust=False)
+        prog = ub.ProgIter(pcc_gen, enabled=verbose, freq=1, adjust=False)
         for pcc in prog:
             if not infr.is_pos_redundant(pcc, k=k, relax=True,
                                          assume_connected=True):
@@ -744,7 +744,7 @@ class CandidateSearch(_RedundancyAugmentation):
         need_flags = [e not in match_task for e in edges]
 
         if any(need_flags):
-            need_edges = ut.compress(edges, need_flags)
+            need_edges = list(ub.compress(edges, need_flags))
             infr.print('There are {} edges without probabilities'.format(
                     len(need_edges)), 1)
 
@@ -802,7 +802,7 @@ class CandidateSearch(_RedundancyAugmentation):
 
             # Read match_probs into a DataFrame
             primary_probs = pd.DataFrame(
-                ut.take(match_probs, priority_edges),
+                list(ub.take(match_probs, priority_edges)),
                 index=nxu.ensure_multi_index(priority_edges, ('aid1', 'aid2'))
             )
 
@@ -861,7 +861,7 @@ class CandidateSearch(_RedundancyAugmentation):
             metric = 'random'
             priority = np.zeros(len(priority_edges)) + 1e-6
 
-        infr.set_edge_attrs(metric, ut.dzip(priority_edges, priority))
+        infr.set_edge_attrs(metric, ub.dzip(priority_edges, priority))
         return metric, priority
 
     def ensure_prioritized(infr, priority_edges):
@@ -907,7 +907,7 @@ class CandidateSearch(_RedundancyAugmentation):
             candidate_edges = infr.find_lnbnn_candidate_edges()
         elif hasattr(infr, 'dummy_verif'):
             infr.print('Searching for dummy candidates')
-            infr.print('dummy vsone params =' + ut.repr4(
+            infr.print('dummy vsone params =' + ub.repr2(
                 infr.dummy_verif.dummy_params, nl=1, si=True))
             ranks_top = infr.params['ranking.ntop']
             candidate_edges = infr.dummy_verif.find_candidate_edges(K=ranks_top)
@@ -929,7 +929,6 @@ class CandidateSearch(_RedundancyAugmentation):
         task_keys = list(infr.verifiers.keys())
         task_probs = {}
         # infr.print('[make_taks_probs] predict {} for {} edges'.format(
-        #     ut.conj_phrase(task_keys, 'and'), len(edges)))
         for task_key in task_keys:
             infr.print('predict {} for {} edges'.format(
                 task_key, len(edges)))
@@ -941,11 +940,11 @@ class CandidateSearch(_RedundancyAugmentation):
     def _make_lnbnn_scores(infr, edges):
         edge_to_data = infr._get_cm_edge_data(edges)
         edges = list(edge_to_data.keys())
-        edge_scores = list(ut.take_column(edge_to_data.values(), 'score'))
-        edge_scores = ut.replace_nones(edge_scores, np.nan)
+        edge_scores = list(util.take_column(edge_to_data.values(), 'score'))
+        edge_scores = util.replace_nones(edge_scores, np.nan)
         edge_scores = np.array(edge_scores)
         # take the inf-norm
-        normscores = edge_scores / vt.safe_max(edge_scores, nans=False)
+        normscores = edge_scores / util.safe_max(edge_scores, nans=False)
         return normscores
 
 

@@ -2,8 +2,9 @@ import six
 import numpy as np
 import utool as ut
 import networkx as nx
+from graphid import util
 from graphid.internal import state as const
-from graphid.internal import nx_utils as nxu
+from graphid.util import nx_utils as nxu
 from graphid.internal.state import (POSTV, NEGTV)
 from graphid.internal.state import (SAME, DIFF, NULL)  # NOQA
 
@@ -115,7 +116,7 @@ class Priority(object):
             >>> infr.add_feedback(edge2, NEGTV)
             >>> num_new = infr.prioritize(reset=True)
             >>> order = infr._peek_many(np.inf)
-            >>> scores = ut.take_column(order, 1)
+            >>> scores = util.take_column(order, 1)
             >>> assert scores[0] > 10
             >>> assert len(scores) == num_new, 'should prioritize two hypotheis edges'
             >>> unrev_edges = set(infr.unreviewed_graph.edges())
@@ -124,7 +125,7 @@ class Priority(object):
             >>> edges.update(list(err_edges)[0:2])
             >>> num_new = infr.prioritize(edges=edges, reset=True)
             >>> order2 = infr._peek_many(np.inf)
-            >>> scores2 = np.array(ut.take_column(order2, 1))
+            >>> scores2 = np.array(util.take_column(order2, 1))
             >>> assert np.all(scores2[0:2] > 10)
             >>> assert np.all(scores2[2:] < 10)
 
@@ -143,7 +144,7 @@ class Priority(object):
             print(ub.repr2(infr.status()))
         """
         if reset or infr.queue is None:
-            infr.queue = ut.PriorityQueue()
+            infr.queue = util.PriorityQueue()
         low = 1e-9
         if metric is None:
             metric = 'prob_match'
@@ -172,8 +173,8 @@ class Priority(object):
                 extra_scores = np.array(pgen)
                 extra_scores[np.isnan(extra_scores)] = low
 
-                scores = ut.aslist(scores) + ut.aslist(extra_scores)
-            edges = ut.aslist(edges) + extra_edges
+                scores = util.aslist(scores) + util.aslist(extra_scores)
+            edges = util.aslist(edges) + extra_edges
 
         # Ensure edges are in some arbitrary order
         edges = list(edges)
@@ -338,9 +339,8 @@ class Priority(object):
             conf_int = const.CONFIDENCE.CODE_TO_INT[conf]
             conf_int = 0 if conf_int is None else conf_int
             return conf_int >= thresh
-        for node in ut.bfs_conditional(infr.graph, u,
-                                       yield_if=satisfied,
-                                       continue_if=satisfied):
+        for node in util.bfs_conditional(infr.graph, u, yield_if=satisfied,
+                                         continue_if=satisfied):
             if node == v:
                 return True
         return False

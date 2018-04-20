@@ -5,10 +5,9 @@ import ubelt as ub
 import pandas as pd
 import itertools as it
 import graphid.internal.state as const
+from graphid import util
 from graphid.internal.state import (POSTV, NEGTV, INCMP, NULL)
 from graphid.internal.refresh import RefreshCriteria
-
-import utool as ut
 
 
 class InfrLoops(object):
@@ -78,7 +77,7 @@ class InfrLoops(object):
             # quick startup. Yield a bunch of random edges
             num = infr.params['manual.n_peek']
             user_request = []
-            for edge in ut.random_combinations(infr.aids, 2, num=num):
+            for edge in util.random_combinations(infr.aids, 2, num=num):
                 user_request += [infr._make_review_tuple(edge, None)]
                 yield user_request
 
@@ -188,7 +187,7 @@ class InfrLoops(object):
         # CONFIDENCE = const.CONFIDENCE
         # CODE_TO_INT = CONFIDENCE.CODE_TO_INT.copy()
         # CODE_TO_INT[CONFIDENCE.CODE.UNKNOWN] = 0
-        # conf = ut.take(CODE_TO_INT, infr.gen_edge_values(
+        # conf = ub.take(CODE_TO_INT, infr.gen_edge_values(
         #     'confidence', edges, on_missing='default',
         #     default=CONFIDENCE.CODE.UNKNOWN))
 

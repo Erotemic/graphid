@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 import ubelt as ub
-import utool as ut
 import numpy as np
-import vtool as vt
 import pandas as pd
+from graphid import util
 from graphid.util.nx_utils import ensure_multi_index
 from graphid.internal.state import POSTV, NEGTV, INCMP
 
@@ -29,7 +28,7 @@ class Groundtruth(object):
     def is_same(infr, aid_pairs):
         if infr.ibs is not None:
             return infr.ibeis_is_same(aid_pairs)
-        node_dict = ut.nx_node_dict(infr.graph)
+        node_dict = infr.graph.nodes
         nid1 = [node_dict[n1]['orig_name_label']
                 for n1, n2 in aid_pairs]
         nid2 = [node_dict[n2]['orig_name_label']
@@ -48,7 +47,7 @@ class Groundtruth(object):
         """ Returns groundtruth state based on ibeis controller """
         index = ensure_multi_index(index, ('aid1', 'aid2'))
         aid_pairs = np.asarray(index.tolist())
-        aid_pairs = vt.ensure_shape(aid_pairs, (None, 2))
+        aid_pairs = util.ensure_shape(aid_pairs, (None, 2))
         is_same = infr.is_same(aid_pairs)
         is_comp = infr.is_comparable(aid_pairs)
         match_state_df = pd.DataFrame.from_items([
@@ -84,11 +83,11 @@ class Groundtruth(object):
             index = edges
         else:
             if edges is None:
-                edges_ = ut.take_column(edge_states, 0)
+                edges_ = util.take_column(edge_states, 0)
             else:
-                edges_ = list(map(tuple, ut.aslist(edges)))
+                edges_ = list(map(tuple, util.aslist(edges)))
             index = pd.MultiIndex.from_tuples(edges_, names=('aid1', 'aid2'))
-        records = ut.itake_column(edge_states, 1)
+        records = util.itake_column(edge_states, 1)
         edge_df = pd.Series.from_array(records)
         edge_df.name = key
         edge_df.index = index

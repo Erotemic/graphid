@@ -1,5 +1,6 @@
 import ubelt as ub
 from graphid import util
+from graphid.internal import annot_inference
 
 
 class GraphID(ub.NiceRepr):
@@ -27,6 +28,7 @@ class GraphID(ub.NiceRepr):
 
     def __init__(self):
         self.infr = None
+        self.infr = annot_inference.AnnotInference()
 
     def add_annots_from(self, annots):
         pass
