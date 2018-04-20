@@ -1,21 +1,5 @@
 import ubelt as ub
-
-
-class KWSpec(object):
-    """
-    Safer keyword arguments with keyword specifications.
-    """
-    def __init__(kwspec, spec):
-        kwspec.spec = spec
-        kwspec.spec_set = set(spec)
-
-    def __call__(kwspec, **kwargs):
-        kw = kwspec.spec.copy()
-        unknown_keys = set(kw).difference(kwspec.spec_set)
-        if unknown_keys:
-            raise KeyError('Unknown keys: {}'.format(unknown_keys))
-        kw.update(kwargs)
-        return kw
+from graphid import util
 
 
 class GraphID(ub.NiceRepr):
@@ -97,8 +81,9 @@ class GraphID(ub.NiceRepr):
         Adds the information from a review to the graph for consideration in
         the dynamic inference algorithm.
         """
-        kw = KWSpec(evidence_decision=None, tags=None, user_id=None,
-                    meta_decision=None, confidence=None, timestamp_c1=None,
-                    timestamp_c2=None, timestamp_s1=None, timestamp=None,
-                    verbose=None, priority=None)(**kwargs)
+        kw = util.KWSpec(evidence_decision=None, tags=None, user_id=None,
+                         meta_decision=None, confidence=None,
+                         timestamp_c1=None, timestamp_c2=None,
+                         timestamp_s1=None, timestamp=None, verbose=None,
+                         priority=None)(**kwargs)
         kw

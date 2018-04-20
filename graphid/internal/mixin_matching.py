@@ -1,26 +1,22 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
-import six
 import numpy as np
-import utool as ut
 import pandas as pd
 import itertools as it
 import networkx as nx
+from graphid.util import nx_utils as nxu
+from graphid.util.nx_utils import e_
+from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
+
+import utool as ut
 import vtool as vt
-from os.path import join  # NOQA
-from ibeis.algo.graph import nx_utils as nxu
-from ibeis.algo.graph.nx_utils import e_
-from ibeis.algo.graph.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
-print, rrr, profile = ut.inject2(__name__)
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class AnnotInfrMatching(object):
     """
     Methods for running matching algorithms
     """
 
-    @profile
     def exec_matching(infr, qaids=None, daids=None, prog_hook=None,
                       cfgdict=None, name_method='node'):
         """
@@ -37,7 +33,7 @@ class AnnotInfrMatching(object):
 
     def _make_rankings(infr, qaids=None, daids=None, prog_hook=None,
                        cfgdict=None, name_method='node'):
-        #from ibeis.algo.graph import graph_iden
+        #from graphid.internal import graph_iden
 
         # TODO: expose other ranking algos like SMK
         rank_algo = 'LNBNN'
@@ -105,11 +101,11 @@ class AnnotInfrMatching(object):
             prog_hook (None): (default = None)
 
         CommandLine:
-            python -m ibeis.algo.graph.core exec_vsone_subset
+            python -m graphid.internal.core exec_vsone_subset
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.core import *  # NOQA
             >>> infr = testdata_infr('testdb1')
             >>> infr.ensure_full()
             >>> edges = [(1, 2), (2, 3)]
@@ -157,7 +153,6 @@ class AnnotInfrMatching(object):
                 raise KeyError('No ChipMatch for edge (%r, %r)' % (aid1, aid2))
         return cm, aid1, aid2
 
-    @profile
     def apply_match_edges(infr, review_cfg={}):
         """
         Adds results from one-vs-many rankings as edges in the graph
@@ -174,7 +169,7 @@ class AnnotInfrMatching(object):
 
     def _cm_breaking(infr, cm_list=None, review_cfg={}):
         """
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.core import *  # NOQA
             >>> review_cfg = {}
         """
         if cm_list is None:
@@ -212,11 +207,11 @@ class AnnotInfrMatching(object):
         Constructs training data for a pairwise classifier
 
         CommandLine:
-            python -m ibeis.algo.graph.core _cm_training_pairs
+            python -m graphid.internal.core _cm_training_pairs
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.core import *  # NOQA
             >>> infr = testdata_infr('PZ_MTEST')
             >>> infr.exec_matching(cfgdict={
             >>>     'can_match_samename': True,
@@ -225,7 +220,7 @@ class AnnotInfrMatching(object):
             >>>     'prescore_method': 'csum',
             >>>     'score_method': 'csum'
             >>> })
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.core import *  # NOQA
             >>> exec(ut.execstr_funckw(infr._cm_training_pairs))
             >>> rng = np.random.RandomState(42)
             >>> aid_pairs = np.array(infr._cm_training_pairs(rng=rng))
@@ -312,7 +307,6 @@ class AnnotInfrMatching(object):
             edge_to_data[(u, v)]['rank'] = rank
         return edge_to_data
 
-    @profile
     def apply_match_scores(infr):
         """
 
@@ -321,11 +315,11 @@ class AnnotInfrMatching(object):
         this.
 
         CommandLine:
-            python -m ibeis.algo.graph.core apply_match_scores --show
+            python -m graphid.internal.core apply_match_scores --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.core import *  # NOQA
             >>> infr = testdata_infr('PZ_MTEST')
             >>> infr.exec_matching()
             >>> infr.apply_match_edges()
@@ -402,7 +396,7 @@ class InfrLearning(object):
         verifier error cases and groundtruth errors.
 
         CommandLine:
-            python -m ibeis.algo.graph.mixin_matching learn_evaluation_verifiers
+            python -m graphid.internal.mixin_matching learn_evaluation_verifiers
 
         Doctest:
             >>> import ibeis
@@ -499,7 +493,7 @@ class _RedundancyAugmentation(object):
             k (int): redundnacy level (if None uses infr.params['redun.neg'])
 
         Example:
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> k = 2
             >>> cc1, cc2 = {1}, {2, 3}
             >>> # --- return an augmentation if feasible
@@ -591,14 +585,13 @@ class _RedundancyAugmentation(object):
         check_edges = set(it.starmap(e_, check_edges))
         return check_edges
 
-    @profile
     def find_pos_redun_candidate_edges(infr, k=None, verbose=False):
         r"""
         Searches for augmenting edges that would make PCCs k-positive redundant
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_matching import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_matching import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(ccs=[(1, 2, 3, 4, 5), (7, 8, 9, 10)])
             >>> infr.add_feedback((2, 5), 'match')
             >>> infr.add_feedback((1, 5), 'notcomp')
@@ -620,15 +613,14 @@ class _RedundancyAugmentation(object):
                 for edge in infr.find_pos_augment_edges(pcc, k=k):
                     yield nxu.e_(*edge)
 
-    @profile
     def find_neg_redun_candidate_edges(infr, k=None):
         """
         Get pairs of PCCs that are not complete.
         Finds edges that might complete them.
 
         Example:
-            >>> from ibeis.algo.graph.mixin_matching import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_matching import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(ccs=[(1,), (2,), (3,)], ignore_pair=True)
             >>> edges = list(infr.find_neg_redun_candidate_edges())
             >>> assert len(edges) == 3, 'all should be needed here'
@@ -636,7 +628,7 @@ class _RedundancyAugmentation(object):
             >>> assert len(list(infr.find_neg_redun_candidate_edges())) == 0
 
         Example:
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(pcc_sizes=[3] * 20, ignore_pair=True)
             >>> ccs = list(infr.positive_components())
             >>> gen = infr.find_neg_redun_candidate_edges(k=2)
@@ -672,13 +664,12 @@ class _RedundancyAugmentation(object):
 
 class CandidateSearch(_RedundancyAugmentation):
     """ Search for candidate edges """
-    @profile
     def find_lnbnn_candidate_edges(infr):
         """
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_mtest_infr()
             >>> cand_edges = infr.find_lnbnn_candidate_edges()
             >>> assert len(cand_edges) > 200
@@ -719,10 +710,10 @@ class CandidateSearch(_RedundancyAugmentation):
         (Currently only the primary task is actually ensured)
 
         CommandLine:
-            python -m ibeis.algo.graph.mixin_matching ensure_task_probs
+            python -m graphid.internal.mixin_matching ensure_task_probs
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_matching import *
+            >>> from graphid.internal.mixin_matching import *
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids='all',
             >>>                             autoinit='staging')
@@ -735,8 +726,8 @@ class CandidateSearch(_RedundancyAugmentation):
             >>> assert len(infr.task_probs['match_state']) == 3
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_matching import *
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_matching import *
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=6, p_incon=.5, size_std=2)
             >>> edges = list(infr.edges())
             >>> infr.ensure_task_probs(edges)
@@ -771,7 +762,6 @@ class CandidateSearch(_RedundancyAugmentation):
                 # Set edge task attribute as well
                 infr.set_edge_attrs(task, probs_dict)
 
-    @profile
     def ensure_priority_scores(infr, priority_edges):
         """
         Ensures that priority attributes are assigned to the edges.
@@ -795,7 +785,7 @@ class CandidateSearch(_RedundancyAugmentation):
             >>> infr.ensure_priority_scores(priority_edges)
 
         Doctest:
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=6, p_incon=.5, size_std=2)
             >>> edges = list(infr.edges())
             >>> infr.ensure_priority_scores(edges)
@@ -879,7 +869,6 @@ class CandidateSearch(_RedundancyAugmentation):
         metric, priority = infr.ensure_priority_scores(priority_edges)
         infr.prioritize(metric=metric, edges=priority_edges, scores=priority)
 
-    @profile
     def add_candidate_edges(infr, candidate_edges):
         candidate_edges = list(candidate_edges)
         new_edges = infr.ensure_edges_from(candidate_edges)
@@ -906,7 +895,6 @@ class CandidateSearch(_RedundancyAugmentation):
                 infr.on_new_candidate_edges(infr, new_edges)
         return len(priority_edges)
 
-    @profile
     def refresh_candidate_edges(infr):
         """
         Search for candidate edges.
@@ -929,7 +917,6 @@ class CandidateSearch(_RedundancyAugmentation):
         infr.add_candidate_edges(candidate_edges)
         infr.assert_consistency_invariant()
 
-    @profile
     def _make_task_probs(infr, edges):
         """
         Predict edge probs for each pairwise classifier task
@@ -951,7 +938,6 @@ class CandidateSearch(_RedundancyAugmentation):
             task_probs[task_key] = probs_df
         return task_probs
 
-    @profile
     def _make_lnbnn_scores(infr, edges):
         edge_to_data = infr._get_cm_edge_data(edges)
         edges = list(edge_to_data.keys())
@@ -964,12 +950,9 @@ class CandidateSearch(_RedundancyAugmentation):
 
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.mixin_matching
-        python -m ibeis.algo.graph.mixin_matching --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/mixin_matching.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

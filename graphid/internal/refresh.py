@@ -2,8 +2,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import utool as ut
-from ibeis.algo.graph.state import (POSTV, NEGTV, INCMP, UNREV, NULL)  # NOQA
-print, rrr, profile = ut.inject2(__name__)
+import ubelt as ub
+import scipy as sp
+from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, NULL)  # NOQA
 
 
 class RefreshCriteria(object):
@@ -50,7 +51,6 @@ class RefreshCriteria(object):
         return prob_event_in_range
 
     def _prob_none_remain(refresh, n_remain_edges=None):
-        import scipy as sp
 
         def poisson_prob_exactly_k_events(k, lam):
             return np.exp(-lam) * (lam ** k) / sp.math.factorial(k)
@@ -90,8 +90,8 @@ class RefreshCriteria(object):
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.refresh import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.refresh import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=50, size=4, size_std=2)
             >>> edges = list(infr.dummy_verif.find_candidate_edges(K=100))
             >>> #edges = ut.shuffle(sorted(edges), rng=321)
@@ -156,8 +156,8 @@ class RefreshCriteria(object):
     def ave(refresh, method='exp'):
         """
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.refresh import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.refresh import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=40, size=4, size_std=2, ignore_pair=True)
             >>> edges = list(infr.dummy_verif.find_candidate_edges(K=100))
             >>> scores = np.array(infr.dummy_verif.predict_edges(edges))
@@ -207,16 +207,16 @@ class RefreshCriteria(object):
 def demo_refresh():
     r"""
     CommandLine:
-        python -m ibeis.algo.graph.refresh demo_refresh \
+        python -m graphid.internal.refresh demo_refresh \
                 --num_pccs=40 --size=2 --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.refresh import *  # NOQA
+        >>> from graphid.internal.refresh import *  # NOQA
         >>> demo_refresh()
         >>> ut.show_if_requested()
     """
-    from ibeis.algo.graph import demo
+    from graphid.internal import demo
     demokw = ut.argparse_dict({'num_pccs': 50, 'size': 4})
     refreshkw = ut.argparse_funckw(RefreshCriteria)
     # make an inference object
@@ -224,7 +224,7 @@ def demo_refresh():
     edges = list(infr.dummy_verif.find_candidate_edges(K=100))
     scores = np.array(infr.dummy_verif.predict_edges(edges))
     sortx = scores.argsort()[::-1]
-    edges = ut.take(edges, sortx)
+    edges = list(ub.take(edges, sortx))
     scores = scores[sortx]
     ys = infr.match_state_df(edges)[POSTV].values
     y_remainsum = ys[::-1].cumsum()[::-1]
@@ -241,7 +241,7 @@ def demo_refresh():
         if refresh.check():
             break
     xdata = xdata
-    ydatas = ut.odict([
+    ydatas = ub.odict([
         ('Est. probability any remain', pprob_any),
         ('Fraction remaining', rfrac_any),
     ])
@@ -292,7 +292,6 @@ def _dev_iters_until_threshold():
     paramter (how far we look ahead) to how far we actually are willing to go.
     """
     import numpy as np
-    import utool as ut
     import sympy as sym
     i = sym.symbols('i', integer=True, nonnegative=True, finite=True)
     # mu_i = sym.symbols('mu_i', integer=True, nonnegative=True, finite=True)
@@ -386,7 +385,7 @@ def _dev_iters_until_threshold():
 
     import plottool as pt
     SA_coords = list(zip(S.ravel(), A.ravel()))
-    for sval, aval in ut.ProgIter(SA_coords):
+    for sval, aval in ub.ProgIter(SA_coords):
         if (sval, aval) not in poisson_cache:
             poisson_cache[(sval, aval)] = float(poisson_thresh.subs({a: aval, s: sval}).evalf())
     poisson_zdata = np.array(
@@ -402,7 +401,7 @@ def _dev_iters_until_threshold():
     fig.set_size_inches(10, 6)
     fig.savefig('a-s-t-poisson3d.png', dpi=300, bbox_inches=pt.extract_axes_extents(fig, combine=True))
 
-    for sval, aval in ut.ProgIter(SA_coords):
+    for sval, aval in ub.ProgIter(SA_coords):
         if (sval, aval) not in binom_cache:
             binom_cache[(sval, aval)] = float(binom_thresh.subs({a: aval, s: sval}).evalf())
     binom_zdata = np.array(
@@ -468,9 +467,9 @@ def _dev_iters_until_threshold():
     svals = np.arange(1, 100)
 
     target_poisson_plots = {}
-    for target in ut.ProgIter(thresh_vals, bs=False, freq=1):
+    for target in ub.ProgIter(thresh_vals, backspace=False, freq=1):
         poisson_avals = []
-        for sval in ut.ProgIter(svals, 'poisson', freq=1):
+        for sval in ub.ProgIter(svals, desc='poisson', freq=1):
             expr = poisson_thresh
             fixed = {s: sval}
             want = a
@@ -490,9 +489,9 @@ def _dev_iters_until_threshold():
     fig.savefig('a-vs-s-poisson.png', dpi=300, bbox_inches=pt.extract_axes_extents(fig, combine=True))
 
     target_binom_plots = {}
-    for target in ut.ProgIter(thresh_vals, bs=False, freq=1):
+    for target in ub.ProgIter(thresh_vals, backspace=False, freq=1):
         binom_avals = []
-        for sval in ut.ProgIter(svals, 'binom', freq=1):
+        for sval in ub.ProgIter(svals, desc='binom', freq=1):
             aval = solve_numeric(binom_thresh, target, a, {s: sval}, method='Nelder-Mead').x[0]
             binom_avals.append(aval)
         target_binom_plots[target] = (svals, binom_avals)
@@ -585,12 +584,9 @@ def _dev_iters_until_threshold():
 
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.refresh
-        python -m ibeis.algo.graph.refresh --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/refresh.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

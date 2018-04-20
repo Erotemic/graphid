@@ -5,10 +5,10 @@ TODO: separate out the tests and make this file just generate the demo data
 from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
 import numpy as np
+from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV
+from graphid.internal.state import SAME, DIFF, NULL  # NOQA
 import utool as ut
-from ibeis.algo.graph.state import POSTV, NEGTV, INCMP, UNREV
-from ibeis.algo.graph.state import SAME, DIFF, NULL  # NOQA
-print, rrr, profile = ut.inject2(__name__)
+import ubelt as ub
 
 
 def make_dummy_infr(annots_per_name):
@@ -27,7 +27,7 @@ def demodata_mtest_infr(state='empty'):
     annots = ibs.annots()
     names = list(annots.group_items(annots.nids).values())
     ut.shuffle(names, rng=321)
-    test_aids = ut.flatten(names[1::2])
+    test_aids = list(ub.flatten(names[1::2]))
     infr = ibeis.AnnotInference(ibs, test_aids, autoinit=True)
     infr.reset(state=state)
     return infr
@@ -49,7 +49,7 @@ def demodata_infr2(defaultdb='PZ_MTEST'):
         c: dummy_phi(c, 30)
         for c in range(1, 4)
     }
-    aids = ut.flatten(names)
+    aids = list(ub.flatten(names))
     infr = ibeis.AnnotInference(ibs, aids, autoinit=True)
     infr.init_termination_criteria(phis)
     infr.init_refresh_criteria()
@@ -57,7 +57,7 @@ def demodata_infr2(defaultdb='PZ_MTEST'):
     # Partially review
     n1, n2, n3, n4 = names[0:4]
     for name in names[4:]:
-        for a, b in ut.itertwo(name.aids):
+        for a, b in ub.iter_window(name.aids, 2):
             infr.add_feedback((a, b), POSTV)
 
     for name1, name2 in it.combinations(names[4:], 2):
@@ -68,12 +68,12 @@ def demodata_infr2(defaultdb='PZ_MTEST'):
 def demo2():
     """
     CommandLine:
-        python -m ibeis.algo.graph.demo demo2 --viz
-        python -m ibeis.algo.graph.demo demo2
+        python -m graphid.internal.demo demo2 --viz
+        python -m graphid.internal.demo demo2
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis.algo.graph.demo import *  # NOQA
+        >>> from graphid.internal.demo import *  # NOQA
         >>> result = demo2()
         >>> print(result)
     """
@@ -96,7 +96,7 @@ def demo2():
 
     # --- draw params
 
-    VISUALIZE = ut.get_argflag('--viz')
+    VISUALIZE = ub.argflag('--viz')
     # QUIT_OR_EMEBED = 'embed'
     QUIT_OR_EMEBED = 'quit'
     TARGET_REVIEW = ut.get_argval('--target', type_=int, default=None)
@@ -123,7 +123,7 @@ def demo2():
 
     # infr_gt = infr.copy()
 
-    dpath = ut.ensuredir(ut.truepath('~/Desktop/demo'))
+    dpath = ub.ensuredir(ub.truepath('~/Desktop/demo'))
     ut.remove_files_in_dir(dpath)
 
     fig_counter = it.count(0)
@@ -158,7 +158,7 @@ def demo2():
         infr_.verbose = verbose
         infr_.show(pickable=True, verbose=0, **showkw)
         infr.verbose = verbose
-        # print('status ' + ut.repr4(infr_.status()))
+        # print('status ' + ub.repr2(infr_.status()))
         # infr.show(**showkw)
         ax = pt.gca()
         pt.set_title(title, fontsize=20)
@@ -214,18 +214,18 @@ def demo2():
         infr.update_visual_attrs(groupby='name_label')
         infr.set_node_attrs('pin', 'true')
         node_dict = ut.nx_node_dict(infr.graph)
-        print(ut.repr4(node_dict[1]))
+        print(ub.repr2(node_dict[1]))
 
     if VISUALIZE:
         infr.latest_logs()
         # Pin Nodes into the target groundtruth position
         show_graph(infr, 'target-gt')
 
-    print(ut.repr4(infr.status()))
+    print(ub.repr2(infr.status()))
     infr.clear_feedback()
     infr.clear_name_labels()
     infr.clear_edges()
-    print(ut.repr4(infr.status()))
+    print(ub.repr2(infr.status()))
     infr.latest_logs()
 
     if VISUALIZE:
@@ -254,7 +254,7 @@ def demo2():
     # _iter2 = list(_iter2)
     # assert len(_iter2) > 0
 
-    # prog = ut.ProgIter(_iter2, label='demo2', bs=False, adjust=False,
+    # prog = ub.ProgIter(_iter2, label='demo2', bs=False, adjust=False,
     #                    enabled=False)
     count = 1
     first = 1
@@ -272,7 +272,7 @@ def demo2():
             break
 
         infr.print(msg)
-        if ut.allsame(infr.pos_graph.node_labels(*edge)) and first:
+        if ub.allsame(infr.pos_graph.node_labels(*edge)) and first:
             # Have oracle make a mistake early
             feedback = infr.request_oracle_review(edge, accuracy=0)
             first -= 1
@@ -285,7 +285,7 @@ def demo2():
         if SHOW_CANDIATE_POP and (VIZ_ALL or AT_TARGET):
             # import utool
             # utool.embed()
-            infr.print(ut.repr2(infr.task_probs['match_state'][edge], precision=4, si=True))
+            infr.print(ub.repr2(infr.task_probs['match_state'][edge], precision=4, si=True))
             infr.print('len(queue) = %r' % (len(infr.queue)))
             # Show edge selection
             infr.print('Oracle will predict: ' + feedback['evidence_decision'])
@@ -305,7 +305,7 @@ def demo2():
             break
         count += 1
 
-    infr.print('status = ' + ut.repr4(infr.status(extended=False)))
+    infr.print('status = ' + ub.repr2(infr.status(extended=False)))
     show_graph(infr, 'post-review (#reviews={})'.format(count), final=True)
 
     # ROUND 2 FIGHT
@@ -314,7 +314,7 @@ def demo2():
     #     infr.params = round2_params
 
     #     _iter2 = enumerate(infr.generate_reviews(**params))
-    #     prog = ut.ProgIter(_iter2, label='round2', bs=False, adjust=False,
+    #     prog = ub.ProgIter(_iter2, label='round2', bs=False, adjust=False,
     #                        enabled=False)
     #     for count, (aid1, aid2) in prog:
     #         msg = 'reviewII #%d' % (count)
@@ -434,19 +434,18 @@ def make_demo_infr(ccs, edges=[], nodes=[], infer=True):
     return infr
 
 
-@profile
 def demodata_infr(**kwargs):
     """
     kwargs = {}
 
     CommandLine:
-        python -m ibeis.algo.graph.demo demodata_infr --show
-        python -m ibeis.algo.graph.demo demodata_infr --num_pccs=25
-        python -m ibeis.algo.graph.demo demodata_infr --profile --num_pccs=100
+        python -m graphid.internal.demo demodata_infr --show
+        python -m graphid.internal.demo demodata_infr --num_pccs=25
+        python -m graphid.internal.demo demodata_infr --profile --num_pccs=100
 
     Example:
-        >>> from ibeis.algo.graph.demo import *  # NOQA
-        >>> from ibeis.algo.graph import demo
+        >>> from graphid.internal.demo import *  # NOQA
+        >>> from graphid.internal import demo
         >>> import networkx as nx
         >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
         >>> kwargs = ut.argparse_dict(kwargs)
@@ -469,9 +468,9 @@ def demodata_infr(**kwargs):
             'ccs': [[1, 2, 3], [4, 5]]
         }
     """
-    import networkx as nx
     import vtool as vt
-    from ibeis.algo.graph import nx_utils
+    import networkx as nx
+    from graphid.internal import nx_utils
 
     def kwalias(*args):
         params = args[0:-1]
@@ -513,8 +512,8 @@ def demodata_infr(**kwargs):
 
     new_ccs = []
     pcc_iter = list(enumerate(pcc_sizes))
-    pcc_iter = ut.ProgIter(pcc_iter, enabled=num_pccs > 20,
-                           label='make pos-demo')
+    pcc_iter = ub.ProgIter(pcc_iter, enabled=num_pccs > 20,
+                           desc='make pos-demo')
     for i, size in pcc_iter:
         p = .1
         want_connectivity = rng.choice(pos_redun)
@@ -565,7 +564,7 @@ def demodata_infr(**kwargs):
                 chosen = rng.choice(incon_idxs, max_n_incon, replace=False)
                 states[np.setdiff1d(incon_idxs, chosen)] = len(probs)
 
-            grouped_edges = ut.group_items(complement_edges, states)
+            grouped_edges = ub.group_items(complement_edges, states)
             for state, edges in grouped_edges.items():
                 truth = POSTV
                 if state == 0:
@@ -617,7 +616,7 @@ def demodata_infr(**kwargs):
             (cc1, cc2)
             for cc1, cc2 in cc_combos if len(cc1) and len(cc2)
         ]
-        for cc1, cc2 in ut.ProgIter(valid_cc_combos, label='make neg-demo'):
+        for cc1, cc2 in ub.ProgIter(valid_cc_combos, desc='make neg-demo'):
             possible_edges = ut.estarmap(nx_utils.e_, it.product(cc1, cc2))
             # probability that any edge between these PCCs is negative
             n_edges = len(possible_edges)
@@ -633,13 +632,13 @@ def demodata_infr(**kwargs):
 
             flags = states < len(pcumsum)
             stateful_states = states.compress(flags)
-            stateful_edges = ut.compress(possible_edges, flags)
+            stateful_edges = list(ub.compress(possible_edges, flags))
 
             unique_states, groupxs_list = vt.group_indices(stateful_states)
             for state, groupxs in zip(unique_states, groupxs_list):
                 # print('state = %r' % (state,))
                 # Add in candidate edges
-                edges = ut.take(stateful_edges, groupxs)
+                edges = list(ub.take(stateful_edges, groupxs))
                 attrs = pair_attrs_lookup[state]
                 for (u, v) in edges:
                     neg_edges.append((u, v, attrs))
@@ -698,12 +697,12 @@ class DummyVerif(object):
     generates dummy scores between edges (not necesarilly in the graph)
 
     CommandLine:
-        python -m ibeis.algo.graph.demo DummyVerif:1
+        python -m graphid.internal.demo DummyVerif:1
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.demo import *  # NOQA
-        >>> from ibeis.algo.graph import demo
+        >>> from graphid.internal.demo import *  # NOQA
+        >>> from graphid.internal import demo
         >>> import networkx as nx
         >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
         >>> infr = demo.demodata_infr(**kwargs)
@@ -723,17 +722,17 @@ class DummyVerif(object):
         verif.infr = infr
         verif.orig_nodes = set(infr.aids)
         verif.orig_labels = infr.get_node_attrs('orig_name_label')
-        verif.orig_groups = ut.invert_dict(verif.orig_labels, False)
-        verif.orig_groups = ut.map_vals(set, verif.orig_groups)
+        verif.orig_groups = ub.invert_dict(verif.orig_labels, False)
+        verif.orig_groups = ub.map_vals(set, verif.orig_groups)
 
     def show_score_probs(verif):
         """
         CommandLine:
-            python -m ibeis.algo.graph.demo DummyVerif.show_score_probs --show
+            python -m graphid.internal.demo DummyVerif.show_score_probs --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.demo import *  # NOQA
+            >>> from graphid.internal.demo import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference(None)
             >>> verif = DummyVerif(infr)
@@ -779,13 +778,13 @@ class DummyVerif(object):
 
         u_edges = [infr.e_(u, v) for v in it.chain.from_iterable(vs_list)]
         u_probs = np.array(infr.dummy_verif.predict_edges(u_edges))
-        # infr.set_edge_attrs('prob_match', ut.dzip(u_edges, u_probs))
+        # infr.set_edge_attrs('prob_match', ub.dzip(u_edges, u_probs))
 
         # Need to determenistically sort here
         # sortx = np.argsort(u_probs)[::-1][0:K]
 
         sortx = np.argsort(u_probs)[::-1][0:K]
-        ranked_edges = ut.take(u_edges, sortx)
+        ranked_edges = list(ub.take(u_edges, sortx))
         # assert len(ranked_edges) == K
         return ranked_edges
 
@@ -793,8 +792,8 @@ class DummyVerif(object):
         """
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.demo import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.demo import *  # NOQA
+            >>> from graphid.internal import demo
             >>> import networkx as nx
             >>> kwargs = dict(num_pccs=40, size=2)
             >>> infr = demo.demodata_infr(**kwargs)
@@ -805,7 +804,7 @@ class DummyVerif(object):
         nodes = list(verif.infr.graph.nodes())
         for u in nodes:
             new_edges.extend(verif.dummy_ranker(u, K=K))
-        # print('new_edges = %r' % (ut.hash_data(new_edges),))
+        # print('new_edges = %r' % (ub.hash_data(new_edges),))
         new_edges = set(new_edges)
         return new_edges
 
@@ -821,12 +820,12 @@ class DummyVerif(object):
     def predict_proba_df(verif, edges):
         """
         CommandLine:
-            python -m ibeis.algo.graph.demo DummyVerif.predict_edges
+            python -m graphid.internal.demo DummyVerif.predict_edges
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.demo import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.demo import *  # NOQA
+            >>> from graphid.internal import demo
             >>> import networkx as nx
             >>> kwargs = dict(num_pccs=40, size=2)
             >>> infr = demo.demodata_infr(**kwargs)
@@ -834,7 +833,7 @@ class DummyVerif(object):
             >>> edges = list(infr.graph.edges())
             >>> probs = verif.predict_proba_df(edges)
             >>> #print('scores = %r' % (scores,))
-            >>> #hashid = ut.hash_data(scores)
+            >>> #hashid = ub.hash_data(scores)
             >>> #print('hashid = %r' % (hashid,))
             >>> #assert hashid == 'cdlkytilfeqgmtsihvhqwffmhczqmpil'
         """
@@ -844,9 +843,9 @@ class DummyVerif(object):
         is_miss = np.array([e not in prob_cache for e in edges])
         # is_hit = ~is_miss
         if np.any(is_miss):
-            miss_edges = ut.compress(edges, is_miss)
+            miss_edges = list(ub.compress(edges, is_miss))
             miss_truths = [verif._get_truth(edge) for edge in miss_edges]
-            grouped_edges = ut.group_items(miss_edges, miss_truths,
+            grouped_edges = ub.group_items(miss_edges, miss_truths,
                                            sorted_=False)
             # Need to make this determenistic too
             states = [POSTV, NEGTV, INCMP]
@@ -858,12 +857,12 @@ class DummyVerif(object):
                 probs1 = verif.rng.rand(len(group)) * (1 - probs0)
                 probs2 = 1 - (probs0 + probs1)
                 for edge, probs in zip(group, zip(probs0, probs1, probs2)):
-                    prob_cache[edge] = ut.dzip(states, probs)
+                    prob_cache[edge] = ub.dzip(states, probs)
 
-        from ibeis.algo.graph import nx_utils as nxu
+        from graphid.internal import nx_utils as nxu
         import pandas as pd
         probs = pd.DataFrame(
-            ut.take(prob_cache, edges),
+            list(ub.take(prob_cache, edges)),
             index=nxu.ensure_multi_index(edges, ('aid1', 'aid2'))
         )
         return probs
@@ -872,16 +871,11 @@ class DummyVerif(object):
         pos_scores = verif.predict_proba_df(edges)[POSTV]
         return pos_scores
 
+
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        ibeis make_qt_graph_interface --show --aids=1,2,3,4,5,6,7 --graph
-        python -m ibeis.algo.graph.demo demo2
-        python -m ibeis.algo.graph.demo
-        python -m ibeis.algo.graph.demo --allexamples
-        python -m ibeis.algo.graph.demo --allexamples --show
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/demo.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

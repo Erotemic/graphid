@@ -4,20 +4,44 @@ TODO: the k-components will soon be implemented in networkx 2.0 use those instea
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
-import utool as ut
 import networkx as nx
 import itertools as it
-import vtool as vt  # NOQA
-# import ibeis.algo.graph.nx_edge_kconnectivity as nx_ec
 from ibeis.algo.graph import nx_edge_augmentation as nx_aug
-from collections import defaultdict
-print, rrr, profile = ut.inject2(__name__)
+import ubelt as ub
+import netharn as nh  # NOQA
 
 
 def _dz(a, b):
     a = a.tolist() if isinstance(a, np.ndarray) else list(a)
     b = b.tolist() if isinstance(b, np.ndarray) else list(b)
-    return ut.dzip(a, b)
+    return ub.dzip(a, b)
+
+
+def list_roll(list_, n):
+    """
+    Like numpy.roll for python lists
+
+    Args:
+        list_ (list):
+        n (int):
+
+    Returns:
+        list:
+
+    References:
+        http://stackoverflow.com/questions/9457832/python-list-rotation
+
+    Example:
+        >>> list_ = [1, 2, 3, 4, 5]
+        >>> n = 2
+        >>> result = list_roll(list_, n)
+        >>> print(result)
+        [4, 5, 1, 2, 3]
+
+    Ignore:
+        np.roll(list_, n)
+    """
+    return list_[-n:] + list_[:-n]
 
 
 def diag_product(s1, s2):
@@ -28,12 +52,12 @@ def diag_product(s1, s2):
         for _ in range(len(s1)):
             for a, b in zip(s1, s2):
                 yield (a, b)
-            s1 = ut.list_roll(s1, 1)
+            s1 = list_roll(s1, 1)
     else:
         for _ in range(len(s2)):
             for a, b in zip(s1, s2):
                 yield (a, b)
-            s2 = ut.list_roll(s2, 1)
+            s2 = list_roll(s2, 1)
 
 
 def e_(u, v):
@@ -70,9 +94,6 @@ def edges_outgoing(graph, nodes):
         nodes (set): set of nodes
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.nx_utils import *  # NOQA
-        >>> import utool as ut
         >>> G = demodata_bridge()
         >>> nodes = {1, 2, 3, 4}
         >>> outgoing = edges_outgoing(G, nodes)
@@ -109,13 +130,7 @@ def edges_between(graph, nodes1, nodes2=None, assume_disjoint=False,
         assume_disjoint (bool): skips expensive check to ensure edges arnt
             returned twice (default=False)
 
-    CommandLine:
-        python -m ibeis.algo.graph.nx_utils --test-edges_between
-
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.nx_utils import *  # NOQA
-        >>> import utool as ut
         >>> edges = [
         >>>     (1, 2), (2, 3), (3, 4), (4, 1), (4, 3),  # cc 1234
         >>>     (1, 5), (7, 2), (5, 1),  # cc 567 / 5678
@@ -310,7 +325,7 @@ def _edges_between_sparse(graph, nodes1, nodes2=None, assume_disjoint=False):
 
 
 def group_name_edges(g, node_to_label):
-    ne_to_edges = defaultdict(set)
+    ne_to_edges = ub.ddict(set)
     for u, v in g.edges():
         name_edge = e_(node_to_label[u], node_to_label[v])
         ne_to_edges[name_edge].add(e_(u, v))
@@ -332,29 +347,24 @@ def demodata_bridge():
     # define 2-connected compoments and bridges
     cc2 = [(1, 2, 4, 3, 1, 4), (8, 9, 10, 8), (11, 12, 13, 11)]
     bridges = [(4, 8), (3, 5), (20, 21), (22, 23, 24)]
-    G = nx.Graph(ut.flatten(ut.itertwo(path) for path in cc2 + bridges))
+    G = nx.Graph(ub.flatten(ub.iter_window(path, 2) for path in cc2 + bridges))
     return G
 
 
 def demodata_tarjan_bridge():
     """
-    CommandLine:
-        python -m ibeis.algo.graph.nx_utils demodata_tarjan_bridge --show
-
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.nx_utils import *  # NOQA
         >>> G = demodata_tarjan_bridge()
-        >>> ut.quit_if_noshow()
+        >>> nh.util.quit_if_noshow()
         >>> import plottool as pt
         >>> pt.show_nx(G)
-        >>> ut.show_if_requested()
+        >>> nh.util.show_if_requested()
     """
     # define 2-connected compoments and bridges
     cc2 = [(1, 2, 4, 3, 1, 4), (5, 6, 7, 5), (8, 9, 10, 8),
              (17, 18, 16, 15, 17), (11, 12, 14, 13, 11, 14)]
     bridges = [(4, 8), (3, 5), (3, 17)]
-    G = nx.Graph(ut.flatten(ut.itertwo(path) for path in cc2 + bridges))
+    G = nx.Graph(ub.flatten(ub.iter_window(path, 2) for path in cc2 + bridges))
     return G
 
 
@@ -397,16 +407,15 @@ def random_k_edge_connected_graph(size, k, p=.1, rng=None):
     Super hacky way of getting a random k-connected graph
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> import plottool as pt
         >>> from ibeis.algo.graph.nx_utils import *  # NOQA
         >>> size, k, p = 25, 3, .1
-        >>> rng = ut.ensure_rng(0)
+        >>> rng = nh.util.ensure_rng(0)
         >>> gs = []
         >>> for x in range(4):
         >>>     G = random_k_edge_connected_graph(size, k, p, rng)
         >>>     gs.append(G)
-        >>> ut.quit_if_noshow()
+        >>> nh.util.quit_if_noshow()
+        >>> import plottool as pt
         >>> pnum_ = pt.make_pnum_nextgen(nRows=2, nSubplots=len(gs))
         >>> fnum = 1
         >>> for g in gs:
@@ -451,12 +460,9 @@ def edge_df(graph, edges, ignore=None):
 
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.nx_utils
-        python -m ibeis.algo.graph.nx_utils --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/util/nx_utils.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

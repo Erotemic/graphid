@@ -16,17 +16,16 @@ TODO:
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-import six
+import ubelt as ub
 import numpy as np
-import utool as ut
-import itertools as it
 import networkx as nx
-from ibeis import constants as const
-from ibeis.algo.graph import nx_utils as nxu
-from ibeis.algo.graph.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN,
+import itertools as it
+from functools import partial
+from graphid.internal import state as const
+from graphid.internal import nx_utils as nxu
+from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN,
                                     UNINFERABLE)
-from ibeis.algo.graph.state import (SAME, DIFF, NULL)  # NOQA
-print, rrr, profile = ut.inject2(__name__)
+from graphid.internal.state import (SAME, DIFF, NULL)  # NOQA
 
 DECISION_LEVEL = 4
 
@@ -89,7 +88,6 @@ class DynamicUpdate(object):
         infr._add_review_edges_from(new_edges, decision=UNREV)
         return new_edges
 
-    @profile
     def add_review_edge(infr, edge, decision):
         """
         Adds edge to the dynamically connected graphs and updates dynamically
@@ -128,7 +126,6 @@ class DynamicUpdate(object):
                 if G.has_edge(*edge):
                     G.remove_edge(*edge)
 
-    @profile
     def _get_current_decision(infr, edge):
         """
         Find if any data structure has the edge
@@ -138,7 +135,6 @@ class DynamicUpdate(object):
                 return decision
         return UNREV
 
-    @profile
     def on_between(infr, edge, decision, prev_decision, nid1, nid2,
                    merge_nid=None):
         """
@@ -153,7 +149,7 @@ class DynamicUpdate(object):
             # A merge occurred
             if infr.params['inference.update_attrs']:
                 cc = infr.pos_graph.component(merge_nid)
-                infr.set_node_attrs('name_label', ut.dzip(cc, [merge_nid]))
+                infr.set_node_attrs('name_label', ub.dzip(cc, [merge_nid]))
             # FIXME: this state is ugly
             action += ['merge']
         else:
@@ -165,7 +161,6 @@ class DynamicUpdate(object):
                 action += ['other-evidence']
         return action
 
-    @profile
     def on_within(infr, edge, decision, prev_decision, nid, split_nids=None):
         """
         Callback when a review is made inside a PCC
@@ -181,8 +176,8 @@ class DynamicUpdate(object):
                 new_nid1, new_nid2 = split_nids
                 cc1 = infr.pos_graph.component(new_nid1)
                 cc2 = infr.pos_graph.component(new_nid2)
-                infr.set_node_attrs('name_label', ut.dzip(cc1, [new_nid1]))
-                infr.set_node_attrs('name_label', ut.dzip(cc2, [new_nid2]))
+                infr.set_node_attrs('name_label', ub.dzip(cc1, [new_nid1]))
+                infr.set_node_attrs('name_label', ub.dzip(cc2, [new_nid2]))
             action += ['split']
         else:
             if decision == POSTV:
@@ -195,7 +190,6 @@ class DynamicUpdate(object):
                 action += ['other-evidence']
         return action
 
-    @profile
     def _update_neg_metagraph(infr, decision, prev_decision, nid1, nid2,
                               merge_nid=None, split_nids=None):
         """
@@ -271,7 +265,6 @@ class DynamicUpdate(object):
             nmg.add_nodes_from(split_nids)
             nmg.add_edges_from(split_edges)
 
-    @profile
     def _positive_decision(infr, edge):
         r"""
         Logic for a dynamic positive decision.  A positive decision is evidence
@@ -281,8 +274,7 @@ class DynamicUpdate(object):
         same.
 
         Ignore:
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> kwargs = dict(num_pccs=3, p_incon=0, size=100)
             >>> infr = demo.demodata_infr(infer=False, **kwargs)
             >>> infr.apply_nondynamic_update()
@@ -298,7 +290,7 @@ class DynamicUpdate(object):
         all_consistent = not (incon1 or incon2)
         was_within = nid1 == nid2
 
-        print_ = ut.partial(infr.print, level=4)
+        print_ = partial(infr.print, level=4)
         prev_decision = infr._get_current_decision(edge)
 
         if was_within:
@@ -346,7 +338,6 @@ class DynamicUpdate(object):
                                      merge_nid=new_nid)
         return action
 
-    @profile
     def _negative_decision(infr, edge):
         """
         Logic for a dynamic negative decision.  A negative decision is evidence
@@ -364,7 +355,7 @@ class DynamicUpdate(object):
         was_within = nid1 == nid2
         was_split = was_within and new_nid1 != new_nid2
 
-        print_ = ut.partial(infr.print, level=4)
+        print_ = partial(infr.print, level=4)
 
         if was_within:
             if was_split:
@@ -411,7 +402,6 @@ class DynamicUpdate(object):
                                      new_nid2)
         return action
 
-    @profile
     def _uninferable_decision(infr, edge, decision):
         """
         Logic for a dynamic uninferable negative decision An uninferrable
@@ -426,7 +416,7 @@ class DynamicUpdate(object):
         was_within = nid1 == nid2
         prev_decision = infr._get_current_decision(edge)
 
-        print_ = ut.partial(infr.print, level=4)
+        print_ = partial(infr.print, level=4)
 
         try:
             prefix = {INCMP: 'incmp', UNREV: 'unrev',
@@ -509,7 +499,7 @@ class DynamicUpdate(object):
                         #     # TODO: verify that there isn't a negative inferred
                         #     # state
                         #     infr.set_edge_attrs(
-                        #         'inferred_state', ut.dzip([edge], [INCMP])
+                        #         'inferred_state', ub.dzip([edge], [INCMP])
                         #     )
             action = infr.on_between(edge, decision, prev_decision, nid1, nid2)
         return action
@@ -531,12 +521,8 @@ class Recovery(object):
         Returns:
             bool: flag
 
-        CommandLine:
-            python -m ibeis.algo.graph.mixin_dynamic is_recovering
-
         Doctest:
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=4, size=4, ignore_pair=True)
             >>> infr.ensure_cliques(meta_decision=SAME)
             >>> a, b, c, d = map(list, infr.positive_components())
@@ -551,7 +537,7 @@ class Recovery(object):
             >>> assert infr.is_recovering((c[0], d[0])) is False
             >>> infr.add_feedback((b[2], c[0]), NEGTV)
             >>> assert infr.is_recovering((c[0], d[0])) is False
-            >>> result = ut.repr4({
+            >>> result = ub.repr2({
             >>>     'pccs': list(infr.positive_components()),
             >>>     'iccs': list(infr.inconsistent_components()),
             >>> }, nobr=True, si=True, itemsep='')
@@ -578,7 +564,6 @@ class Recovery(object):
         # inconsistency to ignore it.
         return False
 
-    @profile
     def _purge_error_edges(infr, nid):
         """
         Removes all error edges associated with a PCC so they can be recomputed
@@ -588,23 +573,22 @@ class Recovery(object):
         # Remove priority from old error edges
         if infr.params['inference.update_attrs']:
             infr.set_edge_attrs('maybe_error',
-                                ut.dzip(old_error_edges, [None]))
+                                ub.dzip(old_error_edges, [None]))
         infr._remove_edge_priority(old_error_edges)
         was_clean = len(old_error_edges) > 0
         return was_clean
 
-    @profile
     def _set_error_edges(infr, nid, new_error_edges):
         # flag error edges
         infr.nid_to_errors[nid] = new_error_edges
         # choose one and give it insanely high priority
         if infr.params['inference.update_attrs']:
             infr.set_edge_attrs('maybe_error',
-                                ut.dzip(new_error_edges, [True]))
+                                ub.dzip(new_error_edges, [True]))
         infr._increase_priority(new_error_edges, 10)
 
     def maybe_error_edges(infr):
-        return ut.iflatten(infr.nid_to_errors.values())
+        return ub.flatten(infr.nid_to_errors.values())
 
     def _new_inconsistency(infr, nid):
         cc = infr.pos_graph.component(nid)
@@ -615,7 +599,6 @@ class Recovery(object):
         infr.print(msg, 2, color='red')
         infr._check_inconsistency(nid, cc=cc)
 
-    @profile
     def _check_inconsistency(infr, nid, cc=None):
         """
         Check if a PCC contains an error
@@ -658,7 +641,7 @@ class Recovery(object):
             'guessing'        : 0.0,
             'unspecified'     : 0.0,
         }
-        confs = np.array(ut.take(code_to_conf, conf_gen))
+        confs = np.array(list(ub.take(code_to_conf, conf_gen)))
         # confs = np.array([0 if c is None else c for c in confs])
 
         prob_gen = infr.gen_edge_values('prob_match', edges_, default=0)
@@ -670,7 +653,6 @@ class Recovery(object):
         weight = nrev + probs + confs
         return weight
 
-    @profile
     def hypothesis_errors(infr, pos_subgraph, neg_edges):
         if not nx.is_connected(pos_subgraph):
             raise AssertionError('Not connected' + repr(pos_subgraph))
@@ -684,7 +666,7 @@ class Recovery(object):
         pos_weight = infr._mincut_edge_weights(pos_edges)
 
         capacity = 'weight'
-        nx.set_edge_attributes(pos_subgraph, name=capacity, values=ut.dzip(pos_edges, pos_weight))
+        nx.set_edge_attributes(pos_subgraph, name=capacity, values=ub.dzip(pos_edges, pos_weight))
 
         # Solve a multicut problem for multiple pairs of terminal nodes.
         # Running multiple min-cuts produces a k-factor approximation
@@ -718,8 +700,7 @@ class Consistency(object):
             flag: bool: returns True unless cc contains any negative edges
 
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=1, p_incon=1)
             >>> assert not infr.is_consistent(next(infr.positive_components()))
             >>> infr = demo.demodata_infr(num_pccs=1, p_incon=0)
@@ -768,7 +749,6 @@ class Consistency(object):
                 yield cc
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class _RedundancyComputers(object):
     """
     methods for computing redundancy
@@ -794,16 +774,13 @@ class _RedundancyComputers(object):
     #     else:
     #         return num_neg
 
-    @profile
     def is_pos_redundant(infr, cc, k=None, relax=None, assume_connected=False):
         """
         Tests if a group of nodes is positive redundant.
         (ie. if the group is k-edge-connected)
 
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> infr = demo.make_demo_infr(ccs=[(1, 2, 3, 4, 5)])
             >>> infr.params['redun.pos'] = 2
             >>> cc = infr.pos_graph.connected_to(1)
@@ -833,16 +810,13 @@ class _RedundancyComputers(object):
         # In all other cases test edge-connectivity
         return nxu.is_k_edge_connected(pos_subgraph, k=k)
 
-    @profile
     def is_neg_redundant(infr, cc1, cc2, k=None):
         r"""
         Tests if two disjoint groups of nodes are negative redundant
         (ie. have at least k negative edges between them).
 
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> infr = demo.make_demo_infr(ccs=[(1, 2), (3, 4)])
             >>> infr.params['redun.neg'] = 2
             >>> cc1 = infr.pos_graph.connected_to(1)
@@ -889,7 +863,7 @@ class _RedundancyComputers(object):
         """
         pos_graph = infr.pos_graph
         neg_graph = infr.neg_graph
-        neg_nid_freq = ut.ddict(lambda: 0)
+        neg_nid_freq = ub.ddict(lambda: 0)
         for u in cc:
             nid1 = pos_graph.node_label(u)
             for v in neg_graph.neighbors(u):
@@ -899,13 +873,11 @@ class _RedundancyComputers(object):
                 neg_nid_freq[nid2] += 1
         return neg_nid_freq
 
-    @profile
     def find_neg_redun_nids_to(infr, cc):
         """
         Get PCCs that are k-negative redundant with `cc`
 
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> import plottool as pt
             >>> pt.qtensure()
             >>> infr = demo.demodata_infr2()
@@ -945,14 +917,13 @@ class _RedundancyComputers(object):
             if not infr.is_pos_redundant(cc, k=k, relax=relax):
                 yield cc
 
-    @profile
     def find_non_neg_redun_pccs(infr, k=None):
         """
         Get pairs of PCCs that are not complete.
 
         Example:
-            >>> from ibeis.algo.graph.mixin_matching import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_matching import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(pcc_sizes=[1, 1, 2, 3, 5, 8], ignore_pair=True)
             >>> non_neg_pccs = list(infr.find_non_neg_redun_pccs(k=2))
             >>> assert len(non_neg_pccs) == (6 * 5) / 2
@@ -983,7 +954,6 @@ class _RedundancyComputers(object):
                     yield nid1, nid2
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class Redundancy(_RedundancyComputers):
     """ methods for dynamic redundancy book-keeping """
 
@@ -1016,14 +986,12 @@ class Redundancy(_RedundancyComputers):
         Uses bookkeeping structures
 
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=1, size=4)
             >>> infr.clear_edges()
             >>> infr.ensure_cliques()
             >>> infr.clear_feedback()
-            >>> print(ut.repr4(infr.status()))
+            >>> print(ub.repr2(infr.status()))
             >>> nonredun_edges = list(infr.filter_edges_flagged_as_redun(
             >>>     infr.unreviewed_graph.edges()))
             >>> assert len(nonredun_edges) == 6
@@ -1032,7 +1000,6 @@ class Redundancy(_RedundancyComputers):
             if not infr.is_flagged_as_redun(edge):
                 yield edge
 
-    @profile
     def update_extern_neg_redun(infr, nid, may_add=True, may_remove=True,
                                 force=False):
         """
@@ -1064,7 +1031,6 @@ class Redundancy(_RedundancyComputers):
             else:
                 infr.print('neg_redun skip update nid=%r' % (nid,), 6)
 
-    @profile
     def update_neg_redun_to(infr, nid1, other_nids, may_add=True, may_remove=True,
                             force=False):
         """
@@ -1086,7 +1052,6 @@ class Redundancy(_RedundancyComputers):
             flags.append(need_add)
         infr._set_neg_redun_flags(nid1, other_nids, flags)
 
-    @profile
     def update_pos_redun(infr, nid, may_add=True, may_remove=True,
                          force=False):
         """
@@ -1119,7 +1084,6 @@ class Redundancy(_RedundancyComputers):
         else:
             infr.print('pos_redun skip update nid=%r' % (nid,), 6)
 
-    @profile
     def _set_pos_redun_flag(infr, nid, flag):
         """
         Flags or unflags an nid as positive redundant.
@@ -1136,7 +1100,7 @@ class Redundancy(_RedundancyComputers):
             if infr.params['inference.update_attrs']:
                 infr.set_edge_attrs(
                     'inferred_state',
-                    ut.dzip(nxu.edges_inside(infr.graph, cc), ['same'])
+                    ub.dzip(nxu.edges_inside(infr.graph, cc), ['same'])
                 )
         else:
             if was_pos_redun:
@@ -1149,10 +1113,9 @@ class Redundancy(_RedundancyComputers):
             if infr.params['inference.update_attrs']:
                 infr.set_edge_attrs(
                     'inferred_state',
-                    ut.dzip(nxu.edges_inside(infr.graph, cc), [None])
+                    ub.dzip(nxu.edges_inside(infr.graph, cc), [None])
                 )
 
-    @profile
     def _set_neg_redun_flags(infr, nid1, other_nids, flags):
         """
         Flags or unflags an nid1 as negative redundant with other nids.
@@ -1232,13 +1195,12 @@ class Redundancy(_RedundancyComputers):
 
             if infr.params['inference.update_attrs']:
                 infr.set_edge_attrs(
-                    'inferred_state', ut.dzip(all_flagged_edges, ['diff'])
+                    'inferred_state', ub.dzip(all_flagged_edges, ['diff'])
                 )
                 infr.set_edge_attrs(
-                    'inferred_state', ut.dzip(all_unflagged_edges, [None])
+                    'inferred_state', ub.dzip(all_unflagged_edges, [None])
                 )
 
-    @profile
     def _purge_redun_flags(infr, nid):
         """
         Removes positive and negative redundancy from nids and all other PCCs
@@ -1267,22 +1229,15 @@ class Redundancy(_RedundancyComputers):
         return prev_neg_nids
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class NonDynamicUpdate(object):
 
-    @profile
     def apply_nondynamic_update(infr, graph=None):
         r"""
         Recomputes all dynamic bookkeeping for a graph in any state.
         This ensures that subsequent dyanmic inference can be applied.
 
-        CommandLine:
-            python -m ibeis.algo.graph.mixin_dynamic apply_nondynamic_update
-
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal import demo
             >>> num_pccs = 250
             >>> kwargs = dict(num_pccs=100, p_incon=.3)
             >>> infr = demo.demodata_infr(infer=False, **kwargs)
@@ -1297,32 +1252,32 @@ class NonDynamicUpdate(object):
 
         infr.set_edge_attrs(
             'inferred_state',
-            ut.dzip(ut.flatten(categories[POSTV].values()), ['same'])
+            ub.dzip(ub.flatten(categories[POSTV].values()), ['same'])
         )
         infr.set_edge_attrs(
             'inferred_state',
-            ut.dzip(ut.flatten(categories[NEGTV].values()), ['diff'])
+            ub.dzip(ub.flatten(categories[NEGTV].values()), ['diff'])
         )
         infr.set_edge_attrs(
             'inferred_state',
-            ut.dzip(ut.flatten(categories[INCMP].values()), [INCMP])
+            ub.dzip(ub.flatten(categories[INCMP].values()), [INCMP])
         )
         infr.set_edge_attrs(
             'inferred_state',
-            ut.dzip(ut.flatten(categories[UNKWN].values()), [UNKWN])
+            ub.dzip(ub.flatten(categories[UNKWN].values()), [UNKWN])
         )
         infr.set_edge_attrs(
             'inferred_state',
-            ut.dzip(ut.flatten(categories[UNREV].values()), [None])
+            ub.dzip(ub.flatten(categories[UNREV].values()), [None])
         )
         infr.set_edge_attrs(
             'inferred_state',
-            ut.dzip(ut.flatten(categories['inconsistent_internal'].values()),
+            ub.dzip(ub.flatten(categories['inconsistent_internal'].values()),
                     ['inconsistent_internal'])
         )
         infr.set_edge_attrs(
             'inferred_state',
-            ut.dzip(ut.flatten(categories['inconsistent_external'].values()),
+            ub.dzip(ub.flatten(categories['inconsistent_external'].values()),
                     ['inconsistent_external'])
         )
 
@@ -1355,12 +1310,12 @@ class NonDynamicUpdate(object):
         # Delete old hypothesis
         infr.set_edge_attrs(
             'maybe_error',
-            ut.dzip(ut.flatten(infr.nid_to_errors.values()), [None])
+            ub.dzip(ub.flatten(infr.nid_to_errors.values()), [None])
         )
         # Set new hypothesis
         infr.set_edge_attrs(
             'maybe_error',
-            ut.dzip(ut.flatten(nid_to_errors.values()), [True])
+            ub.dzip(ub.flatten(nid_to_errors.values()), [True])
         )
         infr.nid_to_errors = nid_to_errors
 
@@ -1368,7 +1323,6 @@ class NonDynamicUpdate(object):
         if graph is None:
             infr.dirty = False
 
-    @profile
     def collapsed_meta_edges(infr, graph=None):
         """
         Collapse the grah such that each PCC is a node. Get a list of edges
@@ -1401,21 +1355,15 @@ class NonDynamicUpdate(object):
         }
         return ne_to_edges
 
-    @profile
     def categorize_edges(infr, graph=None, ne_to_edges=None):
         r"""
         Non-dynamically computes the status of each edge in the graph.
         This is can be used to verify the dynamic computations and update when
         the dynamic state is lost.
 
-        CommandLine:
-            python -m ibeis.algo.graph.mixin_dynamic categorize_edges --profile
-
         Example:
-            >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
-            >>> num_pccs = 250 if ut.get_argflag('--profile') else 100
+            >>> from graphid.internal import demo
+            >>> num_pccs = 250 if ub.argflag('--profile') else 100
             >>> kwargs = dict(num_pccs=100, p_incon=.3)
             >>> infr = demo.demodata_infr(infer=False, **kwargs)
             >>> graph = None
@@ -1526,14 +1474,10 @@ class NonDynamicUpdate(object):
         }
         return ne_categories
 
-
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.mixin_dynamic
-        python -m ibeis.algo.graph.mixin_dynamic --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/mixin_dynamic.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

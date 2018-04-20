@@ -2,31 +2,29 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import utool as ut
-# import logging
 import itertools as it
 import copy
 import six
 import collections
-from ibeis import constants as const
-from ibeis.algo.graph import nx_dynamic_graph
-# from ibeis.algo.graph import _dep_mixins
-from ibeis.algo.graph import mixin_viz
-from ibeis.algo.graph import mixin_helpers
-from ibeis.algo.graph import mixin_dynamic
-from ibeis.algo.graph import mixin_priority
-from ibeis.algo.graph import mixin_loops
-from ibeis.algo.graph import mixin_matching
-from ibeis.algo.graph import mixin_groundtruth
-from ibeis.algo.graph import mixin_simulation
-from ibeis.algo.graph import mixin_ibeis
-from ibeis.algo.graph import nx_utils as nxu
 import pandas as pd
-from ibeis.algo.graph.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
-from ibeis.algo.graph.state import UNINFERABLE
-from ibeis.algo.graph.state import SAME, DIFF, NULL
 import networkx as nx
 import logging
 import ubelt as ub
+from ibeis import constants as const
+from graphid.internal import nx_dynamic_graph
+from graphid.internal import mixin_viz
+from graphid.internal import mixin_helpers
+from graphid.internal import mixin_dynamic
+from graphid.internal import mixin_priority
+from graphid.internal import mixin_loops
+from graphid.internal import mixin_matching
+from graphid.internal import mixin_groundtruth
+from graphid.internal import mixin_simulation
+from graphid.internal import mixin_ibeis
+from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
+from graphid.internal.state import UNINFERABLE
+from graphid.internal.state import SAME, DIFF, NULL
+from graphid.util import nx_utils as nxu
 
 
 DEBUG_CC = False
@@ -100,11 +98,11 @@ class Feedback(object):
         Gets a decision on an edge, either explicitly or implicitly
 
         CommandLine:
-            python -m ibeis.algo.graph.core edge_decision
+            python -m graphid.internal.annot_inference edge_decision
 
         Doctest:
-            >>> from ibeis.algo.graph.core import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.annot_inference import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=1, p_incon=1)
             >>> decision = infr.edge_decision((1, 2))
             >>> print('decision = %r' % (decision,))
@@ -147,7 +145,7 @@ class Feedback(object):
                      timestamp=None, verbose=None, priority=None):
         r"""
         Doctest:
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.annot_inference import *  # NOQA
             >>> infr = testdata_infr('testdb1')
             >>> infr.add_feedback((5, 6), POSTV)
             >>> infr.add_feedback((5, 6), NEGTV, tags=['photobomb'])
@@ -299,10 +297,10 @@ class Feedback(object):
         Transforms the feedback dictionaries into nx graph edge attributes
 
         CommandLine:
-            python -m ibeis.algo.graph.core apply_feedback_edges
+            python -m graphid.internal.annot_inference apply_feedback_edges
 
         Doctest:
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.annot_inference import *  # NOQA
             >>> infr = testdata_infr('testdb1')
             >>> infr.reset_feedback()
             >>> infr.params['inference.enabled'] = False
@@ -356,7 +354,7 @@ class Feedback(object):
             infr._add_review_edges_from(es, state)
 
         for key, val_list in attr_lists.items():
-            infr.set_edge_attrs(key, ut.dzip(edges, val_list))
+            infr.set_edge_attrs(key, ub.dzip(edges, val_list))
 
         if infr.params['inference.enabled']:
             infr.apply_nondynamic_update()
@@ -437,8 +435,8 @@ class Feedback(object):
         Removes all edges from graph and resets name labels.
 
         Example:
-            >>> from ibeis.algo.graph.core import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.annot_inference import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=5)
             >>> assert len(list(infr.edges())) > 0
             >>> infr.reset(state='empty')
@@ -515,7 +513,7 @@ class NameRelabel(object):
         #     isinstance(n, six.string_types) and n.startswith('_extra_name')
         #     for n in new_names
         # ]
-        label_to_name = ut.dzip(unique_newlabels, new_names)
+        label_to_name = ub.dzip(unique_newlabels, new_names)
         needs_assign = list(ub.compress(unique_newlabels, new_flags))
         return label_to_name, needs_assign, unknown_labels
 
@@ -615,7 +613,7 @@ class NameRelabel(object):
 
         for count, subgraph in enumerate(cc_subgraphs):
             new_nid = new_labels[count]
-            node_to_newlabel = ut.dzip(subgraph.nodes(), [new_nid])
+            node_to_newlabel = ub.dzip(subgraph.nodes(), [new_nid])
             infr.set_node_attrs('name_label', node_to_newlabel)
 
         num_names = len(cc_subgraphs)
@@ -628,11 +626,11 @@ class NameRelabel(object):
             dict: num_inconsistent, num_names_max
 
         CommandLine:
-            python -m ibeis.algo.graph.core connected_component_status
+            python -m graphid.internal.annot_inference connected_component_status
 
         Example:
             >>> # DISABLE_DOCTEST
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.annot_inference import *  # NOQA
             >>> infr = testdata_infr('testdb1')
             >>> infr.add_feedback_from([(2, 3), NEGTV) (5, 6), NEGTV)
             >>>                         (1, 2), POSTV)]
@@ -684,10 +682,10 @@ class MiscHelpers(object):
     def add_aids(infr, aids, nids=None):
         """
         CommandLine:
-            python -m ibeis.algo.graph.core add_aids --show
+            python -m graphid.internal.annot_inference add_aids --show
 
         Doctest:
-            >>> from ibeis.algo.graph.core import *  # NOQA
+            >>> from graphid.internal.annot_inference import *  # NOQA
             >>> aids_ = [1, 2, 3, 4, 5, 6, 7, 9]
             >>> infr = AnnotInference(ibs=None, aids=aids_, autoinit=True)
             >>> aids = [2, 22, 7, 9, 8]
@@ -825,7 +823,7 @@ class AltConstructors(object):
         G.add_edges_from(aid_pairs)
         if attrs is not None:
             for key in attrs.keys():
-                nx.set_edge_attributes(G, name=key, values=ut.dzip(aid_pairs, attrs[key]))
+                nx.set_edge_attributes(G, name=key, values=ub.dzip(aid_pairs, attrs[key]))
         infr = AnnotInference.from_netx(G, ibs=ibs, verbose=verbose)
         return infr
 
@@ -843,7 +841,7 @@ class AltConstructors(object):
         orig_name_labels = [infr.pos_graph.node_label(a) for a in aids]
         infr.orig_name_labels = orig_name_labels
         infr.set_node_attrs('orig_name_label',
-                            ut.dzip(aids, orig_name_labels))
+                            ub.dzip(aids, orig_name_labels))
         if infer:
             infr.apply_nondynamic_update()
         return infr
@@ -929,7 +927,7 @@ class AnnotInference(ub.NiceRepr,
                      MiscHelpers,
                      Feedback,
                      NameRelabel,
-                     # New core algorithm stuffs
+                     # New annot_inference algorithm stuffs
                      mixin_dynamic.NonDynamicUpdate,
                      mixin_dynamic.Recovery,
                      mixin_dynamic.Consistency,
@@ -970,7 +968,7 @@ class AnnotInference(ub.NiceRepr,
         ibeis AnnotInference:0 --loginfr
 
     Doctest:
-        >>> from ibeis.algo.graph.core import *  # NOQA
+        >>> from graphid.internal.annot_inference import *  # NOQA
         >>> import ibeis
         >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
         >>> aids = [1, 2, 3, 4, 5, 6]
@@ -987,7 +985,7 @@ class AnnotInference(ub.NiceRepr,
 
     Example:
         >>> # SCRIPT
-        >>> from ibeis.algo.graph.core import *  # NOQA
+        >>> from graphid.internal.annot_inference import *  # NOQA
         >>> import ibeis
         >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
         >>> aids = [1, 2, 3, 4, 5, 6, 7, 9]
@@ -1010,7 +1008,7 @@ class AnnotInference(ub.NiceRepr,
 
     Example:
         >>> # SCRIPT
-        >>> from ibeis.algo.graph.core import *  # NOQA
+        >>> from graphid.internal.annot_inference import *  # NOQA
         >>> import ibeis
         >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
         >>> aids = [1, 2, 3, 4, 5, 6, 7, 9]
@@ -1037,7 +1035,6 @@ class AnnotInference(ub.NiceRepr,
 
     Ignore:
         >>> import ibeis
-        >>> import utool as ut
         >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
         >>> infr = ibeis.AnnotInference(ibs, 'all')
         >>> class_ = infr
@@ -1261,7 +1258,7 @@ class AnnotInference(ub.NiceRepr,
         The returned dict does not contain the prefix
 
         Doctest:
-            >>> from ibeis.algo.graph.core import *
+            >>> from graphid.internal.annot_inference import *
             >>> import ibeis
             >>> infr = ibeis.AnnotInference(None)
             >>> result = ub.repr2(infr.subparams('refresh'))
@@ -1383,9 +1380,9 @@ if __name__ == '__main__':
     r"""
     CommandLine:
         python -m ibeis.viz.viz_graph2 make_qt_graph_interface --show --aids=1,2,3,4,5,6,7 --graph --match=1,4 --nomatch=3,1,5,7
-        python -m ibeis.algo.graph.core
+        python -m graphid.internal.annot_inference
 
-        python -m ibeis.algo.graph all
+        python -m graphid.internal all
 
-        python -m ibeis.algo.graph.core --allexamples
+        python -m graphid.internal.annot_inference --allexamples
     """

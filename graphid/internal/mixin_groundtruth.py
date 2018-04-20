@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
+import ubelt as ub
 import utool as ut
 import numpy as np
 import vtool as vt
 import pandas as pd
-from ibeis.algo.graph.nx_utils import ensure_multi_index
-from ibeis.algo.graph.state import POSTV, NEGTV, INCMP
-print, rrr, profile = ut.inject2(__name__)
+from graphid.util.nx_utils import ensure_multi_index
+from graphid.internal.state import POSTV, NEGTV, INCMP
 
 
 class Groundtruth(object):
@@ -76,7 +76,7 @@ class Groundtruth(object):
             truth = match_state.idxmax()
         return truth
 
-    def edge_attr_df(infr, key, edges=None, default=ut.NoParam):
+    def edge_attr_df(infr, key, edges=None, default=ub.NoParam):
         """ constructs DataFrame using current predictions """
         edge_states = infr.gen_edge_attrs(key, edges=edges, default=default)
         edge_states = list(edge_states)
@@ -86,7 +86,7 @@ class Groundtruth(object):
             if edges is None:
                 edges_ = ut.take_column(edge_states, 0)
             else:
-                edges_ = ut.lmap(tuple, ut.aslist(edges))
+                edges_ = list(map(tuple, ut.aslist(edges)))
             index = pd.MultiIndex.from_tuples(edges_, names=('aid1', 'aid2'))
         records = ut.itake_column(edge_states, 1)
         edge_df = pd.Series.from_array(records)

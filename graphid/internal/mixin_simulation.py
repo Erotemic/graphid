@@ -9,9 +9,8 @@ import utool as ut
 import ubelt as ub
 import pandas as pd
 import itertools as it
-from ibeis.algo.graph import nx_utils as nxu
-from ibeis.algo.graph.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN, NULL)
-print, rrr, profile = ut.inject2(__name__)
+from graphid.util import nx_utils as nxu
+from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN, NULL)
 
 
 class SimulationHelpers(object):
@@ -59,7 +58,7 @@ class SimulationHelpers(object):
         infr.params['algo.max_outer_loops'] = max_outer_loops
 
     def init_test_mode(infr):
-        from ibeis.algo.graph import nx_dynamic_graph
+        from graphid.internal import nx_dynamic_graph
         infr.print('init_test_mode')
         infr.test_mode = True
         # infr.edge_truth = {}
@@ -74,8 +73,8 @@ class SimulationHelpers(object):
         }
         infr.test_gt_pos_graph = nx_dynamic_graph.DynConnGraph()
         infr.test_gt_pos_graph.add_nodes_from(infr.aids)
-        infr.nid_to_gt_cc = ut.group_items(infr.aids, infr.orig_name_labels)
-        infr.node_truth = ut.dzip(infr.aids, infr.orig_name_labels)
+        infr.nid_to_gt_cc = ub.group_items(infr.aids, infr.orig_name_labels)
+        infr.node_truth = ub.dzip(infr.aids, infr.orig_name_labels)
 
         # infr.real_n_pcc_mst_edges = sum(
         #     len(cc) - 1 for cc in infr.nid_to_gt_cc.values())
@@ -83,7 +82,7 @@ class SimulationHelpers(object):
         #     infr.real_n_pcc_mst_edges,), 'red')
 
         infr.metrics_list = []
-        infr.nid_to_gt_cc = ut.group_items(infr.aids, infr.orig_name_labels)
+        infr.nid_to_gt_cc = ub.group_items(infr.aids, infr.orig_name_labels)
         infr.real_n_pcc_mst_edges = sum(
             len(cc) - 1 for cc in infr.nid_to_gt_cc.values())
         infr.print('real_n_pcc_mst_edges = %r' % (
@@ -95,7 +94,7 @@ class SimulationHelpers(object):
             pred_state = data.get('evidence_decision', UNREV)
             if pred_state != UNREV:
                 if true_state != pred_state:
-                    error = ut.odict([('real', true_state),
+                    error = ub.odict([('real', true_state),
                                       ('pred', pred_state)])
                     yield edge, error
 
@@ -113,8 +112,8 @@ class SimulationHelpers(object):
         non_postv = reviewd_cols - {POSTV}
         non_negtv = reviewd_cols - {NEGTV}
 
-        n_fn = sum(ut.take(confusion[POSTV], non_postv))
-        n_fp = sum(ut.take(confusion[NEGTV], non_negtv))
+        n_fn = sum(ub.take(confusion[POSTV], non_postv))
+        n_fp = sum(ub.take(confusion[NEGTV], non_negtv))
 
         n_error_edges = sum(confusion[r][c] + confusion[c][r] for r, c in
                             ut.combinations(reviewd_cols, 2))
@@ -143,7 +142,7 @@ class SimulationHelpers(object):
                     num_undetectable_fp = 0
                     for nid in infr.pos_redun_nids:
                         cc = infr.pos_graph.component(nid)
-                        if not ut.allsame(ut.take(infr.node_truth, cc)):
+                        if not ub.allsame(ub.take(infr.node_truth, cc)):
                             num_undetectable_fp += 1
 
             print('num_undetectable_fn = %r' % (num_undetectable_fn,))
@@ -184,7 +183,7 @@ class SimulationHelpers(object):
         assert n_error_edges == len(infr.mistake_edges)
         direct_mistake_aids = {a for edge in infr.mistake_edges for a in edge}
         mistake_nids = set(infr.node_labels(*direct_mistake_aids))
-        mistake_aids = set(ut.flatten([infr.pos_graph.component(nid)
+        mistake_aids = set(ub.flatten([infr.pos_graph.component(nid)
                                        for nid in mistake_nids]))
 
         pos_acc = pred_n_pcc_mst_edges / infr.real_n_pcc_mst_edges
@@ -224,7 +223,7 @@ class SimulationHelpers(object):
     def _print_previous_loop_statistics(infr, count):
         # Print stats about what happend in the this loop
         history = infr.metrics_list[-count:]
-        recover_blocks = ut.group_items([
+        recover_blocks = ub.group_items([
             (k, sum(1 for i in g))
             for k, g in it.groupby(ut.take_column(history, 'recovering'))
         ]).get(True, [])
@@ -232,22 +231,22 @@ class SimulationHelpers(object):
             'Recovery mode entered {} times, '
             'made {} recovery decisions.').format(
                 len(recover_blocks), sum(recover_blocks)), color='green')
-        testaction_hist = ut.dict_hist(ut.take_column(history, 'test_action'))
+        testaction_hist = ub.dict_hist(ut.take_column(history, 'test_action'))
         infr.print(
             'Test Action Histogram: {}'.format(
-                ut.repr4(testaction_hist, si=True)), color='yellow')
+                ub.repr2(testaction_hist, si=True)), color='yellow')
         if infr.params['inference.enabled']:
-            action_hist = ut.dict_hist(
+            action_hist = ub.dict_hist(
                 ut.emap(frozenset, ut.take_column(history, 'action')))
             infr.print(
                 'Inference Action Histogram: {}'.format(
                     ub.repr2(action_hist, si=True)), color='yellow')
         infr.print(
-            'Decision Histogram: {}'.format(ut.repr2(ut.dict_hist(
+            'Decision Histogram: {}'.format(ub.repr2(ub.dict_hist(
                 ut.take_column(history, 'pred_decision')
             ), si=True)), color='yellow')
         infr.print(
-            'User Histogram: {}'.format(ut.repr2(ut.dict_hist(
+            'User Histogram: {}'.format(ub.repr2(ub.dict_hist(
                 ut.take_column(history, 'user_id')
             ), si=True)), color='yellow')
 
@@ -271,7 +270,7 @@ class SimulationHelpers(object):
         # print('decision = {!r}'.format(decision))
         # print('true_decision = {!r}'.format(true_decision))
 
-        test_print = ut.partial(infr.print, level=2)
+        test_print = partial(infr.print, level=2)
         def test_print(x, **kw):
             infr.print('[ACTION] ' + x, level=2, **kw)
         # test_print = lambda *a, **kw: None  # NOQA
@@ -449,19 +448,12 @@ class UserOracle(object):
             infr.print(
                 'ORACLE ERROR real={} pred={} acc={:.2f} hard={:.2f}'.format(
                     truth, observed, accuracy, hardness), 2, color='red')
-
-            # infr.print(
-            #     'ORACLE ERROR edge={}, truth={}, pred={}, rec={}, hardness={:.3f}'.format(edge, truth, observed, is_recovering, hardness),
-            #     2, color='red')
         return feedback
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.mixin_simulation
-        python -m ibeis.algo.graph.mixin_simulation --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/mixin_simulation.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

@@ -4,14 +4,12 @@ import numpy as np
 import warnings
 import utool as ut
 import vtool as vt  # NOQA
-import six
+import ubelt as ub
 import networkx as nx
 from ibeis.algo.graph.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)
 from ibeis.algo.graph.state import (SAME, DIFF, NULL)  # NOQA
-print, rrr, profile = ut.inject2(__name__)
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class GraphVisualization(object):
     """ contains plotting related code """
 
@@ -153,7 +151,6 @@ class GraphVisualization(object):
                     colors[idx] = pt.GRAY
         return edges, colors
 
-    @profile
     def get_colored_weights(infr, weights):
         import plottool as pt
         #pt.rrrr()
@@ -227,7 +224,6 @@ class GraphVisualization(object):
             ]
         return GraphVizConfig
 
-    @profile
     def update_visual_attrs(infr, graph=None,
                             show_reviewed_edges=True,
                             show_unreviewed_edges=False,
@@ -518,7 +514,6 @@ class GraphVisualization(object):
             for key, node_to_attr in node_overrides.items():
                 nx.set_node_attributes(graph, name=key, values=node_to_attr)
 
-    @profile
     def show_graph(infr, graph=None, use_image=False, update_attrs=True,
                    with_colorbar=False, pnum=(1, 1, 1), zoomable=True,
                    pickable=False, **kwargs):
@@ -652,8 +647,8 @@ class GraphVisualization(object):
         edge_data = ut.delete_dict_keys(all_edge_data.copy(), infr.visual_edge_attrs)
         lines = []
         if visual:
-            lines += [('visual_edge_data: ' + ut.repr2(visual_edge_data, nl=1))]
-        lines += [('edge_data: ' + ut.repr2(edge_data, nl=1))]
+            lines += [('visual_edge_data: ' + ub.repr2(visual_edge_data, nl=1))]
+        lines += [('edge_data: ' + ub.repr2(edge_data, nl=1))]
         return '\n'.join(lines)
 
     def show_error_case(infr, aids, edge=None, error_edges=None, colorby=None,
@@ -734,28 +729,25 @@ def on_pick(event, infr=None):
             node = plotdat['node']
             node_data['degree'] = infr.graph.degree(node)
             node_label = infr.pos_graph.node_label(node)
-            print('visual_node_data: ' + ut.repr2(visual_node_data, nl=1))
-            print('node_data: ' + ut.repr2(node_data, nl=1))
-            ut.cprint('node: ' + ut.repr2(plotdat['node']), 'blue')
+            print('visual_node_data: ' + ub.repr2(visual_node_data, nl=1))
+            print('node_data: ' + ub.repr2(node_data, nl=1))
+            ut.cprint('node: ' + ub.repr2(plotdat['node']), 'blue')
             print('(pcc) node_label = %r' % (node_label,))
             print('artist = %r' % (artist,))
         elif 'edge' in plotdat:
             all_edge_data = ut.sort_dict(plotdat['edge_data'].copy())
             print(infr.repr_edge_data(all_edge_data))
-            ut.cprint('edge: ' + ut.repr2(plotdat['edge']), 'blue')
+            ut.cprint('edge: ' + ub.repr2(plotdat['edge']), 'blue')
             print('artist = %r' % (artist,))
         else:
-            print('???: ' + ut.repr2(plotdat))
+            print('???: ' + ub.repr2(plotdat))
     print(ut.get_timestamp())
 
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.mixin_viz
-        python -m ibeis.algo.graph.mixin_viz --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/mixin_viz.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

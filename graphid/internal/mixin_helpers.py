@@ -4,15 +4,16 @@ import itertools as it
 import networkx as nx
 import operator
 import numpy as np
+import ubelt as ub
+from graphid.internal import state as const
+from graphid.internal.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
+from graphid.internal.state import SAME, DIFF, NULL  # NOQA
+from graphid.util import nx_utils as nxu
+from graphid.util.nx_utils import e_
+import six
+
 import utool as ut
 import vtool as vt
-from ibeis import constants as const
-from ibeis.algo.graph.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
-from ibeis.algo.graph.state import SAME, DIFF, NULL  # NOQA
-from ibeis.algo.graph.nx_utils import e_
-from ibeis.algo.graph import nx_utils as nxu
-import six
-print, rrr, profile = ut.inject2(__name__)
 
 
 DEBUG_INCON = True
@@ -175,14 +176,14 @@ class Convenience(object):
         return infr.review_graphs[UNKWN]
 
     def print_graph_info(infr):
-        print(ut.repr3(ut.graph_info(infr.simplify_graph())))
+        print(ub.repr2(ut.graph_info(infr.simplify_graph())))
 
     def print_graph_connections(infr, label='orig_name_label'):
         """
         label = 'orig_name_label'
         """
         node_to_label = infr.get_node_attrs(label)
-        label_to_nodes = ut.group_items(node_to_label.keys(),
+        label_to_nodes = ub.group_items(node_to_label.keys(),
                                         node_to_label.values())
         print('CC info')
         for name, cc in label_to_nodes.items():
@@ -215,7 +216,7 @@ class Convenience(object):
         Helps debugging when ibs.nids has info that annotmatch/staging do not
 
         Examples:
-            >>> from ibeis.algo.graph.mixin_helpers import *  # NOQA
+            >>> from graphid.internal.mixin_helpers import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb(defaultdb='GZ_Master1')
             >>> infr = ibeis.AnnotInference(ibs, 'all', autoinit=True)
@@ -380,8 +381,8 @@ class DummyEdges(object):
             label = 'name_label'
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_dynamic import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=3, size=4)
             >>> assert infr.status()['nCCs'] == 3
             >>> infr.clear_edges()
@@ -390,7 +391,7 @@ class DummyEdges(object):
             >>> assert infr.status()['nCCs'] == 3
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_dynamic import *  # NOQA
+            >>> from graphid.internal.mixin_dynamic import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', 'all', autoinit=True)
             >>> infr.reset_feedback('annotmatch', apply=True)
@@ -430,11 +431,11 @@ class DummyEdges(object):
             decision (str): (default = 'unreviewed')
 
         CommandLine:
-            python -m ibeis.algo.graph.mixin_helpers ensure_cliques
+            python -m graphid.internal.mixin_helpers ensure_cliques
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_helpers import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_helpers import *  # NOQA
+            >>> from graphid.internal import demo
             >>> label = 'name_label'
             >>> infr = demo.demodata_infr(num_pccs=3, size=5)
             >>> print(infr.status())
@@ -489,18 +490,14 @@ class DummyEdges(object):
                 #     new_edges.append(edge)
         return new_edges
 
-    @profile
     def find_mst_edges(infr, label='name_label'):
         """
         Returns edges to augment existing PCCs (by label) in order to ensure
         they are connected with positive edges.
 
-        CommandLine:
-            python -m ibeis.algo.graph.mixin_helpers find_mst_edges --profile
-
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_helpers import *  # NOQA
+            >>> from graphid.internal.mixin_helpers import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
             >>> infr = ibeis.AnnotInference(ibs, 'all', autoinit=True)
@@ -522,14 +519,14 @@ class DummyEdges(object):
         """
         # Find clusters by labels
         node_to_label = infr.get_node_attrs(label)
-        label_to_nodes = ut.group_items(node_to_label.keys(),
+        label_to_nodes = ub.group_items(node_to_label.keys(),
                                         node_to_label.values())
 
         weight_heuristic = infr.ibs is not None
         if weight_heuristic:
             annots = infr.ibs.annots(infr.aids)
-            node_to_time = ut.dzip(annots, annots.time)
-            node_to_view = ut.dzip(annots, annots.viewpoint_code)
+            node_to_time = ub.dzip(annots, annots.time)
+            node_to_view = ub.dzip(annots, annots.viewpoint_code)
             enabled_heuristics = {
                 'view_weight',
                 'time_weight',
@@ -555,7 +552,7 @@ class DummyEdges(object):
 
             if 'time_weight' in enabled_heuristics:
                 # Prefer linking annotations closer in time
-                times = ut.take(node_to_time, nodes)
+                times = list(ub.take(node_to_time, nodes))
                 maxtime = vt.safe_max(times, fill=1, nans=False)
                 mintime = vt.safe_min(times, fill=0, nans=False)
                 time_denom = maxtime - mintime
@@ -575,8 +572,8 @@ class DummyEdges(object):
             return avail
 
         new_edges = []
-        prog = ut.ProgIter(list(label_to_nodes.keys()),
-                           label='finding mst edges',
+        prog = ub.ProgIter(list(label_to_nodes.keys()),
+                           desc='finding mst edges',
                            enabled=infr.verbose > 0)
         for nid in prog:
             nodes = set(label_to_nodes[nid])
@@ -627,14 +624,14 @@ class DummyEdges(object):
         """
         label = 'name_label'
         node_to_label = infr.get_node_attrs(label)
-        label_to_nodes = ut.group_items(node_to_label.keys(),
+        label_to_nodes = ub.group_items(node_to_label.keys(),
                                         node_to_label.values())
 
         # k = infr.params['redun.pos']
         k = 1
         new_edges = []
-        prog = ut.ProgIter(list(label_to_nodes.keys()),
-                           label='finding connecting edges',
+        prog = ub.ProgIter(list(label_to_nodes.keys()),
+                           desc='finding connecting edges',
                            enabled=infr.verbose > 0)
         for nid in prog:
             nodes = set(label_to_nodes[nid])
@@ -654,10 +651,8 @@ class DummyEdges(object):
 class AssertInvariants(object):
 
     def assert_edge(infr, edge):
-        import utool
-        with utool.embed_on_exception_context:
-            assert edge[0] < edge[1], (
-                'edge={} does not satisfy ordering constraint'.format(edge))
+        assert edge[0] < edge[1], (
+            'edge={} does not satisfy ordering constraint'.format(edge))
 
     def assert_invariants(infr, msg=''):
         infr.assert_disjoint_invariant(msg)
@@ -692,7 +687,7 @@ class AssertInvariants(object):
         all_edges = set(it.starmap(e_, infr.graph.edges()))
         if edge_union != all_edges:
             print('ERROR STATUS DUMP:')
-            print(ut.repr4(infr.status()))
+            print(ub.repr2(infr.status()))
             raise AssertionError(
                 'edge sets must have full union. Found union=%d vs all=%d' % (
                     len(edge_union), len(all_edges)
@@ -722,24 +717,21 @@ class AssertInvariants(object):
             return
         # infr.print('assert_recovery_invariant', 200)
         inconsistent_ccs = list(infr.inconsistent_components())
-        incon_cc = set(ut.flatten(inconsistent_ccs))  # NOQA
+        incon_cc = set(ub.flatten(inconsistent_ccs))  # NOQA
         # import utool
         # with utool.embed_on_exception_context:
         #     assert infr.recovery_cc.issuperset(incon_cc), 'diff incon'
         #     if False:
-        #         # nid_to_cc2 = ut.group_items(
+        #         # nid_to_cc2 = ub.group_items(
         #         #     incon_cc,
         #         #     map(pos_graph.node_label, incon_cc))
         #         infr.print('infr.recovery_cc = %r' % (infr.recovery_cc,))
         #         infr.print('incon_cc = %r' % (incon_cc,))
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.mixin_helpers
-        python -m ibeis.algo.graph.mixin_helpers --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/mixin_helpers.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

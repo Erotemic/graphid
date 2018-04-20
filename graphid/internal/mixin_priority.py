@@ -1,13 +1,11 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 import six
 import numpy as np
 import utool as ut
 import networkx as nx
-from ibeis import constants as const
-from ibeis.algo.graph import nx_utils as nxu
-from ibeis.algo.graph.state import (POSTV, NEGTV)
-from ibeis.algo.graph.state import (SAME, DIFF, NULL)  # NOQA
-print, rrr, profile = ut.inject2(__name__)
+from graphid.internal import state as const
+from graphid.internal import nx_utils as nxu
+from graphid.internal.state import (POSTV, NEGTV)
+from graphid.internal.state import (SAME, DIFF, NULL)  # NOQA
 
 
 class Priority(object):
@@ -15,9 +13,8 @@ class Priority(object):
     Handles prioritization of edges for review.
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from ibeis.algo.graph.mixin_priority import *  # NOQA
-        >>> from ibeis.algo.graph import demo
+        >>> from graphid.internal.mixin_priority import *  # NOQA
+        >>> from graphid.internal import demo
         >>> infr = demo.demodata_infr(num_pccs=20)
     """
 
@@ -32,13 +29,7 @@ class Priority(object):
 
     def _push(infr, edge, priority):
         """ Wraps queue so ordering is determenistic """
-        PSEUDO_RANDOM_TIEBREAKER = False
-        if PSEUDO_RANDOM_TIEBREAKER:
-            # Make it so tiebreakers have a pseudo-random order
-            chaotic = int.from_bytes(ut.digest_data(edge, alg='sha1')[:8], 'big')
-            tiebreaker = (chaotic,) + edge
-        else:
-            tiebreaker = edge
+        tiebreaker = edge
         infr.assert_edge(edge)
         # tiebreaker = (chaotic(chaotic(u) + chaotic(v)), u, v)
         infr.queue[edge] = (-priority, tiebreaker)
@@ -106,15 +97,14 @@ class Priority(object):
             edges = nxu.edges_outgoing(infr.unreviewed_graph, cc)
             infr._reinstate_edge_priority(edges)
 
-    @profile
     def prioritize(infr, metric=None, edges=None, scores=None,
                    force_inconsistent=True, reset=False):
         """
         Adds edges to the priority queue
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_priority import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_priority import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=7, size=5)
             >>> infr.ensure_cliques(meta_decision=SAME)
             >>> # Add a negative edge inside a PCC
@@ -129,7 +119,7 @@ class Priority(object):
             >>> assert scores[0] > 10
             >>> assert len(scores) == num_new, 'should prioritize two hypotheis edges'
             >>> unrev_edges = set(infr.unreviewed_graph.edges())
-            >>> err_edges = set(ut.flatten(infr.nid_to_errors.values()))
+            >>> err_edges = set(ub.flatten(infr.nid_to_errors.values()))
             >>> edges = set(list(unrev_edges - err_edges)[0:2])
             >>> edges.update(list(err_edges)[0:2])
             >>> num_new = infr.prioritize(edges=edges, reset=True)
@@ -143,14 +133,14 @@ class Priority(object):
             infr = ibeis.AnnotInference('PZ_MTEST', aids='all', autoinit='staging')
             infr.verbose = 1000
             infr.load_published()
-            incon_edges = set(ut.iflatten(infr.nid_to_errors.values()))
+            incon_edges = set(ub.flatten(infr.nid_to_errors.values()))
             assert len(incon_edges) > 0
             edges = list(infr.find_pos_redun_candidate_edges())
             assert len(set(incon_edges).intersection(set(edges))) == 0
             infr.add_candidate_edges(edges)
 
             infr.prioritize()
-            print(ut.repr4(infr.status()))
+            print(ub.repr2(infr.status()))
         """
         if reset or infr.queue is None:
             infr.queue = ut.PriorityQueue()
@@ -225,7 +215,6 @@ class Priority(object):
         # Use edge-nids to break ties for determenistic behavior
         infr._push(edge, priority)
 
-    @profile
     def pop(infr):
         """
         Main interface to the priority queue used by the algorithm loops.
@@ -317,8 +306,8 @@ class Priority(object):
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from ibeis.algo.graph.mixin_priority import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_priority import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.demodata_infr(num_pccs=7, size=5)
             >>> infr.refresh_candidate_edges()
             >>> infr.peek_many(50)
@@ -361,8 +350,8 @@ class Priority(object):
         Checks if u and v are conneted by edges above a confidence threshold
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_priority import *  # NOQA
-            >>> from ibeis.algo.graph import demo
+            >>> from graphid.internal.mixin_priority import *  # NOQA
+            >>> from graphid.internal import demo
             >>> infr = demo.make_demo_infr(ccs=[(1, 2), (3, 4), (5, 6), (7, 8)])
             >>> infr.add_feedback((1, 5), NEGTV)
             >>> infr.add_feedback((5, 8), NEGTV)
@@ -467,12 +456,9 @@ class Priority(object):
 
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.mixin_priority
-        python -m ibeis.algo.graph.mixin_priority --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/mixin_priority.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

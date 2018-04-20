@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
-import six
 import numpy as np
-import utool as ut
 import ubelt as ub
 import pandas as pd
 import itertools as it
-import ibeis.constants as const
-from ibeis.algo.graph.state import (POSTV, NEGTV, INCMP, NULL)
-from ibeis.algo.graph.refresh import RefreshCriteria
-print, rrr, profile = ut.inject2(__name__)
+import graphid.internal.state as const
+from graphid.internal.state import (POSTV, NEGTV, INCMP, NULL)
+from graphid.internal.refresh import RefreshCriteria
+
+import utool as ut
 
 
 class InfrLoops(object):
@@ -36,11 +35,11 @@ class InfrLoops(object):
             Different phases of the main loop are implemented as subiterators
 
         CommandLine:
-            python -m ibeis.algo.graph.mixin_loops main_gen
+            python -m graphid.internal.mixin_loops main_gen
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_loops import *
-            >>> from ibeis.algo.graph.mixin_simulation import UserOracle
+            >>> from graphid.internal.mixin_loops import *
+            >>> from graphid.internal.mixin_simulation import UserOracle
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('testdb1', aids='all',
             >>>                             autoinit='staging', verbose=4)
@@ -61,7 +60,7 @@ class InfrLoops(object):
             >>>         break
         """
         infr.print('Starting main loop', 1)
-        infr.print('infr.params = {}'.format(ut.repr3(infr.params)))
+        infr.print('infr.params = {}'.format(ub.repr2(infr.params)))
         if max_loops is None:
             max_loops = infr.params['algo.max_outer_loops']
             if max_loops is None:
@@ -121,7 +120,7 @@ class InfrLoops(object):
 
                 # Phase 2: Ensure positive redundancy.
                 infr.loop_phase = 'posredun_{}'.format(count)
-                if all(ut.take(infr.params, ['redun.enabled', 'redun.enforce_pos'])):
+                if all(ub.take(infr.params, ['redun.enabled', 'redun.enforce_pos'])):
                     # Fix positive redundancy of anything within the loop
                     for _ in infr.pos_redun_gen():
                         yield _
@@ -138,7 +137,7 @@ class InfrLoops(object):
                     infr.print('break triggered')
                     break
 
-        if all(ut.take(infr.params, ['redun.enabled', 'redun.enforce_neg'])):
+        if all(ub.take(infr.params, ['redun.enabled', 'redun.enforce_neg'])):
             # Phase 3: Try to automatically acheive negative redundancy without
             # asking the user to do anything but resolve inconsistency.
             infr.print('Entering phase 3', 1, color='red')
@@ -167,8 +166,8 @@ class InfrLoops(object):
         edges_ = list(infr.edges())
         real_ = list(infr.edge_decision_from(edges_))
         flags_ = [r in {POSTV, NEGTV, INCMP} for r in real_]
-        real = ut.compress(real_, flags_)
-        edges = ut.compress(edges_, flags_)
+        real = list(ub.compress(real_, flags_))
+        edges = list(ub.compress(edges_, flags_))
 
         hardness = 1 - verif.easiness(edges, real)
 
@@ -183,7 +182,7 @@ class InfrLoops(object):
             infr.print('hardness analysis')
             infr.print(str(df))
 
-            infr.print('infr status: ' + ut.repr4(infr.status()))
+            infr.print('infr status: ' + ub.repr2(infr.status()))
 
         # Don't re-review anything that was confidently reviewed
         # CONFIDENCE = const.CONFIDENCE
@@ -206,7 +205,7 @@ class InfrLoops(object):
         # work around add_candidate_edges
         infr.prioritize(metric='hardness', edges=edges,
                         scores=hardness)
-        infr.set_edge_attrs('hardness', ut.dzip(edges, hardness))
+        infr.set_edge_attrs('hardness', ub.dzip(edges, hardness))
         for _ in infr._inner_priority_gen(use_refresh=False):
             yield _
 
@@ -256,7 +255,7 @@ class InfrLoops(object):
         Searches for decisions that would commplete positive redundancy
 
         Doctest:
-            >>> from ibeis.algo.graph.mixin_loops import *
+            >>> from graphid.internal.mixin_loops import *
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids='all',
             >>>                             autoinit='staging', verbose=4)
@@ -460,7 +459,6 @@ class InfrLoops(object):
 
 
 class InfrReviewers(object):
-    @profile
     def try_auto_review(infr, edge):
         review = {
             'user_id': 'algo:auto_clf',
@@ -511,7 +509,7 @@ class InfrReviewers(object):
                 confounded = False
             if not confounded:
                 # decision = decision_flags.argmax()
-                evidence_decision = ut.argmax(decision_probs)
+                evidence_decision = ub.argmax(decision_probs)
                 review['evidence_decision'] = evidence_decision
                 truth = infr.match_state_gt(edge)
                 if review['evidence_decision'] != truth:
@@ -631,7 +629,7 @@ class InfrReviewers(object):
         Qt review loop entry point
 
         CommandLine:
-            python -m ibeis.algo.graph.mixin_loops qt_review_loop --show
+            python -m graphid.internal.mixin_loops qt_review_loop --show
 
         Example:
             >>> # SCRIPT
@@ -641,7 +639,7 @@ class InfrReviewers(object):
             >>> infr = ibeis.AnnotInference(ibs, 'all', autoinit=True)
             >>> infr.ensure_mst()
             >>> # Add dummy priorities to each edge
-            >>> infr.set_edge_attrs('prob_match', ut.dzip(infr.edges(), [1]))
+            >>> infr.set_edge_attrs('prob_match', ub.dzip(infr.edges(), [1]))
             >>> infr.prioritize('prob_match', infr.edges(), reset=True)
             >>> infr.params['redun.enabled'] = False
             >>> win = infr.qt_review_loop()
@@ -653,101 +651,10 @@ class InfrReviewers(object):
         return infr.manual_wgt
 
 
-if False:
-    # Testing generating using threads
-    from threading import Thread
-
-    _sentinel = object()
-
-    class _background_consumer(Thread):
-        """
-        Will fill the queue with content of the source in a separate thread.
-
-        Example:
-            >>> from ibeis.algo.graph.mixin_loops import *
-            >>> import ibeis
-            >>> infr = ibeis.AnnotInference('PZ_MTEST', aids='all',
-            >>>                             autoinit='staging', verbose=4)
-            >>> infr.load_published()
-            >>> gen = infr.find_pos_redun_candidate_edges()
-            >>> parbuf = buffered_add_candidate_edges(infr, 3, gen)
-            >>> next(parbuf)
-
-        """
-        def __init__(self, infr, queue, source):
-            Thread.__init__(self)
-
-            self.infr = infr
-
-            self._queue = queue
-            self._source = source
-
-        def run(self):
-            # for edges in ub.chunks(self._source, 5):
-            #     print('edges = {!r}'.format(edges))
-            #     # print('put item = {!r}'.format(item))
-            #     # probably not thread safe
-            #     infr = self.infr
-            #     infr.add_candidate_edges(edges)
-            #     for item in edges:
-            #         self._queue.put(item)
-            for _, item in enumerate(self._source):
-                # import threading
-                # import multiprocessing
-                # print('multiproc = ' + str(multiprocessing.current_process()))
-                # print('thread = ' + str(threading.current_thread()))
-                # print('_ = {!r}'.format(_))
-                # print('item = {!r}'.format(item))
-                # print('put item = {!r}'.format(item))
-                # probably not thread safe
-                infr = self.infr
-                infr.add_candidate_edges([item])
-                self._queue.put(item, block=True)
-
-            # Signal the consumer we are done.
-            self._queue.put(_sentinel)
-
-    class buffered_add_candidate_edges(object):
-        """
-        Buffers content of an iterator polling the contents of the given
-        iterator in a separate thread.
-        When the consumer is faster than many producers, this kind of
-        concurrency and buffering makes sense.
-
-        The size parameter is the number of elements to buffer.
-
-        The source must be threadsafe.
-        """
-        def __init__(self, infr, size, source):
-            if six.PY2:
-                from Queue import Queue
-            else:
-                from queue import Queue
-            self._queue = Queue(size)
-
-            self._poller = _background_consumer(infr, self._queue, source)
-            self._poller.daemon = True
-            self._poller.start()
-
-        def __iter__(self):
-            return self
-
-        def __next__(self):
-            item = self._queue.get(True)
-            if item is _sentinel:
-                raise StopIteration()
-            return item
-
-        next = __next__
-
-
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.mixin_loops
-        python -m ibeis.algo.graph.mixin_loops --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/mixin_loops.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

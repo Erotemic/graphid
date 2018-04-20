@@ -2,16 +2,14 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import networkx as nx
 import pandas as pd
-import utool as ut
+import ubelt as ub
 import numpy as np
-import vtool as vt  # NOQA
-import six
 from ibeis.algo.graph import nx_utils as nxu
 from ibeis.algo.graph.state import POSTV, NEGTV, INCMP, UNREV, UNKWN  # NOQA
-print, rrr, profile = ut.inject2(__name__)
+
+import utool as ut
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class IBEISIO(object):
     """
     Direct interface into ibeis tables and delta statistics
@@ -29,7 +27,7 @@ class IBEISIO(object):
 
         edge_delta_info = infr.ibeis_edge_delta_info(edge_delta_df)
 
-        info = ut.odict([
+        info = ub.odict([
             ('num_annots_with_names_changed' , len(name_delta_df)),
         ])
         info.update(edge_delta_info)
@@ -187,7 +185,6 @@ class IBEISIO(object):
                     #     print(df)
         return unjustified
 
-    @profile
     def reset_labels_to_ibeis(infr):
         """ Sets to IBEIS de-facto labels if available """
         nids = infr.ibs.get_annot_nids(infr.aids)
@@ -306,7 +303,7 @@ class IBEISIO(object):
         for edge, feedbacks in infr.internal_feedback.items():
             infr.external_feedback[edge].extend(feedbacks)
         # Delete internal feedback
-        infr.internal_feedback = ut.ddict(list)
+        infr.internal_feedback = ub.ddict(list)
 
     def write_ibeis_annotmatch_feedback(infr, edge_delta_df=None):
         """
@@ -475,13 +472,13 @@ class IBEISIO(object):
         # Indicate that unknown names should be replaced
         old_names = [None if n.startswith(infr.ibs.const.UNKNOWN) else n
                      for n in old_names]
-        new_labels = ut.take(node_to_new_label, aids)
+        new_labels = ub.take(node_to_new_label, aids)
         # Recycle as many old names as possible
         label_to_name, needs_assign, unknown_labels = infr._rectify_names(
             old_names, new_labels)
         if ignore_unknown:
-            label_to_name = ut.delete_dict_keys(label_to_name, unknown_labels)
-            needs_assign = ut.setdiff(needs_assign, unknown_labels)
+            label_to_name = ub.delete_dict_keys(label_to_name, unknown_labels)
+            needs_assign = ub.setdiff(needs_assign, unknown_labels)
         infr.print('had %d unknown labels' % (len(unknown_labels)), 3)
         infr.print('ignore_unknown = %r' % (ignore_unknown,), 3)
         infr.print('need to make %d new names' % (len(needs_assign)), 3)
@@ -497,7 +494,7 @@ class IBEISIO(object):
                 if label not in unknown_labels_
             }
         aid_list = list(node_to_new_label.keys())
-        new_name_list = ut.take(label_to_name, node_to_new_label.values())
+        new_name_list = ub.take(label_to_name, node_to_new_label.values())
         old_name_list = infr.ibs.get_annot_name_texts(
             aid_list, distinguish_unknowns=True)
         # Put into a dataframe for convinience
@@ -531,7 +528,7 @@ class IBEISIO(object):
             >>> ibs = ibeis.opendb('GZ_Master1')
             >>> infr = ibeis.AnnotInference(ibs=ibs, aids='all')
             >>> feedback = infr.read_ibeis_staging_feedback()
-            >>> result = ('feedback = %s' % (ut.repr2(feedback),))
+            >>> result = ('feedback = %s' % (ub.repr2(feedback),))
             >>> print(result)
         """
 
@@ -618,7 +615,7 @@ class IBEISIO(object):
             >>> infr = testdata_infr('testdb1')
             >>> feedback = infr.read_ibeis_annotmatch_feedback()
             >>> items = feedback[(2, 3)]
-            >>> result = ('feedback = %s' % (ut.repr2(feedback, nl=2),))
+            >>> result = ('feedback = %s' % (ub.repr2(feedback, nl=2),))
             >>> print(result)
             >>> assert len(feedback) >= 2, 'should contain at least 2 edges'
             >>> assert len(items) == 1, '2-3 should have one review'
@@ -649,7 +646,7 @@ class IBEISIO(object):
             'num_reviews': matches.count,
         }
 
-        feedback = ut.ddict(list)
+        feedback = ub.ddict(list)
         for aid1, aid2, row in zip(aids1, aids2, zip(*column_lists.values())):
             edge = nxu.e_(aid1, aid2)
             feedback_item = dict(zip(column_lists.keys(), row))
@@ -667,7 +664,7 @@ class IBEISIO(object):
             infr.write_ibeis_staging_feedback()
         else:
             infr.external_feedback = staging_feedback
-        infr.internal_feedback = ut.ddict(list)
+        infr.internal_feedback = ub.ddict(list)
         # edge_delta_df = infr.match_state_delta(old='staging',
         # new='annotmatch')
 
@@ -680,7 +677,7 @@ class IBEISIO(object):
         am_rowids = ibs.get_annotmatch_rowid_from_undirected_superkey(aids1,
                                                                       aids2)
         rectified_feedback_ = infr._rectify_feedback(feedback)
-        rectified_feedback = ut.take(rectified_feedback_, aid_pairs)
+        rectified_feedback = list(ub.take(rectified_feedback_, aid_pairs))
         decision = ut.dict_take_column(rectified_feedback, 'evidence_decision')
         tags = ut.dict_take_column(rectified_feedback, 'tags')
         confidence = ut.dict_take_column(rectified_feedback, 'confidence')
@@ -965,7 +962,6 @@ class IBEISIO(object):
         print('____')
 
 
-@six.add_metaclass(ut.ReloadingMetaclass)
 class IBEISGroundtruth(object):
     """
     Methods for generating training labels for classifiers
@@ -1048,7 +1044,7 @@ def _update_staging_to_annotmatch(infr):
     df = infr.match_state_delta('staging', 'annotmatch')
     print('There are {}/{} annotmatch items that do not exist in staging'.format(
         sum(df['is_new']), len(df)))
-    print(ut.repr4(infr.ibeis_edge_delta_info(df)))
+    print(ub.repr2(infr.ibeis_edge_delta_info(df)))
 
     # Find places that exist in annotmatch but not in staging
     flags = pd.isnull(df['old_evidence_decision'])
@@ -1197,12 +1193,9 @@ def needs_conversion(infr):
 
 
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m ibeis.algo.graph.mixin_ibeis
-        python -m ibeis.algo.graph.mixin_ibeis --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python ~/code/graphid/graphid/internal/mixin_ibeis.py all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

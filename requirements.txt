@@ -1,0 +1,6 @@
+ubelt
+xdoctest
+pytest
+numpy
+networkx
+pandas
