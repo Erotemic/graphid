@@ -1,6 +1,6 @@
 import ubelt as ub
 from graphid import util
-from graphid.internal import annot_inference
+from graphid.core import annot_inference
 
 
 class GraphID(ub.NiceRepr):

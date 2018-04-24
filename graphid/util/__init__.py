@@ -1,14 +1,13 @@
 """
-python -c "import ubelt._internal as a; a.autogen_init('graphid.util')"
-python -m netharn
+mkinit graphid.util
 """
 # flake8: noqa
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __DYNAMIC__ = True
 if __DYNAMIC__:
-    from ubelt._internal import dynamic_import
-    exec(dynamic_import(__name__))
+    import mkinit
+    exec(mkinit.dynamic_init(__name__))
 else:
     # <AUTOGEN_INIT>
     from graphid.util import mplutil
@@ -50,6 +49,7 @@ else:
                                        is_k_edge_connected, itake_column,
                                        k_edge_augmentation, list_roll,
                                        nx_delete_edge_attr, nx_delete_node_attr,
+                                       nx_gen_edge_attrs, nx_gen_edge_values,
                                        nx_gen_node_attrs, nx_gen_node_values,
                                        random_k_edge_connected_graph, take_column,)
     from graphid.util.priority_queue import (PriorityQueue,)

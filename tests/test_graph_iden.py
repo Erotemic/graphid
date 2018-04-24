@@ -1,6 +1,6 @@
 import ubelt as ub
-from graphid.internal import demo
-from graphid.internal.state import (POSTV, NEGTV, INCMP, UNREV)
+from graphid.core import demo
+from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV)
 
 
 def test_incomp_inference():
