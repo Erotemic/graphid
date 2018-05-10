@@ -91,15 +91,6 @@ class GraphVisualization(object):
             infr.initialize_visual_node_attrs()
         aid_list = list(graph.nodes())
 
-        if infr.ibs is not None:
-            nx.set_node_attributes(graph, name='framewidth', values=3.0)
-            nx.set_node_attributes(graph, name='shape', values=ub.dzip(aid_list, ['rect']))
-            if infr.ibs is None:
-                raise ValueError('Cannot show images when ibs is None')
-            imgpath_list = infr.ibs.depc_annot.get('chipthumb', aid_list, 'img',
-                                                   config=infr._viz_image_config,
-                                                   read_extern=False)
-            nx.set_node_attributes(graph, name='image', values=ub.dzip(aid_list, imgpath_list))
         if graph is infr.graph:
             infr._viz_image_config_dirty = False
 
@@ -594,30 +585,6 @@ class GraphVisualization(object):
                       modifysize=True)
         showkw.update(kwargs)
         match.show(ax, **showkw)
-
-    def draw_aids(infr, aids, fnum=None):
-        from ibeis.viz import viz_chip
-        import plottool as pt
-        fnum = pt.ensure_fnum(None)
-        fig = pt.figure(fnum=fnum)
-        viz_chip.show_many_chips(infr.ibs, aids, fnum=fnum)
-        return fig
-
-    def start_qt_interface(infr, loop=True):
-        import guitool as gt
-        from ibeis.viz.viz_graph2 import AnnotGraphWidget
-        from plottool import abstract_interaction
-        import plottool as pt
-        pt.qtensure()
-        gt.ensure_qtapp()
-        # win = AnnotGraphWidget(infr=infr, use_image=False, init_mode='review')
-        win = AnnotGraphWidget(infr=infr, use_image=False, init_mode=None)
-        abstract_interaction.register_interaction(win)
-        if loop:
-            gt.qtapp_loop(qwin=win, freq=10)
-        else:
-            win.show()
-        return win
 
     def debug_edge_repr(infr):
         print('DEBUG EDGE REPR')

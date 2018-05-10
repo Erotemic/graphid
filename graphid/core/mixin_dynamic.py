@@ -781,7 +781,7 @@ class _RedundancyComputers(object):
 
         Example:
             >>> from graphid.core import demo
-            >>> infr = demo.make_demo_infr(ccs=[(1, 2, 3, 4, 5)])
+            >>> infr = demo.demodata_infr(ccs=[(1, 2, 3, 4, 5)])
             >>> infr.params['redun.pos'] = 2
             >>> cc = infr.pos_graph.connected_to(1)
             >>> flag1 = infr.is_pos_redundant(cc)
@@ -817,7 +817,7 @@ class _RedundancyComputers(object):
 
         Example:
             >>> from graphid.core import demo
-            >>> infr = demo.make_demo_infr(ccs=[(1, 2), (3, 4)])
+            >>> infr = demo.demodata_infr(ccs=[(1, 2), (3, 4)])
             >>> infr.params['redun.neg'] = 2
             >>> cc1 = infr.pos_graph.connected_to(1)
             >>> cc2 = infr.pos_graph.connected_to(3)

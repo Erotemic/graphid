@@ -337,7 +337,7 @@ class Priority(object):
         Doctest:
             >>> from graphid.core.mixin_priority import *  # NOQA
             >>> from graphid.core import demo
-            >>> infr = demo.make_demo_infr(ccs=[(1, 2), (3, 4), (5, 6), (7, 8)])
+            >>> infr = demo.demodata_infr(ccs=[(1, 2), (3, 4), (5, 6), (7, 8)])
             >>> infr.add_feedback((1, 5), NEGTV)
             >>> infr.add_feedback((5, 8), NEGTV)
             >>> infr.add_feedback((6, 3), NEGTV)

@@ -472,9 +472,8 @@ def random_k_edge_connected_graph(size, k, p=.1, rng=None):
         >>> for g in gs:
         >>>     util.show_nx(g, fnum=fnum, pnum=pnum_())
     """
-    import sys
     for count in it.count(0):
-        seed = None if rng is None else rng.randint(sys.maxsize)
+        seed = None if rng is None else rng.randint((2 ** 31 - 1))
         # Randomly generate a graph
         g = nx.fast_gnp_random_graph(size, p, seed=seed)
         conn = nx.edge_connectivity(g)

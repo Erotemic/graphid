@@ -10,24 +10,18 @@ import networkx as nx
 import logging
 import ubelt as ub
 from graphid.core import state as const
-from graphid.util import nx_dynamic_graph
 from graphid import util
 from graphid.core import mixin_viz
 from graphid.core import mixin_helpers
 from graphid.core import mixin_dynamic
 from graphid.core import mixin_priority
 from graphid.core import mixin_loops
-from graphid.core import mixin_matching
-from graphid.core import mixin_groundtruth
+from graphid.core import mixin_callbacks
 from graphid.core import mixin_simulation
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
 from graphid.core.state import UNINFERABLE
 from graphid.core.state import SAME, DIFF, NULL
 from graphid.util import nx_utils as nxu
-
-
-DEBUG_CC = False
-# DEBUG_CC = True
 
 
 def _rectify_decision(evidence_decision, meta_decision):
@@ -93,7 +87,7 @@ class Feedback(object):
                 infr.add_feedback(edge, *args, verbose=verbose, **kwargs)
 
     def edge_decision(infr, edge):
-        r"""
+        """
         Gets a decision on an edge, either explicitly or implicitly
         """
         evidence_decision = infr.get_edge_attr(edge, 'evidence_decision',
@@ -105,7 +99,7 @@ class Feedback(object):
         return decision
 
     def edge_decision_from(infr, edges):
-        r"""
+        """
         Gets a decision for multiple edges
         """
         edges = list(edges)
@@ -117,25 +111,22 @@ class Feedback(object):
             yield _rectify_decision(ed, md)
 
     def add_node_feedback(infr, aid, **attrs):
-        infr.print('Writing annot aid=%r %s' % (aid, ub.repr2(attrs)))
-        ibs = infr.ibs
-        ibs.set_annot_quality_texts([aid], [attrs['quality_texts']])
-        ibs.set_annot_viewpoint_code([aid], [attrs['viewpoint_code']])
-        ibs.overwrite_annot_case_tags([aid], [attrs['case_tags']])
-        ibs.set_annot_multiple([aid], [attrs['multiple']])
+        infr.print('Setting aid={} {}'.format(aid, ub.repr2(attrs)))
+        for key, value in attrs.items():
+            infr.set_node_attrs(key, {aid: value})
 
     def add_feedback(infr, edge, evidence_decision=None, tags=None,
                      user_id=None, meta_decision=None, confidence=None,
                      timestamp_c1=None, timestamp_c2=None, timestamp_s1=None,
                      timestamp=None, verbose=None, priority=None):
-        r"""
+        """
         Doctest:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=5)
             >>> infr.add_feedback((5, 6), POSTV)
             >>> infr.add_feedback((5, 6), NEGTV, tags=['photobomb'])
             >>> infr.add_feedback((1, 2), INCMP)
-            >>> print(ub.repr2(infr.internal_feedback, nl=2))
+            >>> print(ub.repr2(infr.internal_feedback, nl=3, sk=1))
             >>> assert len(infr.external_feedback) == 0
             >>> assert len(infr.internal_feedback) == 2
             >>> assert len(infr.internal_feedback[(5, 6)]) == 2
@@ -169,7 +160,6 @@ class Feedback(object):
         loc = locals()
         msg += ', '.join([
             str(val)
-            # key + '=' + str(val)
             for key, val in (
                 (key, loc[key])
                 for key in ['evidence_decision', 'tags', 'user_id',
@@ -277,7 +267,7 @@ class Feedback(object):
         ]
 
     def apply_feedback_edges(infr):
-        r"""
+        """
         Transforms the feedback dictionaries into nx graph edge attributes
         """
         infr.print('apply_feedback_edges', 1)
@@ -294,12 +284,7 @@ class Feedback(object):
             set1 = set(feedback_item.keys())
             set2 = set(attr_lists.keys())
             if set1 != set2:
-                raise AssertionError(
-                    'Bad feedback keys: '  # +
-                    # ub.repr2(util.set_overlap_items(set1, set2, 'got', 'want'), nl=1)
-                    # ub.repr2(sorted(feedback_item.keys()), sv=True) + ' ' +
-                    # ub.repr2(sorted(attr_lists.keys()), sv=True)
-                )
+                raise AssertionError('Bad feedback keys')
             for key, val in feedback_item.items():
                 attr_lists[key].append(val)
             edges.append(edge)
@@ -388,7 +373,7 @@ class Feedback(object):
 
     def reset_feedback(infr, mode='annotmatch', apply=True):
         """ Resets feedback edges to state of the SQL annotmatch table """
-        infr.print('reset_feedback mode=%r' % (mode,), 1)
+        infr.print('reset_feedback mode={}'.format(mode), 1)
         infr.clear_feedback()
         if mode == 'annotmatch':
             infr.external_feedback = infr.read_ibeis_annotmatch_feedback()
@@ -479,9 +464,6 @@ class NameRelabel(object):
         unknown_labels = list(ub.compress(unique_newlabels, still_unknown))
 
         new_flags = [n is None for n in new_names]
-        #     isinstance(n, six.string_types) and n.startswith('_extra_name')
-        #     for n in new_names
-        # ]
         label_to_name = ub.dzip(unique_newlabels, new_names)
         needs_assign = list(ub.compress(unique_newlabels, new_flags))
         return label_to_name, needs_assign, unknown_labels
@@ -589,7 +571,7 @@ class NameRelabel(object):
         return num_names, num_inconsistent
 
     def connected_component_status(infr):
-        r"""
+        """
         Returns:
             dict: num_inconsistent, num_names_max
 
@@ -613,10 +595,7 @@ class MiscHelpers(object):
 
     def _rectify_nids(infr, aids, nids):
         if nids is None:
-            if infr.ibs is None:
-                nids = [-aid for aid in aids]
-            else:
-                nids = infr.ibs.get_annot_nids(aids)
+            nids = [-aid for aid in aids]
         elif not ub.iterable(nids):
             nids = [nids] * len(aids)
         return nids
@@ -639,22 +618,6 @@ class MiscHelpers(object):
         infr.incomp_graph.remove_nodes_from(aids)
 
     def add_aids(infr, aids, nids=None):
-        """
-        CommandLine:
-            python -m graphid.core.annot_inference add_aids --show
-
-        Doctest:
-            >>> from graphid.core.annot_inference import *  # NOQA
-            >>> aids_ = [1, 2, 3, 4, 5, 6, 7, 9]
-            >>> infr = AnnotInference(ibs=None, aids=aids_, autoinit=True)
-            >>> aids = [2, 22, 7, 9, 8]
-            >>> nids = None
-            >>> infr.add_aids(aids, nids)
-            >>> result = infr.aids
-            >>> print(result)
-            >>> assert len(infr.graph) == len(infr.aids)
-            [1, 2, 3, 4, 5, 6, 7, 9, 22, 8]
-        """
         nids = infr._rectify_nids(aids, nids)
         assert len(aids) == len(nids), 'must correspond'
         if infr.aids is None:
@@ -702,13 +665,16 @@ class MiscHelpers(object):
         # TODO: depricate these, they will always be identity I think
 
     def initialize_graph(infr, graph=None):
+        """
+        Constructs the internal networkx Graph objects
+        """
         infr.print('initialize_graph', 1)
         if graph is None:
             infr.graph = infr._graph_cls()
         else:
             infr.graph = graph
 
-        infr.review_graphs[POSTV] = nx_dynamic_graph.DynConnGraph()
+        infr.review_graphs[POSTV] = util.DynConnGraph()
         infr.review_graphs[NEGTV] = infr._graph_cls()
         infr.review_graphs[INCMP] = infr._graph_cls()
         infr.review_graphs[UNKWN] = infr._graph_cls()
@@ -726,9 +692,9 @@ class MiscHelpers(object):
 
         infr.update_node_attributes()
 
-    def log_message(infr, msg, level=1, color=None):
+    def print(infr, msg, level=1, color=None):
         if color is None:
-            color = 'blue'
+            color = 'turquoise' if ub.WIN32 else 'blue'
 
         if True:
             from xdoctest.dynamic_analysis import get_parent_frame
@@ -752,8 +718,6 @@ class MiscHelpers(object):
             # Send the message to a python logger
             infr.logger.log(loglevel, msg)
 
-    print = log_message
-
     def latest_logs(infr, colored=False):
         index = infr.log_index
         infr.log_index = len(infr.logs)
@@ -770,57 +734,43 @@ class MiscHelpers(object):
 
 
 class AltConstructors(object):
-    _graph_cls = nx_dynamic_graph.NiceGraph
+    _graph_cls = util.NiceGraph
     # _graph_cls = nx.Graph
-    # nx.Graph
     # _graph_cls = nx.DiGraph
 
     @classmethod
-    def from_pairs(AnnotInference, aid_pairs, attrs=None, ibs=None, verbose=False):
-        import networkx as nx
+    def from_pairs(AnnotInference, aid_pairs, attrs=None, verbose=False):
         G = AnnotInference._graph_cls()
-        assert not any([a1 == a2 for a1, a2 in aid_pairs]), 'cannot have self-edges'
+        if any(a1 == a2 for a1, a2 in aid_pairs):
+            raise AssertionError('cannot have self-edges')
         G.add_edges_from(aid_pairs)
         if attrs is not None:
             for key in attrs.keys():
-                nx.set_edge_attributes(G, name=key, values=ub.dzip(aid_pairs, attrs[key]))
-        infr = AnnotInference.from_netx(G, ibs=ibs, verbose=verbose)
+                values = ub.dzip(aid_pairs, attrs[key])
+                nx.set_edge_attributes(G, name=key, values=values)
+        infr = AnnotInference.from_netx(G, verbose=verbose)
         return infr
 
     @classmethod
-    def from_netx(AnnotInference, G, ibs=None, verbose=False, infer=True):
+    def from_netx(AnnotInference, G, verbose=False, infer=True):
         aids = list(G.nodes())
-        if ibs is not None:
-            nids = None
-        else:
-            nids = [-a for a in aids]
-        infr = AnnotInference(ibs, aids, nids, autoinit=False,
+        nids = [-a for a in aids]
+        infr = AnnotInference(aids, nids, autoinit=False,
                               verbose=verbose)
         infr.initialize_graph(graph=G)
         # hack
         orig_name_labels = [infr.pos_graph.node_label(a) for a in aids]
         infr.orig_name_labels = orig_name_labels
-        infr.set_node_attrs('orig_name_label',
-                            ub.dzip(aids, orig_name_labels))
+        infr.set_node_attrs('orig_name_label', ub.dzip(aids, orig_name_labels))
         if infer:
             infr.apply_nondynamic_update()
         return infr
 
-    @classmethod
-    def from_qreq_(AnnotInference, qreq_, cm_list, autoinit=False):
-        """
-        Create a AnnotInference object using a precomputed query / results
-        """
-        # raise NotImplementedError('do not use')
-        aids = list(ub.unique(ub.flatten([qreq_.qaids, qreq_.daids])))
-        nids = qreq_.get_qreq_annot_nids(aids)
-        ibs = qreq_.ibs
-        infr = AnnotInference(ibs, aids, nids, verbose=False, autoinit=autoinit)
-        infr.cm_list = cm_list
-        infr.qreq_ = qreq_
-        return infr
-
     def status(infr, extended=False):
+        """
+        Returns:
+            dict: a dictionary containing status information
+        """
         status_dict = ub.odict([
             ('nNodes', len(infr.aids)),
             ('nEdges', infr.graph.number_of_edges()),
@@ -873,11 +823,6 @@ class AltConstructors(object):
                 # infr.unreviewed_graph.number_of_edges(),
             )
             return msg
-            # return 'nAids={}, nEdges={}, nCCs={}'.format(
-            #     len(infr.aids),
-            #     infr.graph.number_of_edges(),
-            #     infr.pos_graph.number_of_components()
-            # )
 
 
 class AnnotInference(ub.NiceRepr,
@@ -893,9 +838,6 @@ class AnnotInference(ub.NiceRepr,
                      mixin_dynamic.Redundancy,
                      mixin_dynamic.DynamicUpdate,
                      mixin_priority.Priority,
-                     mixin_matching.CandidateSearch,
-                     mixin_matching.InfrLearning,
-                     mixin_matching.AnnotInfrMatching,
                      # General helpers
                      mixin_helpers.AssertInvariants,
                      mixin_helpers.DummyEdges,
@@ -905,33 +847,13 @@ class AnnotInference(ub.NiceRepr,
                      mixin_simulation.SimulationHelpers,
                      mixin_loops.InfrReviewers,
                      mixin_loops.InfrLoops,
+                     # For matching and candidate edge callbacks
+                     mixin_callbacks.InfrCallbacks,
                      # Visualization
                      mixin_viz.GraphVisualization,
-                     # plugging into IBEIS
-                     mixin_groundtruth.Groundtruth,
-                     # mixin_ibeis.IBEISIO,
-                     # mixin_ibeis.IBEISGroundtruth,
                      ):
     """
     class for maintaining state of an identification
-
-    Terminology and Concepts:
-
-    Doctest:
-        >>> from graphid.core.annot_inference import *  # NOQA
-        >>> import ibeis
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
-        >>> aids = [1, 2, 3, 4, 5, 6]
-        >>> infr = AnnotInference(ibs, aids, autoinit=True, verbose=1000)
-        >>> result = ('infr = %s' % (infr,))
-        >>> print(result)
-        >>> util.quit_if_noshow()
-        >>> use_image = True
-        >>> infr.initialize_visual_node_attrs()
-        >>> # Note that there are initially no edges
-        >>> infr.show_graph(use_image=use_image)
-        >>> util.show_if_requested()
-        infr = <AnnotInference(nNodes=6, nEdges=0, nCCs=6)>
     """
 
     def __getstate__(self):
@@ -941,7 +863,7 @@ class AnnotInference(ub.NiceRepr,
         state['logger'] = None
         return state
 
-    def __init__(infr, ibs, aids=[], nids=None, autoinit=True, verbose=False):
+    def __init__(infr, aids=[], nids=None, autoinit=True, verbose=False):
         """
         Ignore:
             pass
@@ -950,31 +872,8 @@ class AnnotInference(ub.NiceRepr,
         infr.name = None
         infr.verbose = verbose
 
-        # ibeis controller and initial nodes
-        # TODO: aids can be abstracted as a property that simply looks at the
-        # nodes in infr.graph.
-        if isinstance(ibs, six.string_types):
-            import ibeis
-            ibs = ibeis.opendb(ibs)
-
         # setup logging
         infr.logger = None
-        do_logging = ub.argflag(('--loginfr', '--log-infr'))
-        # do_logging = True
-        if do_logging:
-            if ibs is not None:
-                from os.path import join
-                # logdir = ibs.get_logdir_local()
-                logdir = '.'
-                logname = 'AnnotInference' + ub.timestamp()
-                logger = logging.getLogger(logname)
-                if not logger.handlers:
-                    fh = logging.FileHandler(join(logdir, logname + '.log'))
-                    print('logger.handlers = {!r}'.format(logger.handlers))
-                    logger.addHandler(fh)
-                # logger.setLevel(logging.INFO)
-                logger.setLevel(logging.DEBUG)
-                infr.logger = logger
 
         infr.logs = collections.deque(maxlen=10000)
         infr.log_index = 0
@@ -985,7 +884,6 @@ class AnnotInference(ub.NiceRepr,
         infr.dirty = False
         infr.readonly = False
 
-        infr.ibs = ibs
         infr.aids = None
         infr.aids_set = None
         infr.orig_name_labels = None
@@ -1012,7 +910,7 @@ class AnnotInference(ub.NiceRepr,
         infr.recovery_ccs = []
 
         # Recover graph holds positive edges of inconsistent PCCs
-        infr.recover_graph = nx_dynamic_graph.DynConnGraph()
+        infr.recover_graph = util.DynConnGraph()
         # Set of PCCs that are positive redundant
         infr.pos_redun_nids = set([])
         # Represents the metagraph of negative edges between PCCs
@@ -1061,7 +959,6 @@ class AnnotInference(ub.NiceRepr,
 
         infr.params = {
             'manual.n_peek': 1,
-            'manual.autosave': True,
 
             'ranking.enabled': True,
             'ranking.ntop': 5,
@@ -1134,8 +1031,6 @@ class AnnotInference(ub.NiceRepr,
         infr.manual_wgt = None
 
         infr.print('__init__', level=1)
-        if aids == 'all':
-            aids = ibs.get_valid_aids()
         infr.add_aids(aids, nids)
         if autoinit:
             infr.initialize_graph()
@@ -1159,9 +1054,8 @@ class AnnotInference(ub.NiceRepr,
         return subparams
 
     def copy(infr):
-        # shallow copy ibs
         infr2 = AnnotInference(
-            infr.ibs, copy.deepcopy(infr.aids),
+            copy.deepcopy(infr.aids),
             copy.deepcopy(infr.orig_name_labels), autoinit=False,
             verbose=infr.verbose)
 
@@ -1211,7 +1105,7 @@ class AnnotInference(ub.NiceRepr,
         read only. Do not commit any reviews made from here.
         """
         orig_name_labels = list(infr.gen_node_values('orig_name_label', aids))
-        infr2 = AnnotInference(infr.ibs, aids, orig_name_labels,
+        infr2 = AnnotInference(aids, orig_name_labels,
                                autoinit=False, verbose=infr.verbose)
         # deep copy the graph structure
         infr2.graph = infr.graph.subgraph(aids).copy()

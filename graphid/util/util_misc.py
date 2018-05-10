@@ -165,7 +165,17 @@ def cprint(text, color=None):
         >>> cprint('line5', 'fuchsia')
         >>> print('line6')
     """
-    print(ub.color_text(text, color))
+    if False and ub.WIN32:
+        # Ignore colors on windows. Seems to cause a recursion error
+        print(text)
+    else:
+        try:
+            if color is None:
+                print(ub.color_text(text, 'blue'))
+            else:
+                print(ub.color_text(text, color))
+        except RecursionError:
+            print(text)
 
 
 def ensure_iterable(obj):

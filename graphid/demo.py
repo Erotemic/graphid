@@ -4,6 +4,7 @@ TODO: separate out the tests and make this file just generate the demo data
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
+import networkx as nx
 import numpy as np
 import pandas as pd
 from graphid import util
@@ -14,69 +15,23 @@ import ubelt as ub
 
 
 def make_dummy_infr(annots_per_name):
+    from graphid.core.annot_inference import AnnotInference
     nids = [val for val, num in enumerate(annots_per_name, start=1)
             for _ in range(num)]
     aids = range(len(nids))
-    from graphid.core.annot_inference import AnnotInference
     infr = AnnotInference(None, aids, nids=nids, autoinit=True, verbose=1)
-    return infr
-
-
-def demodata_mtest_infr(state='empty'):
-    import ibeis
-    ibs = ibeis.opendb(db='PZ_MTEST')
-    annots = ibs.annots()
-    names = list(annots.group_items(annots.nids).values())
-    util.shuffle(names, rng=321)
-    test_aids = list(ub.flatten(names[1::2]))
-    from graphid.core.annot_inference import AnnotInference
-    infr = AnnotInference(ibs, test_aids, autoinit=True)
-    infr.reset(state=state)
-    return infr
-
-
-def demodata_infr2(defaultdb='PZ_MTEST'):
-    defaultdb = 'PZ_MTEST'
-    import ibeis
-    ibs = ibeis.opendb(defaultdb=defaultdb)
-    annots = ibs.annots()
-    names = list(annots.group_items(annots.nids).values())[0:20]
-    def dummy_phi(c, n):
-        x = np.arange(n)
-        phi = c * x / (c * x + 1)
-        phi = phi / phi.sum()
-        phi = np.diff(phi)
-        return phi
-    phis = {
-        c: dummy_phi(c, 30)
-        for c in range(1, 4)
-    }
-    aids = list(ub.flatten(names))
-    from graphid.core.annot_inference import AnnotInference
-    infr = AnnotInference(ibs, aids, autoinit=True)
-    infr.init_termination_criteria(phis)
-    infr.init_refresh_criteria()
-
-    # Partially review
-    n1, n2, n3, n4 = names[0:4]
-    for name in names[4:]:
-        for a, b in ub.iter_window(name.aids, 2):
-            infr.add_feedback((a, b), POSTV)
-
-    for name1, name2 in it.combinations(names[4:], 2):
-        infr.add_feedback((name1.aids[0], name2.aids[0]), NEGTV)
     return infr
 
 
 def demo2():
     """
     CommandLine:
-        python -m graphid.core.demo demo2 --viz
-        python -m graphid.core.demo demo2
+        python -m graphid.demo demo2 --viz
+        python -m graphid.demo demo2
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from graphid.core.demo import *  # NOQA
+        >>> from graphid.demo import *  # NOQA
         >>> result = demo2()
         >>> print(result)
     """
@@ -111,11 +66,8 @@ def demo2():
     # infr = demodata_infr(num_pccs=3, size=5, size_std=.2, p_incon=0)
     infr = demodata_infr(pcc_sizes=[5, 2, 4])
     infr.verbose = 100
-    # apply_dummy_viewpoints(infr)
-    # infr.ensure_cliques()
     infr.ensure_cliques()
     infr.ensure_full()
-    # infr.apply_edge_truth()
     # Dummy scoring
 
     infr.init_simulation(oracle_accuracy=oracle_accuracy, name='demo2')
@@ -304,32 +256,6 @@ def demo2():
     infr.print('status = ' + ub.repr2(infr.status(extended=False)))
     show_graph(infr, 'post-review (#reviews={})'.format(count), final=True)
 
-    # ROUND 2 FIGHT
-    # if TARGET_REVIEW is None and round2_params is not None:
-    #     # HACK TO GET NEW THINGS IN QUEUE
-    #     infr.params = round2_params
-
-    #     _iter2 = enumerate(infr.generate_reviews(**params))
-    #     prog = ub.ProgIter(_iter2, label='round2', bs=False, adjust=False,
-    #                        enabled=False)
-    #     for count, (aid1, aid2) in prog:
-    #         msg = 'reviewII #%d' % (count)
-    #         print('\n----------')
-    #         print(msg)
-    #         print('remaining_reviews = %r' % (infr.remaining_reviews()),)
-    #         # Make the next review evidence_decision
-    #         feedback = infr.request_oracle_review(edge)
-    #         if count == TARGET_REVIEW:
-    #             infr.EMBEDME = QUIT_OR_EMEBED == 'embed'
-    #         infr.add_feedback(edge, **feedback)
-    #         # Show the result
-    #         if PRESHOW or TARGET_REVIEW is None or count >= TARGET_REVIEW - 1:
-    #             show_graph(infr, msg)
-    #         if count == TARGET_REVIEW:
-    #             break
-
-    #     show_graph(infr, 'post-re-review', final=True)
-
     if VISUALIZE:
         if not getattr(infr, 'EMBEDME', False):
             # import plottool as pt
@@ -337,105 +263,16 @@ def demo2():
             util.mplutil.show_if_requested()
 
 
-valid_views = ['L', 'F', 'R', 'B']
-adjacent_views = {
-    v: [valid_views[(count + i) % len(valid_views)] for i in [-1, 0, 1]]
-    for count, v in enumerate(valid_views)
-}
-
-
-def get_edge_truth(infr, n1, n2):
-    node_dict = infr.graph.nodes
-    nid1 = node_dict[n1]['orig_name_label']
-    nid2 = node_dict[n2]['orig_name_label']
-    try:
-        view1 = node_dict[n1]['viewpoint']
-        view2 = node_dict[n2]['viewpoint']
-        comparable = view1 in adjacent_views[view2]
-    except KeyError:
-        comparable = True
-        # raise
-    same = nid1 == nid2
-
-    if not comparable:
-        return 2
-    else:
-        return int(same)
-
-
-def apply_dummy_viewpoints(infr):
-    transition_rate = .5
-    transition_rate = 0
-    valid_views = ['L', 'F', 'R', 'B']
-    rng = np.random.RandomState(42)
-    class MarkovView(object):
-        def __init__(self):
-            self.dir_ = +1
-            self.state = 0
-
-        def __call__(self):
-            return self.next_state()
-
-        def next_state(self):
-            if self.dir_ == -1 and self.state <= 0:
-                self.dir_ = +1
-            if self.dir_ == +1 and self.state >= len(valid_views) - 1:
-                self.dir_ = -1
-            if rng.rand() < transition_rate:
-                self.state += self.dir_
-            return valid_views[self.state]
-    mkv = MarkovView()
-    nid_to_aids = util.group_pairs([
-        (n, d['name_label']) for n, d in infr.graph.nodes(data=True)])
-    grouped_nodes = list(nid_to_aids.values())
-    node_to_view = {node: mkv() for nodes in grouped_nodes for node in nodes}
-    infr.set_node_attrs('viewpoint', node_to_view)
-
-
-def make_demo_infr(ccs, edges=[], nodes=[], infer=True):
-    """
-    Depricate in favor of demodata_infr
-    """
-    from graphid.core.annot_inference import AnnotInference
-    import networkx as nx
-
-    if nx.__version__.startswith('1'):
-        nx.add_path = nx.Graph.add_path
-
-    G = AnnotInference._graph_cls()
-    G.add_nodes_from(nodes)
-    for cc in ccs:
-        if len(cc) == 1:
-            G.add_nodes_from(cc)
-        nx.add_path(G, cc, evidence_decision=POSTV, meta_decision=NULL)
-
-    # for edge in edges:
-    #     u, v, d = edge if len(edge) == 3 else tuple(edge) + ({},)
-
-    G.add_edges_from(edges)
-    infr = AnnotInference.from_netx(G, infer=infer)
-    infr.verbose = 3
-
-    infr.relabel_using_reviews(rectify=False)
-
-    infr.graph.graph['dark_background'] = False
-    infr.graph.graph['ignore_labels'] = True
-    infr.set_node_attrs('width', 40)
-    infr.set_node_attrs('height', 40)
-    # infr.set_node_attrs('fontsize', fontsize)
-    # infr.set_node_attrs('fontname', fontname)
-    infr.set_node_attrs('fixed_size', True)
-    return infr
-
-
 def demodata_infr(**kwargs):
     """
-    kwargs = {}
+    Kwargs:
+        num_pccs (list): implicit number of individuals
+        ccs (list): explicit list of connected components
 
     CommandLine:
-        python -m graphid.core.demo demodata_infr --show
-        python -m graphid.core.demo demodata_infr --num_pccs=25
-        python -m graphid.core.demo demodata_infr --profile --num_pccs=100
+        python -m graphid.demo demodata_infr --show
+        python -m graphid.demo demodata_infr --num_pccs=25
+        python -m graphid.demo demodata_infr --profile --num_pccs=100
 
     Example:
         >>> from graphid.core import demo
@@ -461,7 +298,6 @@ def demodata_infr(**kwargs):
             'ccs': [[1, 2, 3], [4, 5]]
         }
     """
-    import networkx as nx
 
     def kwalias(*args):
         params = args[0:-1]
@@ -666,7 +502,6 @@ def demodata_infr(**kwargs):
     infr.set_node_attrs('fixed_size', True)
 
     # Set synthetic ground-truth attributes for testing
-    # infr.apply_edge_truth()
     infr.edge_truth = infr.get_edge_attrs('truth')
     # Make synthetic verif
     infr.dummy_verif = DummyVerif(infr)
@@ -688,11 +523,11 @@ class DummyVerif(object):
     generates dummy scores between edges (not necesarilly in the graph)
 
     CommandLine:
-        python -m graphid.core.demo DummyVerif:1
+        python -m graphid.demo DummyVerif:1
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from graphid.core.demo import *  # NOQA
+        >>> from graphid.demo import *  # NOQA
         >>> from graphid.core import demo
         >>> import networkx as nx
         >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
@@ -719,13 +554,12 @@ class DummyVerif(object):
     def show_score_probs(verif):
         """
         CommandLine:
-            python -m graphid.core.demo DummyVerif.show_score_probs --show
+            python -m graphid.demo DummyVerif.show_score_probs --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.core.demo import *  # NOQA
-            >>> import ibeis
-            >>> infr = ibeis.AnnotInference(None)
+            >>> from graphid.demo import *  # NOQA
+            >>> infr = AnnotInference(None)
             >>> verif = DummyVerif(infr)
             >>> verif.show_score_probs()
             >>> util.show_if_requested()
@@ -783,7 +617,7 @@ class DummyVerif(object):
         """
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.core.demo import *  # NOQA
+            >>> from graphid.demo import *  # NOQA
             >>> from graphid.core import demo
             >>> import networkx as nx
             >>> kwargs = dict(num_pccs=40, size=2)
@@ -811,11 +645,11 @@ class DummyVerif(object):
     def predict_proba_df(verif, edges):
         """
         CommandLine:
-            python -m graphid.core.demo DummyVerif.predict_edges
+            python -m graphid.demo DummyVerif.predict_edges
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.core.demo import *  # NOQA
+            >>> from graphid.demo import *  # NOQA
             >>> from graphid.core import demo
             >>> import networkx as nx
             >>> kwargs = dict(num_pccs=40, size=2)
@@ -864,7 +698,7 @@ class DummyVerif(object):
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/graphid/graphid.core/demo.py all
+        python ~/code/graphid/graphid.demo.py all
     """
     import xdoctest
     xdoctest.doctest_module(__file__)

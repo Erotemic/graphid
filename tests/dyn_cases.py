@@ -11,7 +11,7 @@ def do_infr_test(ccs, edges, new_edges):
     # import networkx as nx
     import plottool as pt
 
-    infr = demo.make_demo_infr(ccs, edges)
+    infr = demo.demodata_infr(ccs, edges)
 
     if util.show_was_requested():
         pt.qtensure()

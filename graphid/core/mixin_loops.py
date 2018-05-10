@@ -38,9 +38,7 @@ class InfrLoops(object):
 
         Doctest:
             >>> from graphid.core.mixin_simulation import UserOracle
-            >>> import ibeis
-            >>> infr = ibeis.AnnotInference('testdb1', aids='all',
-            >>>                             autoinit='staging', verbose=4)
+            >>> infr = todo_make_a_demo_graph
             >>> infr.params['manual.n_peek'] = 10
             >>> infr.params['ranking.ntop'] = 1
             >>> infr.oracle = UserOracle(.99, rng=0)
@@ -254,10 +252,7 @@ class InfrLoops(object):
 
         Doctest:
             >>> from graphid.core.mixin_loops import *
-            >>> import ibeis
-            >>> infr = ibeis.AnnotInference('PZ_MTEST', aids='all',
-            >>>                             autoinit='staging', verbose=4)
-            >>> #infr.load_published()
+            >>> infr = todo_make_a_demo_graph
             >>> gen = infr.pos_redun_gen()
             >>> feedback = next(gen)
         """
@@ -285,21 +280,7 @@ class InfrLoops(object):
             # if infr.test_mode:
             candgen = serial_gen()
             for new_edges in candgen:
-                if infr.ibs is not None:
-                    ibs = infr.ibs
-                    qual_edges = ibs.unflat_map(ibs.get_annot_quality_int, new_edges)
-                    valid_edges = []
-                    for (u, v), (q1, q2) in zip(new_edges, qual_edges):
-                        # Skip edges involving qualities less than ok
-                        if q1 is not None and q1 < ibs.const.QUAL.OK:
-                            continue
-                        if q2 is not None and q2 < ibs.const.QUAL.OK:
-                            continue
-                        valid_edges.append((u, v))
-                    if len(valid_edges) > 0:
-                        yield valid_edges
-                else:
-                    yield new_edges
+                yield new_edges
 
         for count in it.count(0):
             infr.print('check pos-redun iter {}'.format(count))
@@ -582,9 +563,6 @@ class InfrReviewers(object):
             infr.add_node_feedback(**annot2_state)
         infr.add_feedback(**feedback)
 
-        if infr.params['manual.autosave']:
-            infr.write_ibeis_staging_feedback()
-
     def continue_review(infr):
         infr.print('continue_review', 10)
         if infr._gen is None:
@@ -598,47 +576,6 @@ class InfrReviewers(object):
             infr._gen = None
             user_request = None
         return user_request
-
-    def qt_edge_reviewer(infr, edge=None):
-        import guitool as gt
-        gt.ensure_qapp()
-        from ibeis.viz import viz_graph2
-        infr.manual_wgt = viz_graph2.AnnotPairDialog(
-            edge=edge, infr=infr, standalone=False,
-            cfgdict=infr.verifier_params)
-        if edge is not None:
-            # infr.emit_manual_review(edge, priority=None)
-            infr.manual_wgt.seek(0)
-            # infr.manual_wgt.show()
-        return infr.manual_wgt
-
-    def qt_review_loop(infr):
-        r"""
-        TODO: The loop parts should be a non-mixin class
-
-        Qt review loop entry point
-
-        CommandLine:
-            python -m graphid.core.mixin_loops qt_review_loop --show
-
-        Example:
-            >>> # SCRIPT
-            >>> import ibeis
-            >>> ibs = ibeis.opendb('PZ_MTEST')
-            >>> infr = ibeis.AnnotInference(ibs, 'all', autoinit=True)
-            >>> infr.ensure_mst()
-            >>> # Add dummy priorities to each edge
-            >>> infr.set_edge_attrs('prob_match', ub.dzip(infr.edges(), [1]))
-            >>> infr.prioritize('prob_match', infr.edges(), reset=True)
-            >>> infr.params['redun.enabled'] = False
-            >>> win = infr.qt_review_loop()
-            >>> import guitool as gt
-            >>> gt.qtapp_loop(qwin=win, freq=10)
-        """
-        infr.qt_edge_reviewer()
-        # infr.continue_review()
-        return infr.manual_wgt
-
 
 if __name__ == '__main__':
     """
