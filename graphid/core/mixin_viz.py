@@ -18,11 +18,11 @@ class GraphVisualization(object):
         # TODO: change to cs4 colors with util.Color
         # util.Color('dodgerblue')
         truth_colors = {
-            POSTV: util.Color('blue').as255('bgr'),
-            NEGTV: util.Color('red').as255('bgr'),
-            INCMP: util.Color('yellow').as255('bgr'),
-            UNKWN: util.Color('purple').as255('bgr'),
-            UNREV: util.Color('gray').as255('bgr'),
+            POSTV: util.Color('blue').as01('bgr'),
+            NEGTV: util.Color('red').as01('bgr'),
+            INCMP: util.Color('yellow').as01('bgr'),
+            UNKWN: util.Color('purple').as01('bgr'),
+            UNREV: util.Color('gray').as01('bgr'),
         }
         return truth_colors
 
@@ -527,6 +527,7 @@ class GraphVisualization(object):
             >>> infr.show_graph(show_cand=True, simple_labels=True, pickable=True, fnum=1, pnum=pnum_())
             >>> util.show_if_requested()
         """
+        import matplotlib.pyplot as plt
         if graph is None:
             graph = infr.graph
         # kwargs['fontsize'] = kwargs.get('fontsize', 8)
@@ -539,8 +540,8 @@ class GraphVisualization(object):
                        modify_ax=False, use_image=use_image,
                        pnum=pnum, verbose=verbose, **kwargs)
             if zoomable:
-                pt.zoom_factory()
-                pt.pan_factory(pt.gca())
+                util.mplutil.zoom_factory()
+                util.mplutil.pan_factory(plt.gca())
 
         # if with_colorbar:
         #     # Draw a colorbar
@@ -565,14 +566,15 @@ class GraphVisualization(object):
             pt.dark_background(force=True)
 
         if pickable:
-            fig = pt.gcf()
+            fig = plt.gcf()
             fig.canvas.mpl_connect('pick_event', partial(on_pick, infr=infr))
 
     def show_edge(infr, edge, fnum=None, pnum=None, **kwargs):
+        import matplotlib.pyplot as plt
         match = infr._exec_pairwise_match([edge])[0]
         fnum = pt.ensure_fnum(fnum)
         pt.figure(fnum=fnum, pnum=pnum)
-        ax = pt.gca()
+        ax = plt.gca()
         showkw = dict(vert=False, heatmask=True, show_lines=False,
                       show_ell=False, show_ori=False, show_eig=False,
                       modifysize=True)
@@ -640,7 +642,8 @@ class GraphVisualization(object):
             edge_overrides[k][edge] = selected_kw[k]
 
         sub_infr.show_edge(edge, fnum=1, pnum=(2, 1, 2))
-        ax = pt.gca()
+        import matplotlib.pyplot as plt
+        ax = plt.gca()
         xy, w, h = pt.get_axis_xy_width_height(ax=ax)
 
         nx.set_node_attributes(sub_infr.graph, name='framewidth', values=1.0)
@@ -694,22 +697,21 @@ def color_nodes(graph, labelattr='label', brightness=.878,
     ncolors = len(unique_lbls)
     if outof is None:
         if (ncolors) == 1:
-            unique_colors = [pt.LIGHT_BLUE]
+            unique_colors = [util.Color('lightblue').as01()]
         elif (ncolors) == 2:
             # https://matplotlib.org/examples/color/named_colors.html
             unique_colors = ['royalblue', 'orange']
             unique_colors = [util.Color(c).as01('bgr') for c in unique_colors]
         else:
-            unique_colors = pt.distinct_colors(ncolors, brightness=brightness)
+            unique_colors = util.distinct_colors(ncolors, brightness=brightness)
     else:
-        unique_colors = pt.distinct_colors(outof, brightness=brightness)
+        unique_colors = util.distinct_colors(outof, brightness=brightness)
 
     if sat_adjust:
-        pass
-        # unique_colors = [
-        #     pt.color_funcs.adjust_hsv_of_rgb(c, sat_adjust=sat_adjust)
-        #     for c in unique_colors
-        # ]
+        unique_colors = [
+            util.Color(c).adjust_hsv(0.0, sat_adjust, 0.0)
+            for c in unique_colors
+        ]
     # Find edges and aids strictly between two nids
     if outof is None:
         lbl_to_color = ub.dzip(unique_lbls, unique_colors)
@@ -734,13 +736,7 @@ def nx_ensure_agraph_color(graph):
             if color is None and alpha is not None:
                 color = [0, 0, 0]
             if color is not None:
-                # color = pt.ensure_nonhex_color(color)
-                color = [1, 1, 1]
-
-                #if isinstance(color, np.ndarray):
-                #    color = color.tolist()
-                color = list(util.Color(color).as255('bgr'))
-
+                color = util.Color(color).as255()
                 if alpha is not None:
                     if len(color) == 3:
                         color += [int(alpha * 255)]

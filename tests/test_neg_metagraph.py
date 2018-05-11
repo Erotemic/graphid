@@ -5,6 +5,8 @@ Ensure they are run via run_tests even though they are not doctests.
 Consider moving to pytest and using xdoctest (because regular doctest does not
 accept the syntax of IBEIS doctests)
 """
+from graphid import demo
+from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)  # NOQA
 
 
 def test_neg_metagraph_simple_add_remove():
@@ -12,8 +14,6 @@ def test_neg_metagraph_simple_add_remove():
     Test that the negative metagraph tracks the number of negative edges
     between PCCs through non-label-changing operations
     """
-    from graphid.core import demo
-    from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)  # NOQA
 
     # Create a graph with 5-sized CCs, with 3-pos-redun, and no negative edges
     infr = demo.demodata_infr(num_pccs=2, pcc_size=5, pos_redun=3,
@@ -71,8 +71,6 @@ def test_neg_metagraph_merge():
     Test that the negative metagraph tracks the number of negative edges
     between PCCs through label-changing merge operations
     """
-    from graphid.core import demo
-    from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)  # NOQA
     # Create a graph with 4 CCs, with 3-pos-redun, and no negative edges
     infr = demo.demodata_infr(num_pccs=4, pcc_size=5, pos_redun=3,
                               ignore_pair=True, infer=True)
@@ -159,8 +157,6 @@ def test_neg_metagraph_split_neg():
     Test that the negative metagraph tracks the number of negative edges
     between PCCs through label-changing split operations
     """
-    from graphid.core import demo
-    from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)  # NOQA
     # Create a graph with 4 CCs, with 3-pos-redun, and no negative edges
     infr = demo.demodata_infr(num_pccs=4, pcc_size=5, pos_redun=3,
                               ignore_pair=True, infer=True)
@@ -178,8 +174,6 @@ def test_neg_metagraph_split_neg():
 
 
 def test_neg_metagraph_split_incomp():
-    from graphid.core import demo
-    from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)  # NOQA
     infr = demo.demodata_infr(num_pccs=4, pcc_size=5, pos_redun=3,
                               ignore_pair=True, infer=True)
     nmg = infr.neg_metagraph
@@ -199,8 +193,6 @@ def test_neg_metagraph_split_and_merge():
     Test that the negative metagraph tracks the number of negative edges
     between PCCs through label-changing split and merge operations
     """
-    from graphid.core import demo
-    from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)  # NOQA
     # Create a graph with 4 CCs, with 3-pos-redun, and no negative edges
     infr = demo.demodata_infr(num_pccs=4, pcc_size=5, pos_redun=3,
                               ignore_pair=True, infer=True)

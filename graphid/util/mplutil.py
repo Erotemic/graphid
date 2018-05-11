@@ -7,6 +7,7 @@ import ubelt as ub
 from six.moves import zip_longest
 from os.path import join, dirname
 import warnings
+import colorsys
 
 
 def multi_plot(xdata=None, ydata=[], **kwargs):
@@ -2235,7 +2236,8 @@ def make_heatmask(probs, cmap='plasma', with_alpha=True):
     import matplotlib as mpl
     assert len(probs.shape) == 2
     cmap_ = mpl.cm.get_cmap(cmap)
-    probs = imutil.ensure_float01(probs)
+    from graphid import util
+    probs = util.ensure_float01(probs)
     heatmask = cmap_(probs)
     if with_alpha:
         heatmask[:, :, 0:3] = heatmask[:, :, 0:3][:, :, ::-1]
@@ -2441,6 +2443,194 @@ class Color(ub.NiceRepr):
             return [Color(c, 'bgr').as01(space=space) for c in distinct_colors]
         else:
             return distinct_colors
+
+    def adjust_hsv(self, hue_adjust=0.0, sat_adjust=0.0, val_adjust=0.0):
+        """
+        Performs adaptive changes to the HSV values of the color.
+
+        Args:
+            hue_adjust (float): addative
+            sat_adjust (float):
+            val_adjust (float):
+
+        Returns:
+            list: new_rgb
+
+        CommandLine:
+            python -m graphid.util.mplutil Color.adjust_hsv
+
+        Example:
+            >>> rgb_list = [Color(c).as01() for c in ['pink', 'yellow', 'green']]
+            >>> hue_adjust = -0.1
+            >>> sat_adjust = +0.5
+            >>> val_adjust = -0.1
+            >>> # execute function
+            >>> new_rgb_list = [Color(rgb).adjust_hsv(hue_adjust, sat_adjust, val_adjust) for rgb in rgb_list]
+            >>> print(ub.repr2(new_rgb_list, nl=1, sv=True))
+            [
+                <Color(rgb: 0.90, 0.23, 0.75)>,
+                <Color(rgb: 0.90, 0.36, 0.00)>,
+                <Color(rgb: 0.24, 0.40, 0.00)>,
+            ]
+            >>> # xdoc: +REQUIRES(--show)
+            >>> color_list = rgb_list + new_rgb_list
+            >>> testshow_colors(color_list)
+
+        Ignore:
+            print(np.array([-.1, 0.0, .1, .5, .9, 1.0, 1.1]))
+            print(np.array([-.1, 0.0, .1, .5, .9, 1.0, 1.1]) % 1.0)
+            print(divmod(np.array([-.1, 0.0, .1, .5, .9, 1.0, 1.1]), 1.0))
+            print(1 + np.array([-.1, 0.0, .1, .5, .9, 1.0, 1.1]) % 1.0)
+        """
+        rgb = list(self.as01(space='rgb'))
+        alpha = None
+        if len(rgb) == 4:
+            (R, G, B, alpha) = rgb
+        else:
+            (R, G, B) = rgb
+        hsv = colorsys.rgb_to_hsv(R, G, B)
+        (H, S, V) = hsv
+        H_new = (H + hue_adjust)
+        if H_new > 0 or H_new < 1:
+            # is there a way to more ellegantly get this?
+            H_new %= 1.0
+        S_new = max(min(S + sat_adjust, 1.0), 0.0)
+        V_new = max(min(V + val_adjust, 1.0), 0.0)
+        #print('hsv=%r' % (hsv,))
+        hsv_new = (H_new, S_new, V_new)
+        #print('hsv_new=%r' % (hsv_new,))
+        new_rgb = colorsys.hsv_to_rgb(*hsv_new)
+        if alpha is not None:
+            new_rgb = list(new_rgb) + [alpha]
+        return Color(new_rgb, space='rgb').convert(space=self.space)
+
+    def convert(self, space):
+        """
+        Converts to a new colorspace
+        """
+        return Color(self.as01(space=space), space=space)
+
+
+def zoom_factory(ax=None, zoomable_list=[], base_scale=1.1):
+    """
+    References:
+        https://gist.github.com/tacaswell/3144287
+        http://stackoverflow.com/questions/11551049/matplotlib-plot-zooming-with-scroll-wheel
+    """
+    import matplotlib.pyplot as plt
+    if ax is None:
+        ax = plt.gca()
+    def zoom_fun(event):
+        #print('zooming')
+        # get the current x and y limits
+        cur_xlim = ax.get_xlim()
+        cur_ylim = ax.get_ylim()
+        xdata = event.xdata  # get event x location
+        ydata = event.ydata  # get event y location
+        if xdata is None or ydata is None:
+            return
+        if event.button == 'up':
+            # deal with zoom in
+            scale_factor = 1 / base_scale
+        elif event.button == 'down':
+            # deal with zoom out
+            scale_factor = base_scale
+        else:
+            raise NotImplementedError('event.button=%r' % (event.button,))
+            # deal with something that should never happen
+            scale_factor = 1
+            print(event.button)
+        for zoomable in zoomable_list:
+            zoom = zoomable.get_zoom()
+            new_zoom = zoom / (scale_factor ** (1.2))
+            zoomable.set_zoom(new_zoom)
+        # Get distance from the cursor to the edge of the figure frame
+        x_left = xdata - cur_xlim[0]
+        x_right = cur_xlim[1] - xdata
+        y_top = ydata - cur_ylim[0]
+        y_bottom = cur_ylim[1] - ydata
+        ax.set_xlim([xdata - x_left * scale_factor, xdata + x_right * scale_factor])
+        ax.set_ylim([ydata - y_top * scale_factor, ydata + y_bottom * scale_factor])
+
+        # ----
+        ax.figure.canvas.draw()  # force re-draw
+
+    fig = ax.get_figure()  # get the figure of interest
+    # attach the call back
+    fig.canvas.mpl_connect('scroll_event', zoom_fun)
+
+    #return the function
+    return zoom_fun
+
+
+def pan_factory(ax=None):
+    import matplotlib.pyplot as plt
+    if ax is None:
+        ax = plt.gca()
+    self = PanEvents(ax)
+    ax = self.ax
+    fig = ax.get_figure()  # get the figure of interest
+    self.cidBP = fig.canvas.mpl_connect('button_press_event', self.pan_on_press)
+    self.cidBR = fig.canvas.mpl_connect('button_release_event', self.pan_on_release)
+    self.cidBM = fig.canvas.mpl_connect('motion_notify_event', self.pan_on_motion)
+    # attach the call back
+    return self
+
+
+class PanEvents(object):
+    def __init__(self, ax=None):
+        self.press = None
+        self.cur_xlim = None
+        self.cur_ylim = None
+        self.x0 = None
+        self.y0 = None
+        self.x1 = None
+        self.y1 = None
+        self.xpress = None
+        self.ypress = None
+        self.xzoom = True
+        self.yzoom = True
+        self.cidBP = None
+        self.cidBR = None
+        self.cidBM = None
+        self.cidKeyP = None
+        self.cidKeyR = None
+        self.cidScroll = None
+        self.ax = ax
+
+    def pan_on_press(self, event):
+        if event.button != 1:
+            return
+        ax = self.ax
+        if event.inaxes != ax:
+            return
+        self.cur_xlim = ax.get_xlim()
+        self.cur_ylim = ax.get_ylim()
+        self.press = self.x0, self.y0, event.xdata, event.ydata
+        self.x0, self.y0, self.xpress, self.ypress = self.press
+
+    def pan_on_release(self, event):
+        if event.button != 1:
+            return
+        ax = self.ax
+        self.press = None
+        ax.figure.canvas.draw()
+
+    def pan_on_motion(self, event):
+        ax = self.ax
+        if self.press is None:
+            return
+        if event.inaxes != ax:
+            return
+        dx = event.xdata - self.xpress
+        dy = event.ydata - self.ypress
+        self.cur_xlim -= dx
+        self.cur_ylim -= dy
+        ax.set_xlim(self.cur_xlim)
+        ax.set_ylim(self.cur_ylim)
+
+        ax.figure.canvas.draw()
+        ax.figure.canvas.flush_events()
 
 if __name__ == '__main__':
     import xdoctest

@@ -26,7 +26,12 @@ from __future__ import absolute_import, division, print_function
 from six.moves import zip
 import six
 import numpy as np
+import ubelt as ub
 from six.moves import reduce
+import networkx as nx
+from graphid.util import nx_utils
+from graphid.util import mplutil
+from graphid import util
 
 
 LARGE_GRAPH = 100
@@ -36,7 +41,7 @@ def dump_nx_ondisk(graph, fpath):
     agraph = make_agraph(graph.copy())
     # agraph = nx.nx_agraph.to_agraph(graph)
     agraph.layout(prog='dot')
-    agraph.draw(ut.truepath(fpath))
+    agraph.draw(ub.truepath(fpath))
 
 
 def ensure_nonhex_color(orig_color):
@@ -85,22 +90,21 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
     Example:
         >>> # ENABLE_DOCTEST
         >>> from graphid.util.util_graphviz import *  # NOQA
-        >>> import networkx as nx
+        >>> import utool as ut
         >>> graph = nx.DiGraph()
         >>> graph.add_nodes_from(['a', 'b', 'c', 'd'])
         >>> graph.add_edges_from({'a': 'b', 'b': 'c', 'b': 'd', 'c': 'd'}.items())
         >>> nx.set_node_attributes(graph, name='shape', values='rect')
-        >>> nx.set_node_attributes(graph, name='image', values={'a': ut.grab_test_imgpath('carl.jpg')})
-        >>> nx.set_node_attributes(graph, name='image', values={'d': ut.grab_test_imgpath('lena.png')})
+        >>> nx.set_node_attributes(graph, name='image', values={'a': util.grab_test_imgpath('carl.jpg')})
+        >>> nx.set_node_attributes(graph, name='image', values={'d': util.grab_test_imgpath('astro.png')})
         >>> #nx.set_node_attributes(graph, name='height', values=100)
         >>> with_labels = True
         >>> fnum = None
         >>> pnum = None
         >>> e = show_nx(graph, with_labels, fnum, pnum, layout='agraph')
-        >>> ut.show_if_requested()
+        >>> util.show_if_requested()
     """
-    from graphviz import util
-    import networkx as nx
+    from matplotlib import pyplot as plt
     if ax is None:
         fnum = mplutil.ensure_fnum(fnum)
         mplutil.figure(fnum=fnum, pnum=pnum)
@@ -110,7 +114,7 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
         img_dict = nx.get_node_attributes(graph, 'image')
 
     if verbose is None:
-        verbose = ut.VERBOSE
+        verbose = False
 
     use_image = kwargs.get('use_image', True)
 
@@ -136,9 +140,9 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
     node_size = layout_info['node'].get('size')
     node_pos = layout_info['node'].get('pos')
     if node_size is not None:
-        size_arr = np.array(ut.take(node_size, graph.nodes()))
+        size_arr = np.array(list(ub.take(node_size, graph.nodes())))
         half_size_arr = size_arr / 2.
-        pos_arr = np.array(ut.take(node_pos, graph.nodes()))
+        pos_arr = np.array(list(ub.take(node_pos, graph.nodes())))
         # autoscale does not seem to work
         #ul_pos = pos_arr - half_size_arr
         #br_pos = pos_arr + half_size_arr
@@ -150,7 +154,6 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
         xmax, ymax = br_pos.max(axis=0)
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
-    #pt.plt.axis('off')
     ax.set_xticks([])
     ax.set_yticks([])
 
@@ -158,16 +161,17 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
         if verbose:
             print('Drawing images')
         node_list = sorted(img_dict.keys())
-        pos_list = ut.dict_take(node_pos, node_list)
-        img_list = ut.dict_take(img_dict, node_list)
-        size_list = ut.dict_take(node_size, node_list)
+        pos_list = list(ub.dict_take(node_pos, node_list))
+        img_list = list(ub.dict_take(img_dict, node_list))
+        size_list = list(ub.dict_take(node_size, node_list))
         #color_list = ut.dict_take(nx.get_node_attributes(graph, 'color'), node_list, None)
-        color_list = ut.dict_take(nx.get_node_attributes(graph, 'framecolor'), node_list, None)
-        framewidth_list = ut.dict_take(nx.get_node_attributes(graph, 'framewidth'),
-                                       node_list, framewidth)
-        pt.netx_draw_images_at_positions(img_list, pos_list, size_list,
-                                         color_list,
-                                         framewidth_list=framewidth_list)
+        color_list = list(ub.dict_take(nx.get_node_attributes(graph, 'framecolor'), node_list, None))
+        framewidth_list = list(ub.dict_take(nx.get_node_attributes(graph, 'framewidth'),
+                                            node_list, framewidth))
+
+        netx_draw_images_at_positions(img_list, pos_list, size_list,
+                                      color_list,
+                                      framewidth_list=framewidth_list)
         # Hack in older interface
         imgdat = {}
         imgdat['node_list'] = node_list
@@ -177,7 +181,7 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
             print('Not drawing images')
 
     if title is not None:
-        pt.set_title(title)
+        ax.set_title(title)
     return layout_info
 
 
@@ -194,8 +198,7 @@ def netx_draw_images_at_positions(img_list, pos_list, size_list, color_list,
         http://matplotlib.org/api/offsetbox_api.html
     """
     import vtool as vt
-    from matplotlib import plottool as plt
-    import plottool as pt
+    from matplotlib import pyplot as plt
     # Ensure all images have been read
     img_list_ = [vt.convert_colorspace(vt.imread(img), 'RGB')
                  if isinstance(img, six.string_types) else img
@@ -213,6 +216,8 @@ def parse_html_graphviz_attrs():
     # Parse the documentation table
     import bs4
     import requests
+    import pandas as pd
+    import utool as ut
     r  = requests.get(r"http://www.graphviz.org/doc/info/attrs.html")
     data = r.text
     soup = bs4.BeautifulSoup(data, 'html5lib')
@@ -229,7 +234,6 @@ def parse_html_graphviz_attrs():
         if row:
             data.append(row)
 
-    import pandas as pd
     pd.options.display.max_rows = 20
     pd.options.display.max_columns = 40
     pd.options.display.width = 160
@@ -324,82 +328,6 @@ class GRAPHVIZ_KEYS(object):
          'sep', 'showboxes', 'size', 'smoothing', 'sortv', 'splines', 'start',
          'style', 'stylesheet', 'target', 'truecolor', 'viewport',
          'voro_margin', 'xdotversion'}
-
-
-try:
-    class GraphVizLayoutConfig(dt.Config):
-        r"""
-        Ignore:
-            Node Props:
-                colorscheme    CEGN           string                NaN
-                  fontcolor    CEGN            color                NaN
-                   fontname    CEGN           string                NaN
-                   fontsize    CEGN           double                NaN
-                      label    CEGN        lblString                NaN
-                  nojustify    CEGN             bool                NaN
-                      style    CEGN            style                NaN
-                      color     CEN   colorcolorList                NaN
-                  fillcolor     CEN   colorcolorList                NaN
-                      layer     CEN       layerRange                NaN
-                   penwidth     CEN           double                NaN
-               radientangle     CGN              int                NaN
-                   labelloc     CGN           string                NaN
-                     margin     CGN      doublepoint                NaN
-                      sortv     CGN              int                NaN
-                peripheries      CN              int                NaN
-                  showboxes     EGN              int           dot only
-                    comment     EGN           string                NaN
-                        pos      EN  pointsplineType                NaN
-                     xlabel      EN        lblString                NaN
-                   ordering      GN           string           dot only
-                      group       N           string           dot only
-                        pin       N             bool   fdp | neato only
-                 distortion       N           double                NaN
-                  fixedsize       N       boolstring                NaN
-                     height       N           double                NaN
-                      image       N           string                NaN
-                 imagescale       N       boolstring                NaN
-                orientation       N           double                NaN
-                    regular       N             bool                NaN
-               samplepoints       N              int                NaN
-                      shape       N            shape                NaN
-                  shapefile       N           string                NaN
-                      sides       N              int                NaN
-                       skew       N           double                NaN
-                      width       N           double                NaN
-                          z       N           double                NaN
-        """
-        # TODO: make a gridsearchable config for layouts
-        @staticmethod
-        def get_param_info_list():
-            param_info_list = [
-                # GENERAL
-                ut.ParamInfo('splines', 'spline', valid_values=[
-                    'none', 'line', 'polyline', 'curved', 'ortho', 'spline']),
-                ut.ParamInfo('pack', True),
-                ut.ParamInfo('packmode', 'cluster'),
-                #ut.ParamInfo('nodesep', ?),
-                # NOT DOT
-                ut.ParamInfo('overlap', 'prism', valid_values=[
-                    'true', 'false', 'prism', 'ipsep']),
-                ut.ParamInfo('sep', 1 / 8),
-                ut.ParamInfo('esep', 1 / 8),  # stricly  less than sep
-                # NEATO ONLY
-                ut.ParamInfo('mode', 'major', valid_values=['heir', 'KK', 'ipsep']),
-                #kwargs['diredgeconstraints'] = 'heir'
-                #kwargs['inputscale'] = kwargs.get('inputscale', 72)
-                #kwargs['Damping'] = kwargs.get('Damping', .1)
-                # DOT ONLY
-                ut.ParamInfo('rankdir', 'LR', valid_values=['LR', 'RL', 'TB', 'BT']),
-                ut.ParamInfo('ranksep', 2.5),
-                ut.ParamInfo('nodesep', 2.0),
-                ut.ParamInfo('clusterrank', 'local', valid_values=['local', 'global'])
-                # OUTPUT ONLY
-                #kwargs['dpi'] = kwargs.get('dpi', 1.0)
-            ]
-            return param_info_list
-except Exception:
-    pass
 
 
 def get_explicit_graph(graph):
@@ -553,6 +481,7 @@ def make_agraph(graph_):
     # FIXME; make this not an inplace operation
     import networkx as nx
     import pygraphviz
+    import utool as ut
     patch_pygraphviz()
     # Convert to agraph format
 
@@ -563,14 +492,14 @@ def make_agraph(graph_):
         print('Making agraph for large graph %d nodes. '
               'May take time' % (num_nodes))
 
-    ut.nx_ensure_agraph_color(graph_)
+    nx_ensure_agraph_color(graph_)
     # Reduce size to be in inches not pixels
     # FIXME: make robust to param settings
     # Hack to make the w/h of the node take thae max instead of
     # dot which takes the minimum
     shaped_nodes = [n for n, d in graph_.nodes(data=True) if 'width' in d]
-    node_dict = ut.nx_node_dict(graph_)
-    node_attrs = ut.dict_take(node_dict, shaped_nodes)
+    node_dict = graph_.node
+    node_attrs = list(ub.take(node_dict, shaped_nodes))
 
     width_px = np.array(ut.take_column(node_attrs, 'width'))
     height_px = np.array(ut.take_column(node_attrs, 'height'))
@@ -593,8 +522,6 @@ def make_agraph(graph_):
     else:
         groupid_to_nodes = {}
     # Initialize agraph format
-    #import utool
-    #utool.embed()
     ut.nx_delete_None_edge_attr(graph_)
     agraph = nx.nx_agraph.to_agraph(graph_)
     # Add subgraphs labels
@@ -666,14 +593,14 @@ def _groupby_prelayout(graph_, layoutkw, groupby):
     if not has_pins:
         # Layout groups separately
         node_to_group = nx.get_node_attributes(graph_, groupby)
-        group_to_nodes = ut.invert_dict(node_to_group, unique_vals=False)
+        group_to_nodes = ub.invert_dict(node_to_group, unique_vals=False)
         subgraph_list = []
 
         def subgraph_grid(subgraphs, hpad=None, vpad=None):
             n_cols = int(np.ceil(np.sqrt(len(subgraphs))))
-            columns = [ut.stack_graphs(chunk, vert=False, pad=hpad)
-                       for chunk in ut.ichunks(subgraphs, n_cols)]
-            new_graph = ut.stack_graphs(columns, vert=True, pad=vpad)
+            columns = [stack_graphs(chunk, vert=False, pad=hpad)
+                       for chunk in ub.chunks(subgraphs, n_cols)]
+            new_graph = stack_graphs(columns, vert=True, pad=vpad)
             return new_graph
 
         group_grid = graph_.graph.get('group_grid', None)
@@ -696,7 +623,6 @@ def _groupby_prelayout(graph_, layoutkw, groupby):
         vpad = graph_.graph.get('vpad', None)
         graph_ = subgraph_grid(subgraph_list, hpad, vpad)
 
-        # graph_ = ut.stack_graphs(subgraph_list)
         nx.set_node_attributes(graph_, name='pin', values='true')
         return True, graph_
     else:
@@ -728,30 +654,30 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
 
     Doctest:
         >>> from graphid.util.util_graphviz import *  # NOQA
-        >>> import plottool as pt
         >>> import networkx as nx
         >>> import utool as ut
+        >>> from graphid import util
         >>> n, s = 9, 4
         >>> offsets = list(range(0, (1 + n) * s, s))
-        >>> node_groups = [ut.lmap(str, range(*o)) for o in ut.itertwo(offsets)]
+        >>> node_groups = [ut.lmap(str, range(*o)) for o in ub.iter_window(offsets, 2)]
         >>> edge_groups = [ut.combinations(nodes, 2) for nodes in node_groups]
         >>> graph = nx.Graph()
         >>> [graph.add_nodes_from(nodes) for nodes in node_groups]
         >>> [graph.add_edges_from(edges) for edges in edge_groups]
         >>> for count, nodes in enumerate(node_groups):
-        ...     nx.set_node_attributes(graph, name='id', values=ut.dzip(nodes, [count]))
+        ...     nx.set_node_attributes(graph, name='id', values=ub.dzip(nodes, [count]))
         >>> layoutkw = dict(prog='neato')
         >>> graph1, info1 = nx_agraph_layout(graph.copy(), inplace=True, groupby='id', **layoutkw)
         >>> graph2, info2 = nx_agraph_layout(graph.copy(), inplace=True, **layoutkw)
         >>> graph3, _ = nx_agraph_layout(graph1.copy(), inplace=True, **layoutkw)
         >>> nx.set_node_attributes(graph1, name='pin', values='true')
         >>> graph4, _ = nx_agraph_layout(graph1.copy(), inplace=True, **layoutkw)
-        >>> if pt.show_was_requested():
-        >>>     pt.show_nx(graph1, layout='custom', pnum=(2, 2, 1), fnum=1)
-        >>>     pt.show_nx(graph2, layout='custom', pnum=(2, 2, 2), fnum=1)
-        >>>     pt.show_nx(graph3, layout='custom', pnum=(2, 2, 3), fnum=1)
-        >>>     pt.show_nx(graph4, layout='custom', pnum=(2, 2, 4), fnum=1)
-        >>>     ut.show_if_requested()
+        >>> # xdoc: +REQUIRES(--show)
+        >>> util.show_nx(graph1, layout='custom', pnum=(2, 2, 1), fnum=1)
+        >>> util.show_nx(graph2, layout='custom', pnum=(2, 2, 2), fnum=1)
+        >>> util.show_nx(graph3, layout='custom', pnum=(2, 2, 3), fnum=1)
+        >>> util.show_nx(graph4, layout='custom', pnum=(2, 2, 4), fnum=1)
+        >>> util.show_if_requested()
         >>> g1pos = nx.get_node_attributes(graph1, 'pos')['1']
         >>> g4pos = nx.get_node_attributes(graph4, 'pos')['1']
         >>> g2pos = nx.get_node_attributes(graph2, 'pos')['1']
@@ -816,7 +742,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
     args = ' '.join(argparts)
 
     if verbose is None:
-        verbose = ut.VERBOSE
+        verbose = False
     if verbose or is_large:
         print('[nx_agraph_layout] args = %r' % (args,))
     # Convert to agraph format
@@ -851,30 +777,21 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
     try:
         agraph.layout(prog=prog, args=args)
     except Exception as ex:
-        ut.printex(ex, tb=True)
-        # import utool
-        # utool.embed()
         raise
-    #except RuntimeWarning as ex:
-    #    ut.printex(ex, iswarning=True)
-    #    flag = True
-    #if flag:
-    #    import utool
-    #    utool.embed()
 
     if is_large:
         print('Finished agraph layout.')
 
     if 0:
-        test_fpath = ut.truepath('~/test_graphviz_draw.png')
+        test_fpath = ub.truepath('~/test_graphviz_draw.png')
         agraph.draw(test_fpath)
-        ut.startfile(test_fpath)
+        ub.startfile(test_fpath)
     if verbose > 3:
         print('AFTER LAYOUT\n' + str(agraph))
 
     # TODO: just replace with a single dict of attributes
-    node_layout_attrs = ut.ddict(dict)
-    edge_layout_attrs = ut.ddict(dict)
+    node_layout_attrs = ub.ddict(dict)
+    edge_layout_attrs = ub.ddict(dict)
 
     #for node in agraph.nodes():
     for node in graph_.nodes():
@@ -883,7 +800,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
         for key, val in node_attrs.items():
             node_layout_attrs[key][node] = val
 
-    edges = list(ut.nx_edges(graph_, keys=True))
+    edges = list(nx_utils.nx_edges(graph_, keys=True))
 
     for edge in edges:
         aedge = pygraphviz.Edge(agraph, *edge)
@@ -893,8 +810,8 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
 
     if draw_implicit:
         # ADD IN IMPLICIT EDGES
-        layout_edges = set(ut.nx_edges(graph_, keys=True))
-        orig_edges = set(ut.nx_edges(orig_graph, keys=True))
+        layout_edges = set(nx_utils.nx_edges(graph_, keys=True))
+        orig_edges = set(nx_utils.nx_edges(orig_graph, keys=True))
         implicit_edges = list(orig_edges - layout_edges)
         #all_edges = list(set.union(orig_edges, layout_edges))
         needs_implicit = len(implicit_edges) > 0
@@ -910,7 +827,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
                 data = orig_graph.get_edge_data(*iedge)
                 agraph.add_edge(*iedge, **data)
 
-            if ut.VERBOSE or verbose:
+            if verbose:
                 print('BEFORE IMPLICIT LAYOUT\n' + str(agraph))
             # Route the implicit edges (must use neato)
 
@@ -937,8 +854,8 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
                       'large graph.')
 
             if False:
-                agraph.draw(ut.truepath('~/implicit_test_graphviz_draw.png'))
-            if ut.VERBOSE or verbose:
+                agraph.draw(ub.truepath('~/implicit_test_graphviz_draw.png'))
+            if verbose:
                 print('AFTER IMPLICIT LAYOUT\n' + str(agraph))
 
             control_node = pygraphviz.Node(agraph, node)
@@ -962,7 +879,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
 
     if pinned_groups:
         # Remove temporary pins put in place by groups
-        ut.nx_delete_node_attr(graph_, 'pin')
+        nx_utils.nx_delete_node_attr(graph_, 'pin')
 
     graph_layout_attrs = dict(
         splines=splines
@@ -1025,9 +942,6 @@ def parse_aedge_layout_attrs(aedge, translation=None):
     #print('apos = %r' % (apos,))
     end_pt = None
     start_pt = None
-    #if '-' in apos:
-    #    import utool
-    #    utool.embed()
 
     def safeadd(x, y):
         if x is None or y is None:
@@ -1073,7 +987,7 @@ def format_anode_pos(xy, pin=True):
 def _get_node_size(graph, node, node_size):
     if node_size is not None and node in node_size:
         return node_size[node]
-    node_dict = ut.nx_node_dict(graph)
+    node_dict = graph.nodes
     nattrs = node_dict[node]
     scale = nattrs.get('scale', 1.0)
     if 'width' in nattrs and 'height' in nattrs:
@@ -1103,7 +1017,8 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
     import plottool as pt
     import matplotlib as mpl
 
-    figsize = ut.get_argval('--figsize', type_=list, default=None)
+    # figsize = ub.argval('--figsize', type_=list, default=None)
+    figsize = None
 
     patch_dict = {
         'patch_frame_dict': {},
@@ -1129,10 +1044,10 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
 
     # Draw nodes
     large_graph = len(graph) > LARGE_GRAPH
-    #for edge, pts in ut.ProgIter(edge_pos.items(), length=len(edge_pos), enabled=large_graph, lbl='drawing edges'):
+    #for edge, pts in ub.ProgIter(edge_pos.items(), length=len(edge_pos), enabled=large_graph, lbl='drawing edges'):
 
-    for node, nattrs in ut.ProgIter(graph.nodes(data=True), length=len(graph),
-                                    lbl='drawing nodes', enabled=large_graph):
+    for node, nattrs in ub.ProgIter(graph.nodes(data=True), total=len(graph),
+                                    desc='drawing nodes', enabled=large_graph):
         # shape = nattrs.get('shape', 'circle')
         if nattrs is None:
             nattrs = {}
@@ -1171,7 +1086,7 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
             xy_bl = (xy[0] - width // 2, xy[1] - height // 2)
 
             # rounded = angle == 0
-            node_dict = ut.nx_node_dict(graph)
+            node_dict = graph.nodes
             rounded = 'rounded' in node_dict.get(node, {}).get('style', '')
             isdiag = 'diagonals' in node_dict.get(node, {}).get('style', '')
 
@@ -1257,8 +1172,6 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
                     frame.set_zorder(zorder)
                 #frame.set_zorder()
                 patch_dict['patch_frame_dict'][node] = frame
-        #import utool
-        #utool.embed()
         picker = nattrs.get('picker', True)
         patch.set_picker(picker)
         if zorder is not None:
@@ -1294,8 +1207,8 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
     edge_pos = layout_info['edge'].get('ctrl_pts', None)
     n_invis_edge = 0
     if edge_pos is not None:
-        for edge, pts in ut.ProgIter(edge_pos.items(), length=len(edge_pos),
-                                     enabled=large_graph, lbl='drawing edges'):
+        for edge, pts in ub.ProgIter(edge_pos.items(), total=len(edge_pos),
+                                     enabled=large_graph, desc='drawing edges'):
             data = get_default_edge_data(graph, edge)
 
             if data.get('style', None) == 'invis':
@@ -1304,11 +1217,11 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
 
             alpha = data.get('alpha', None)
 
-            defaultcolor = pt.BLACK[0:3]
+            defaultcolor = util.Color('black').as01()
             if alpha is None:
                 if data.get('implicit', False):
                     alpha = .5
-                    defaultcolor = util.Color('green').as01('bgr')
+                    defaultcolor = mplutil.Color('green').as01()
                 else:
                     alpha = 1.0
             color = data.get('color', defaultcolor)
@@ -1356,14 +1269,15 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
 
             path = mpl.path.Path(verts, codes)
 
-            figsize = ut.get_argval('--figsize', type_=list, default=None)
+            # figsize = ub.argval('--figsize', type_=list, default=None)
+            figsize = None
             if figsize is not None:
                 # HACK
                 graphsize = max(figsize)
                 lw = graphsize / 8
                 width =  graphsize / 15
-                width = ut.get_argval('--arrow-width', default=width)
-                lw = ut.get_argval('--line-width', default=lw)
+                width = int(ub.argval('--arrow-width', default=width))
+                lw = int(ub.argval('--line-width', default=lw))
                 #print('width = %r' % (width,))
             else:
                 width = .5
@@ -1372,8 +1286,8 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
                     import vtool as vt
                     # Compute arrow width using estimated graph size
                     if node_size is not None and node_pos is not None:
-                        xys = np.array(ut.take(node_pos, node_pos.keys())).T
-                        whs = np.array(ut.take(node_size, node_pos.keys())).T
+                        xys = np.array(list(ub.take(node_pos, node_pos.keys()))).T
+                        whs = np.array(list(ub.take(node_size, node_pos.keys()))).T
                         bboxes = vt.bbox_from_xywh(xys, whs, [.5, .5])
                         extents = vt.extent_from_bbox(bboxes)
                         tl_pts = np.array([extents[0], extents[2]]).T
@@ -1441,7 +1355,7 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
                     scale = shadowkw.pop('scale', 1.0)
                     shadow_color = shadowkw.pop('color', 'k')
                     shadow_color = shadowkw.pop('shadow_color', shadow_color)
-                    offset = ut.ensure_iterable(shadowkw.pop('offset', (2, -2)))
+                    offset = ub.ensure_iterable(shadowkw.pop('offset', (2, -2)))
                     if len(offset) == 1:
                         offset = offset * 2
                     shadowkw_ = dict(offset=offset, shadow_color=shadow_color,
@@ -1466,7 +1380,7 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
             zorder = data.get('zorder', 5)
             patch = mpl.patches.PathPatch(path, facecolor='none', lw=lw,
                                           path_effects=path_effects,
-                                          edgecolor=color,
+                                          edgecolor=util.Color(color).as01(),
                                           picker=picker,
                                           #facecolor=color,
                                           linestyle=linestyle,
@@ -1581,13 +1495,117 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
     return patch_dict
 
 
+def stack_graphs(graph_list, vert=False, pad=None):
+    graph_list_ = [g.copy() for g in graph_list]
+    for g in graph_list_:
+        translate_graph_to_origin(g)
+    bbox_list = [get_graph_bounding_box(g) for g in graph_list_]
+    if vert:
+        dim1 = 3
+        dim2 = 2
+    else:
+        dim1 = 2
+        dim2 = 3
+    dim1_list = np.array([bbox[dim1] for bbox in bbox_list])
+    dim2_list = np.array([bbox[dim2] for bbox in bbox_list])
+    if pad is None:
+        pad = np.mean(dim1_list) / 2
+    offset1_list = np.cumsum([0] + [d + pad for d in dim1_list[:-1]])
+    max_dim2 = max(dim2_list)
+    offset2_list = [(max_dim2 - d2) / 2 for d2 in dim2_list]
+    if vert:
+        t_xy_list = [(d2, d1) for d1, d2 in zip(offset1_list, offset2_list)]
+    else:
+        t_xy_list = [(d1, d2) for d1, d2 in zip(offset1_list, offset2_list)]
+
+    for g, t_xy in zip(graph_list_, t_xy_list):
+        translate_graph(g, t_xy)
+        nx.set_node_attributes(g, name='pin', values='true')
+
+    new_graph = nx.compose_all(graph_list_)
+    return new_graph
+
+
+def translate_graph(graph, t_xy):
+    node_pos_attrs = ['pos']
+    for attr in node_pos_attrs:
+        attrdict = nx.get_node_attributes(graph, attr)
+        attrdict = {
+            node: pos + t_xy
+            for node, pos in attrdict.items()
+        }
+        nx.set_node_attributes(graph, name=attr, values=attrdict)
+    edge_pos_attrs = ['ctrl_pts', 'end_pt', 'head_lp', 'lp', 'start_pt', 'tail_lp']
+    util.nx_delete_None_edge_attr(graph)
+    for attr in edge_pos_attrs:
+        attrdict = nx.get_edge_attributes(graph, attr)
+        attrdict = {
+            node: pos + t_xy
+            if pos is not None else pos
+            for node, pos in attrdict.items()
+        }
+        nx.set_edge_attributes(graph, name=attr, values=attrdict)
+
+
+def translate_graph_to_origin(graph):
+    x, y, w, h = get_graph_bounding_box(graph)
+    translate_graph(graph, (-x, -y))
+
+
+def get_graph_bounding_box(graph):
+    nodes = list(graph.nodes())
+    shape_list = nx_utils.nx_gen_node_values(graph, 'size', nodes)
+    pos_list = nx_utils.nx_gen_node_values(graph, 'pos', nodes)
+
+    node_extents = np.array([
+        util.extent_from_bbox(util.bbox_from_center_wh(xy, wh))
+        for xy, wh in zip(pos_list, shape_list)
+    ])
+    tl_x, br_x, tl_y, br_y = node_extents.T
+    extent = tl_x.min(), br_x.max(), tl_y.min(), br_y.max()
+    bbox = util.bbox_from_extent(extent)
+    return bbox
+
+
+def nx_ensure_agraph_color(graph):
+    """ changes colors to hex strings on graph attrs """
+    def _fix_agraph_color(data):
+        try:
+            orig_color = data.get('color', None)
+            alpha = data.get('alpha', None)
+            color = orig_color
+            if color is None and alpha is not None:
+                color = [0, 0, 0]
+            if color is not None:
+                color = list(util.Color(color).as255())
+                if alpha is not None:
+                    if len(color) == 3:
+                        color += [int(alpha * 255)]
+                    else:
+                        color[3] = int(alpha * 255)
+                color = tuple(color)
+                if len(color) == 3:
+                    data['color'] = '#%02x%02x%02x' % color
+                else:
+                    data['color'] = '#%02x%02x%02x%02x' % color
+        except Exception as ex:
+            # import utool as ut
+            # ut.printex(ex, keys=['color', 'orig_color', 'data'])
+            raise
+
+    for node, node_data in graph.nodes(data=True):
+        data = node_data
+        _fix_agraph_color(data)
+
+    for u, v, edge_data in graph.edges(data=True):
+        data = edge_data
+        _fix_agraph_color(data)
+
+
 if __name__ == '__main__':
-    r"""
-    CommandLine:
-        python -m graphid.util.util_graphviz
-        python -m graphid.util.util_graphviz --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    CommandLine:
+        python -m graphid.util.util_graphviz all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

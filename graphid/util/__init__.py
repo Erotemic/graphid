@@ -15,6 +15,8 @@ else:
     from graphid.util import nx_dynamic_graph
     from graphid.util import nx_utils
     from graphid.util import priority_queue
+    from graphid.util import util_geometry
+    from graphid.util import util_graphviz
     from graphid.util import util_group
     from graphid.util import util_kw
     from graphid.util import util_misc
@@ -48,11 +50,48 @@ else:
                                        graph_info, group_name_edges, is_complete,
                                        is_k_edge_connected, itake_column,
                                        k_edge_augmentation, list_roll,
+                                       nx_delete_None_edge_attr,
+                                       nx_delete_None_node_attr,
                                        nx_delete_edge_attr, nx_delete_node_attr,
-                                       nx_gen_edge_attrs, nx_gen_edge_values,
-                                       nx_gen_node_attrs, nx_gen_node_values,
+                                       nx_edges, nx_gen_edge_attrs,
+                                       nx_gen_edge_values, nx_gen_node_attrs,
+                                       nx_gen_node_values, nx_node_dict,
                                        random_k_edge_connected_graph, take_column,)
     from graphid.util.priority_queue import (PriorityQueue,)
+    from graphid.util.util_geometry import (bbox_center, bbox_from_center_wh,
+                                            bbox_from_extent, bbox_from_verts,
+                                            bbox_from_xywh, bboxes_from_vert_list,
+                                            closest_point_on_bbox,
+                                            closest_point_on_line,
+                                            closest_point_on_line_segment,
+                                            closest_point_on_vert_segments,
+                                            cvt_bbox_xywh_to_pt1pt2,
+                                            distance_to_lineseg, draw_border,
+                                            draw_verts, extent_from_bbox,
+                                            extent_from_verts,
+                                            get_pointset_extent_wh,
+                                            get_pointset_extents,
+                                            point_inside_bbox, scale_bbox,
+                                            scale_extents, scaled_verts_from_bbox,
+                                            scaled_verts_from_bbox_gen,
+                                            union_extents, verts_from_bbox,
+                                            verts_list_from_bboxes_list,)
+    from graphid.util.util_graphviz import (GRAPHVIZ_KEYS, LARGE_GRAPH,
+                                            apply_graph_layout_attrs,
+                                            draw_network2, dump_nx_ondisk,
+                                            ensure_nonhex_color, format_anode_pos,
+                                            get_explicit_graph,
+                                            get_graph_bounding_box, get_nx_layout,
+                                            make_agraph,
+                                            netx_draw_images_at_positions,
+                                            nx_agraph_layout,
+                                            nx_ensure_agraph_color,
+                                            parse_aedge_layout_attrs,
+                                            parse_anode_layout_attrs,
+                                            parse_html_graphviz_attrs, parse_point,
+                                            patch_pygraphviz, show_nx,
+                                            stack_graphs, translate_graph,
+                                            translate_graph_to_origin,)
     from graphid.util.util_group import (group_pairs, grouping_delta,
                                          order_dict_by, sort_dict, sortedby,)
     from graphid.util.util_kw import (KWSpec,)
@@ -61,7 +100,7 @@ else:
                                         delete_items_by_index, ensure_iterable,
                                         estarmap, flag_None_items, get_timestamp,
                                         highlight_regex, isect, iteritems_sorted,
-                                        make_index_lookup, partial_order,
+                                        make_index_lookup, partial_order, randn,
                                         regex_word, replace_nones, safe_argmax,
                                         safe_extreme, safe_max, safe_min, setdiff,
                                         snapped_slice, stats_dict,

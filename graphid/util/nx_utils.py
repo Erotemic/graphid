@@ -994,6 +994,72 @@ def nx_gen_edge_values(G, key, edges=None, default=ub.NoParam,
     # if default is ub.NoParam:
 
 
+def nx_edges(graph, keys=False, data=False):
+    if graph.is_multigraph():
+        edges = graph.edges(keys=keys, data=data)
+    else:
+        edges = graph.edges(data=data)
+        #if keys:
+        #    edges = [e[0:2] + (0,) + e[:2] for e in edges]
+    return edges
+
+
+def nx_delete_None_edge_attr(graph, edges=None):
+    removed = 0
+    if graph.is_multigraph():
+        if edges is None:
+            edges = list(graph.edges(keys=graph.is_multigraph()))
+        for edge in edges:
+            u, v, k = edge
+            data = graph[u][v][k]
+            for key in list(data.keys()):
+                try:
+                    if data[key] is None:
+                        del data[key]
+                        removed += 1
+                except KeyError:
+                    pass
+    else:
+        if edges is None:
+            edges = list(graph.edges())
+        for edge in graph.edges():
+            u, v = edge
+            data = graph[u][v]
+            for key in list(data.keys()):
+                try:
+                    if data[key] is None:
+                        del data[key]
+                        removed += 1
+                except KeyError:
+                    pass
+    return removed
+
+
+def nx_delete_None_node_attr(graph, nodes=None):
+    removed = 0
+    if nodes is None:
+        nodes = list(graph.nodes())
+    for node in graph.nodes():
+        node_dict = graph.nodes
+        data = node_dict[node]
+        for key in list(data.keys()):
+            try:
+                if data[key] is None:
+                    del data[key]
+                    removed += 1
+            except KeyError:
+                pass
+    return removed
+
+
+def nx_node_dict(G):
+    print('Warning: use G.nodes instead')
+    if nx.__version__.startswith('1'):
+        return getattr(G, 'node')
+    else:
+        return G.nodes
+
+
 if __name__ == '__main__':
     """
     CommandLine:
