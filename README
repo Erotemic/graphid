@@ -8,3 +8,9 @@ python -m graphid.demo.dummy_infr demodata_infr --show
 python -m graphid.demo.dummy_infr demodata_infr --num_pccs=25 --show
 python -m graphid.demo.dummy_infr demodata_infr --num_pccs=100 --show
 ```
+
+
+Conda can be used to install pygraphviz on windows?
+
+conda install -c marufr pygraphviz
+
