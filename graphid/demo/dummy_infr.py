@@ -17,33 +17,27 @@ def demodata_infr(**kwargs):
         ccs (list): explicit list of connected components
 
     CommandLine:
-        python -m graphid.demo demodata_infr --show
-        python -m graphid.demo demodata_infr --num_pccs=25
-        python -m graphid.demo demodata_infr --profile --num_pccs=100
+        python -m graphid.demo.dummy_infr demodata_infr --show
+        python -m graphid.demo.dummy_infr demodata_infr --show
+        python -m graphid.demo.dummy_infr demodata_infr --num_pccs=25
+        python -m graphid.demo.dummy_infr demodata_infr --num_pccs=100
 
     Example:
-        >>> from graphid.core import demo
+        >>> from graphid import demo
         >>> import networkx as nx
+        >>> import utool as ut
         >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
-        >>> #kwargs = ut.argparse_dict(kwargs)
+        >>> kwargs = ut.argparse_dict(kwargs)
         >>> infr = demo.demodata_infr(**kwargs)
         >>> pccs = list(infr.positive_components())
         >>> assert len(pccs) == kwargs['num_pccs']
         >>> nonfull_pccs = [cc for cc in pccs if len(cc) > 1 and nx.is_empty(nx.complement(infr.pos_graph.subgraph(cc)))]
         >>> expected_n_incon = len(nonfull_pccs) * kwargs['p_incon']
         >>> n_incon = len(list(infr.inconsistent_components()))
-        >>> # TODO can test that we our sample num incon agrees with pop mean
-        >>> #sample_mean = n_incon / len(nonfull_pccs)
-        >>> #pop_mean = kwargs['p_incon']
         >>> print('status = ' + ub.repr2(infr.status(extended=True)))
         >>> # xdoctest: +REQUIRES(--show)
         >>> infr.show(pickable=True, groupby='name_label')
         >>> util.show_if_requested()
-
-    Ignore:
-        kwargs = {
-            'ccs': [[1, 2, 3], [4, 5]]
-        }
     """
 
     def kwalias(*args):
@@ -257,3 +251,12 @@ def demodata_infr(**kwargs):
     infr.verifiers['match_state'] = infr.dummy_verif
     infr.demokw = kwargs
     return infr
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m graphid.demo.dummy_infr all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)
