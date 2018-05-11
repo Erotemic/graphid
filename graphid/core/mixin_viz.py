@@ -8,6 +8,7 @@ from functools import partial
 from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)
 from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
 from graphid import util
+pt = util
 
 
 class GraphVisualization(object):
@@ -16,24 +17,20 @@ class GraphVisualization(object):
     def _get_truth_colors(infr):
         # TODO: change to cs4 colors with util.Color
         # util.Color('dodgerblue')
-        import plottool as pt
         truth_colors = {
-            POSTV: pt.TRUE_BLUE,
-            NEGTV: pt.FALSE_RED,
-            INCMP: pt.YELLOW,
-            UNKWN: pt.UNKNOWN_PURP,
-            UNREV: pt.GRAY,
+            POSTV: util.Color('blue').as255('bgr'),
+            NEGTV: util.Color('red').as255('bgr'),
+            INCMP: util.Color('yellow').as255('bgr'),
+            UNKWN: util.Color('purple').as255('bgr'),
+            UNREV: util.Color('gray').as255('bgr'),
         }
         return truth_colors
 
     @property
     def _error_color(infr):
-        import plottool as pt
-        return pt.ORANGE
+        return util.Color('orange').as255('bgr')
 
     def _get_cmap(infr):
-        import plottool as pt
-        # return pt.plt.cm.RdYlBu
         if hasattr(infr, '_cmap'):
             return infr._cmap
         else:
@@ -96,7 +93,6 @@ class GraphVisualization(object):
 
     def get_colored_edge_weights(infr, graph=None, highlight_reviews=True):
         # Update color and linewidth based on scores/weight
-        import plottool as pt
         if graph is None:
             graph = infr.graph
         truth_colors = infr._get_truth_colors()
@@ -115,8 +111,8 @@ class GraphVisualization(object):
                         color = truth_colors[POSTV]
                     if meta == DIFF:
                         color = truth_colors[NEGTV]
-                    color = pt.color_funcs.adjust_hsv_of_rgb(
-                        color, sat_adjust=1, val_adjust=-.3)
+                    # color = pt.adjust_hsv_of_rgb(
+                    #     color, sat_adjust=1, val_adjust=-.3)
                 edges.append(edge)
                 colors.append(color)
         else:
@@ -134,13 +130,11 @@ class GraphVisualization(object):
             #print('!! edges = %r' % (len(edges),))
             #print('!! colors = %r' % (len(colors),))
             if len(nan_idxs) > 0:
-                import plottool as pt
                 for idx in nan_idxs:
-                    colors[idx] = pt.GRAY
+                    colors[idx] = util.Color('gray').as255('bgr')
         return edges, colors
 
     def get_colored_weights(infr, weights):
-        import plottool as pt
         cmap_ = infr._get_cmap()
         thresh = .5
         weights[np.isnan(weights)] = thresh
@@ -226,8 +220,6 @@ class GraphVisualization(object):
                             **kwargs
                             # hide_unreviewed_inferred=True
                             ):
-        import plottool as pt
-
         infr.print('update_visual_attrs', 3)
         if graph is None:
             graph = infr.graph
@@ -488,7 +480,10 @@ class GraphVisualization(object):
             )
             layoutkw.update(kwargs)
             # print(ub.repr2(graph.edges))
-            pt.nx_agraph_layout(graph, inplace=True, **layoutkw)
+            try:
+                pt.nx_agraph_layout(graph, inplace=True, **layoutkw)
+            except AttributeError:
+                print('WARNING: errors may occur')
 
         if edge_overrides:
             for key, edge_to_attr in edge_overrides.items():
@@ -532,7 +527,6 @@ class GraphVisualization(object):
             >>> infr.show_graph(show_cand=True, simple_labels=True, pickable=True, fnum=1, pnum=pnum_())
             >>> util.show_if_requested()
         """
-        import plottool as pt
         if graph is None:
             graph = infr.graph
         # kwargs['fontsize'] = kwargs.get('fontsize', 8)
@@ -575,7 +569,6 @@ class GraphVisualization(object):
             fig.canvas.mpl_connect('pick_event', partial(on_pick, infr=infr))
 
     def show_edge(infr, edge, fnum=None, pnum=None, **kwargs):
-        import plottool as pt
         match = infr._exec_pairwise_match([edge])[0]
         fnum = pt.ensure_fnum(fnum)
         pt.figure(fnum=fnum, pnum=pnum)
@@ -607,7 +600,6 @@ class GraphVisualization(object):
         """
         Example
         """
-        import plottool as pt
 
         if error_edges is None:
             # compute a minimal set of edges to minimally fix the case
@@ -668,7 +660,6 @@ class GraphVisualization(object):
 
 
 def on_pick(event, infr=None):
-    import plottool as pt
     print('ON PICK: %r' % (event,))
     artist = event.artist
     plotdat = pt.get_plotdat_dict(artist)
@@ -698,7 +689,6 @@ def on_pick(event, infr=None):
 def color_nodes(graph, labelattr='label', brightness=.878,
                 outof=None, sat_adjust=None):
     """ Colors edges and nodes by nid """
-    import plottool as pt
     node_to_lbl = nx.get_node_attributes(graph, labelattr)
     unique_lbls = sorted(set(node_to_lbl.values()))
     ncolors = len(unique_lbls)
@@ -708,22 +698,23 @@ def color_nodes(graph, labelattr='label', brightness=.878,
         elif (ncolors) == 2:
             # https://matplotlib.org/examples/color/named_colors.html
             unique_colors = ['royalblue', 'orange']
-            unique_colors = list(map(pt.color_funcs.ensure_base01, unique_colors))
+            unique_colors = [util.Color(c).as01('bgr') for c in unique_colors]
         else:
             unique_colors = pt.distinct_colors(ncolors, brightness=brightness)
     else:
         unique_colors = pt.distinct_colors(outof, brightness=brightness)
 
     if sat_adjust:
-        unique_colors = [
-            pt.color_funcs.adjust_hsv_of_rgb(c, sat_adjust=sat_adjust)
-            for c in unique_colors
-        ]
+        pass
+        # unique_colors = [
+        #     pt.color_funcs.adjust_hsv_of_rgb(c, sat_adjust=sat_adjust)
+        #     for c in unique_colors
+        # ]
     # Find edges and aids strictly between two nids
     if outof is None:
         lbl_to_color = ub.dzip(unique_lbls, unique_colors)
     else:
-        gray = pt.color_funcs.ensure_base01('lightgray')
+        gray = util.Color('lightgray').as01('bgr')
         unique_colors = [gray] + unique_colors
         offset = max(1, min(unique_lbls)) - 1
         node_to_lbl = ub.map_vals(lambda nid: max(0, nid - offset), node_to_lbl)
@@ -735,9 +726,6 @@ def color_nodes(graph, labelattr='label', brightness=.878,
 
 def nx_ensure_agraph_color(graph):
     """ changes colors to hex strings on graph attrs """
-    from plottool import color_funcs
-    import plottool as pt
-    #import six
     def _fix_agraph_color(data):
         try:
             orig_color = data.get('color', None)
@@ -746,10 +734,13 @@ def nx_ensure_agraph_color(graph):
             if color is None and alpha is not None:
                 color = [0, 0, 0]
             if color is not None:
-                color = pt.ensure_nonhex_color(color)
+                # color = pt.ensure_nonhex_color(color)
+                color = [1, 1, 1]
+
                 #if isinstance(color, np.ndarray):
                 #    color = color.tolist()
-                color = list(color_funcs.ensure_base255(color))
+                color = list(util.Color(color).as255('bgr'))
+
                 if alpha is not None:
                     if len(color) == 3:
                         color += [int(alpha * 255)]

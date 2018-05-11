@@ -1,0 +1,3 @@
+Conda can be used to install pygraphviz on windows?
+
+conda install -c marufr pygraphviz
