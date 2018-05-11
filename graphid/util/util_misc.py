@@ -3,6 +3,13 @@ import itertools as it
 import numpy as np
 
 
+def randn(mean=0, std=1, shape=[], a_max=None, a_min=None, rng=None):
+    a = (rng.randn(*shape) * std) + mean
+    if a_max is not None or a_min is not None:
+        a = np.clip(a, a_min, a_max)
+    return a
+
+
 def aslist(sequence):
     """
     Ensures that the sequence object is a Python list.
