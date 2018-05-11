@@ -729,7 +729,7 @@ def color_nodes(graph, labelattr='label', brightness=.878,
         node_to_lbl = ub.map_vals(lambda nid: max(0, nid - offset), node_to_lbl)
         lbl_to_color = ub.dzip(range(outof + 1), unique_colors)
     node_to_color = ub.map_vals(lbl_to_color, node_to_lbl)
-    util.set_node_attributes(graph, name='color', values=node_to_color)
+    nx.set_node_attributes(graph, name='color', values=node_to_color)
     nx_ensure_agraph_color(graph)
 
 

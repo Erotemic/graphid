@@ -76,6 +76,7 @@ def demo2():
 
     dpath = ub.ensuredir(ub.truepath('~/Desktop/demo'))
     ub.delete(dpath)
+    ub.ensuredir(dpath)
 
     fig_counter = it.count(0)
 
@@ -111,9 +112,10 @@ def demo2():
         infr.verbose = verbose
         # print('status ' + ub.repr2(infr_.status()))
         # infr.show(**showkw)
-        ax = pt.gca()
-        pt.set_title(title, fontsize=20)
-        fig = pt.gcf()
+        from matplotlib import pyplot as plt
+        ax = plt.gca()
+        ax.set_title(title, fontsize=20)
+        fig = plt.gcf()
         fontsize = 22
         if True:
             # postprocess xlabel
@@ -137,8 +139,8 @@ def demo2():
                 fontsize = 8
 
         if True:
-            pt.adjust_subplots(top=.95, left=0, right=1, bottom=.45,
-                               fig=fig)
+            util.mplutil.adjust_subplots(top=.95, left=0, right=1, bottom=.45,
+                                         fig=fig)
             ax.set_xlabel('\n' + latest)
             xlabel = ax.get_xaxis().get_label()
             xlabel.set_horizontalalignment('left')
@@ -259,7 +261,7 @@ def demo2():
     if VISUALIZE:
         if not getattr(infr, 'EMBEDME', False):
             # import plottool as pt
-            util.mplutil.all_figures_tile()
+            # util.mplutil.all_figures_tile()
             util.mplutil.show_if_requested()
 
 
