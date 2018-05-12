@@ -8,6 +8,7 @@ class GraphID(ub.NiceRepr):
     Public API for the Graph ID algorithm
 
     Example:
+        >>> # DISABLE_DOCTEST
         >>> for query in iter(self):
         >>>     feedback = oracle.review(query)
         >>>     self.add_feedback(feedback)
@@ -17,6 +18,7 @@ class GraphID(ub.NiceRepr):
     def from_ibeis(IDGraph, ibs, aids):
         """
         Example:
+            >>> # DISABLE_DOCTEST
             >>> import ibeis
             >>> ibs = ibeis.opendb(defaultdb=defaultdb)
             >>> aids = [1, 2, 3, 4, 5, 6]
