@@ -413,14 +413,13 @@ class DummyEdges(object):
             python -m graphid.core.mixin_helpers ensure_cliques
 
         Doctest:
-            >>> from graphid.core.mixin_helpers import *  # NOQA
             >>> from graphid import demo
             >>> label = 'name_label'
             >>> infr = demo.demodata_infr(num_pccs=3, size=5)
-            >>> print(infr.status())
+            >>> print(ub.repr2(infr.status()))
             >>> assert infr.status()['nEdges'] < 33
             >>> infr.ensure_cliques()
-            >>> print(infr.status())
+            >>> print(ub.repr2(infr.status()))
             >>> assert infr.status()['nEdges'] == 33
             >>> assert infr.status()['nUnrevEdges'] == 12
             >>> assert len(list(infr.find_clique_edges(label))) > 0

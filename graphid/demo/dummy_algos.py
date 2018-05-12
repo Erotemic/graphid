@@ -50,7 +50,7 @@ class DummyVerif(object):
             >>> # ENABLE_DOCTEST
             >>> from graphid import core
             >>> from graphid import demo
-            >>> infr = core.AnnotInference(None)
+            >>> infr = core.AnnotInference()
             >>> verif = demo.DummyVerif(infr)
             >>> verif.show_score_probs()
             >>> util.show_if_requested()

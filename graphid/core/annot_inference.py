@@ -594,6 +594,8 @@ class NameRelabel(object):
 class MiscHelpers(object):
 
     def _rectify_nids(infr, aids, nids):
+        if aids is None:
+            raise ValueError('aids cannot be None')
         if nids is None:
             nids = [-aid for aid in aids]
         elif not ub.iterable(nids):
@@ -618,6 +620,8 @@ class MiscHelpers(object):
         infr.incomp_graph.remove_nodes_from(aids)
 
     def add_aids(infr, aids, nids=None):
+        if aids is None:
+            raise ValueError('aids cannot be None')
         nids = infr._rectify_nids(aids, nids)
         assert len(aids) == len(nids), 'must correspond'
         if infr.aids is None:
@@ -1042,9 +1046,12 @@ class AnnotInference(ub.NiceRepr,
         Returns dict of params prefixed with <prefix>.
         The returned dict does not contain the prefix
 
+        CommandLine:
+            python -m graphid.core.annot_inference AnnotInference.subparams
+
         Doctest:
-            >>> infr = AnnotInference(None)
-            >>> result = ub.repr2(infr.subparams('refresh'))
+            >>> infr = AnnotInference()
+            >>> result = ub.repr2(infr.subparams('refresh'), nl=0, precision=1)
             >>> print(result)
             {'method': 'binomial', 'patience': 72, 'thresh': 0.1, 'window': 20}
         """
