@@ -90,7 +90,7 @@ class RefreshCriteria(object):
         Example:
             >>> # ENABLE_DOCTEST
             >>> from graphid.core.refresh import *  # NOQA
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=50, size=4, size_std=2)
             >>> edges = list(infr.dummy_verif.find_candidate_edges(K=100))
             >>> #edges = util.shuffle(sorted(edges), rng=321)
@@ -154,7 +154,7 @@ class RefreshCriteria(object):
 
     def ave(refresh, method='exp'):
         """
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=40, size=4, size_std=2, ignore_pair=True)
             >>> edges = list(infr.dummy_verif.find_candidate_edges(K=100))
             >>> scores = np.array(infr.dummy_verif.predict_edges(edges))
@@ -177,9 +177,9 @@ class RefreshCriteria(object):
             >>>     reals.append(n_real)
             >>>     xdata.append(count + 1)
             >>> # xdoctest: +REQUIRES(--show)
-            >>> import plottool as pt
-            >>> pt.qtensure()
-            >>> pt.multi_plot(xdata, [ma1, ma2, reals], marker='',
+            >>> from graphid import util
+            >>> util.qtensure()
+            >>> util.multi_plot(xdata, [ma1, ma2, reals], marker='',
             >>>               label_list=['exp', 'win', 'real'], xlabel='review num',
             >>>               ylabel='mu')
         """
@@ -213,7 +213,7 @@ def demo_refresh():
         >>> demo_refresh()
         >>> util.show_if_requested()
     """
-    from graphid.core import demo
+    from graphid import demo
     import utool as ut
     demokw = ut.argparse_dict({'num_pccs': 50, 'size': 4})
     refreshkw = ut.argparse_funckw(RefreshCriteria)
@@ -245,27 +245,29 @@ def demo_refresh():
     ])
 
     # xdoctest: +REQUIRES(--show)
-    import plottool as pt
-    pt.qtensure()
-    from ibeis.scripts.thesis import TMP_RC
-    import matplotlib as mpl
-    mpl.rcParams.update(TMP_RC)
-    pt.multi_plot(
-        xdata, ydatas, xlabel='# manual reviews', rcParams=TMP_RC, marker='',
+    from graphid import util
+    util.qtensure()
+    # from ibeis.scripts.thesis import TMP_RC
+    # import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    # mpl.rcParams.update(TMP_RC)
+    util.multi_plot(
+        xdata, ydatas, xlabel='# manual reviews',
+        # rcParams=TMP_RC,
+        marker='',
         ylim=(0, 1), use_legend=False,
     )
     demokw = ub.map_keys({'num_pccs': '#PCC', 'size': 'PCC size'},
                          demokw)
     thresh = refreshkw.pop('thresh')
     refreshkw['span'] = refreshkw.pop('window')
-    import utool as ut
-    pt.relative_text((.02, .58 + .0), ut.get_cfg_lbl(demokw, sep=' ')[1:],
-                     valign='bottom')
-    pt.relative_text((.02, .68 + .0), ut.get_cfg_lbl(refreshkw, sep=' ')[1:],
-                     valign='bottom')
-    legend = pt.gca().legend()
+    util.relative_text((.02, .58 + .0), ut.get_cfg_lbl(demokw, sep=' ')[1:],
+                       valign='bottom')
+    util.relative_text((.02, .68 + .0), ut.get_cfg_lbl(refreshkw, sep=' ')[1:],
+                       valign='bottom')
+    legend = plt.gca().legend()
     legend.get_frame().set_alpha(1.0)
-    pt.plt.plot([xdata[0], xdata[-1]], [thresh, thresh], 'g--', label='thresh')
+    plt.plot([xdata[0], xdata[-1]], [thresh, thresh], 'g--', label='thresh')
 
 
 def _dev_iters_until_threshold():
@@ -383,20 +385,22 @@ def _dev_iters_until_threshold():
     S, A = np.meshgrid(np.arange(1, 150, 1), np.arange(0, 150, 1))
 
     import plottool as pt
+    from graphid import util
+    import matplotlib as plt
     SA_coords = list(zip(S.ravel(), A.ravel()))
     for sval, aval in ub.ProgIter(SA_coords):
         if (sval, aval) not in poisson_cache:
             poisson_cache[(sval, aval)] = float(poisson_thresh.subs({a: aval, s: sval}).evalf())
     poisson_zdata = np.array(
         [poisson_cache[(sval, aval)] for sval, aval in SA_coords]).reshape(A.shape)
-    fig = pt.figure(fnum=1, doclf=True)
-    pt.gca().set_axis_off()
+    fig = util.figure(fnum=1, doclf=True)
+    plt.gca().set_axis_off()
     pt.plot_surface3d(S, A, poisson_zdata, xlabel='s', ylabel='a',
                       rstride=3, cstride=3,
                       zlabel='poisson', mode='wire', contour=True,
                       title='poisson3d')
-    pt.gca().set_zlim(0, 1)
-    pt.gca().view_init(elev=taud(1 / 16), azim=taud(5 / 8))
+    plt.gca().set_zlim(0, 1)
+    plt.gca().view_init(elev=taud(1 / 16), azim=taud(5 / 8))
     fig.set_size_inches(10, 6)
     fig.savefig('a-s-t-poisson3d.png', dpi=300, bbox_inches=pt.extract_axes_extents(fig, combine=True))
 
@@ -405,14 +409,14 @@ def _dev_iters_until_threshold():
             binom_cache[(sval, aval)] = float(binom_thresh.subs({a: aval, s: sval}).evalf())
     binom_zdata = np.array(
         [binom_cache[(sval, aval)] for sval, aval in SA_coords]).reshape(A.shape)
-    fig = pt.figure(fnum=2, doclf=True)
-    pt.gca().set_axis_off()
+    fig = util.figure(fnum=2, doclf=True)
+    plt.gca().set_axis_off()
     pt.plot_surface3d(S, A, binom_zdata, xlabel='s', ylabel='a',
                       rstride=3, cstride=3,
                       zlabel='binom', mode='wire', contour=True,
                       title='binom3d')
-    pt.gca().set_zlim(0, 1)
-    pt.gca().view_init(elev=taud(1 / 16), azim=taud(5 / 8))
+    plt.gca().set_zlim(0, 1)
+    plt.gca().view_init(elev=taud(1 / 16), azim=taud(5 / 8))
     fig.set_size_inches(10, 6)
     fig.savefig('a-s-t-binom3d.png', dpi=300, bbox_inches=pt.extract_axes_extents(fig, combine=True))
 

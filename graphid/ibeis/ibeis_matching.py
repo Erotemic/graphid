@@ -448,7 +448,7 @@ class _RedundancyAugmentation(object):
             k (int): redundnacy level (if None uses infr.params['redun.neg'])
 
         Example:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> k = 2
             >>> cc1, cc2 = {1}, {2, 3}
             >>> # --- return an augmentation if feasible
@@ -545,7 +545,7 @@ class _RedundancyAugmentation(object):
         Searches for augmenting edges that would make PCCs k-positive redundant
 
         Doctest:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=[(1, 2, 3, 4, 5), (7, 8, 9, 10)])
             >>> infr.add_feedback((2, 5), 'match')
             >>> infr.add_feedback((1, 5), 'notcomp')
@@ -573,7 +573,7 @@ class _RedundancyAugmentation(object):
         Finds edges that might complete them.
 
         Example:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=[(1,), (2,), (3,)], ignore_pair=True)
             >>> edges = list(infr.find_neg_redun_candidate_edges())
             >>> assert len(edges) == 3, 'all should be needed here'
@@ -581,7 +581,7 @@ class _RedundancyAugmentation(object):
             >>> assert len(list(infr.find_neg_redun_candidate_edges())) == 0
 
         Example:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(pcc_sizes=[3] * 20, ignore_pair=True)
             >>> ccs = list(infr.positive_components())
             >>> gen = infr.find_neg_redun_candidate_edges(k=2)
@@ -622,7 +622,7 @@ class CandidateSearch(_RedundancyAugmentation):
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_mtest_infr()
             >>> cand_edges = infr.find_lnbnn_candidate_edges()
             >>> assert len(cand_edges) > 200
@@ -675,7 +675,7 @@ class CandidateSearch(_RedundancyAugmentation):
             >>> assert len(infr.task_probs['match_state']) == 3
 
         Doctest:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=6, p_incon=.5, size_std=2)
             >>> edges = list(infr.edges())
             >>> infr.ensure_task_probs(edges)
@@ -733,7 +733,7 @@ class CandidateSearch(_RedundancyAugmentation):
             >>> infr.ensure_priority_scores(priority_edges)
 
         Doctest:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=6, p_incon=.5, size_std=2)
             >>> edges = list(infr.edges())
             >>> infr.ensure_priority_scores(edges)

@@ -274,7 +274,7 @@ class DynamicUpdate(object):
         same.
 
         Ignore:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> kwargs = dict(num_pccs=3, p_incon=0, size=100)
             >>> infr = demo.demodata_infr(infer=False, **kwargs)
             >>> infr.apply_nondynamic_update()
@@ -521,8 +521,11 @@ class Recovery(object):
         Returns:
             bool: flag
 
+        CommandLine:
+            python -m graphid.core.mixin_dynamic Recovery.is_recovering
+
         Doctest:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=4, size=4, ignore_pair=True)
             >>> infr.ensure_cliques(meta_decision=SAME)
             >>> a, b, c, d = map(list, infr.positive_components())
@@ -538,9 +541,9 @@ class Recovery(object):
             >>> infr.add_feedback((b[2], c[0]), NEGTV)
             >>> assert infr.is_recovering((c[0], d[0])) is False
             >>> result = ub.repr2({
-            >>>     'pccs': list(infr.positive_components()),
             >>>     'iccs': list(infr.inconsistent_components()),
-            >>> }, nobr=True, si=True, itemsep='')
+            >>>     'pccs': sorted([cc for cc in infr.positive_components()], key=min),
+            >>> }, nobr=True, sorted=True, si=True, itemsep='', sep='', nl=1)
             >>> print(result)
             iccs: [{1,2,3,4}],
             pccs: [{1,2,3,4},{5,6,7,8},{9,10,11,12},{13,14,15,16}],
@@ -700,7 +703,7 @@ class Consistency(object):
             flag: bool: returns True unless cc contains any negative edges
 
         Example:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=1, p_incon=1)
             >>> assert not infr.is_consistent(next(infr.positive_components()))
             >>> infr = demo.demodata_infr(num_pccs=1, p_incon=0)
@@ -779,17 +782,23 @@ class _RedundancyComputers(object):
         Tests if a group of nodes is positive redundant.
         (ie. if the group is k-edge-connected)
 
+        CommandLine:
+            python -m graphid.core.mixin_dynamic _RedundancyComputers.is_pos_redundant
+
         Example:
-            >>> from graphid.core import demo
-            >>> infr = demo.demodata_infr(ccs=[(1, 2, 3, 4, 5)])
-            >>> infr.params['redun.pos'] = 2
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(ccs=[(1, 2, 3)], pos_redun=1)
             >>> cc = infr.pos_graph.connected_to(1)
             >>> flag1 = infr.is_pos_redundant(cc)
-            >>> infr.add_feedback((1, 5), POSTV)
-            >>> flag2 = infr.is_pos_redundant(cc)
+            >>> infr.add_feedback((1, 3), POSTV)
+            >>> flag2 = infr.is_pos_redundant(cc, k=2)
             >>> flags = [flag1, flag2]
             >>> print('flags = %r' % (flags,))
-            >>> assert flags == [False, True]
+            flags = [False, True]
+            >>> # xdoc: +REQUIRES(--show)
+            >>> from graphid import util
+            >>> infr.show()
+            >>> util.show_if_requested()
         """
         if k is None:
             k = infr.params['redun.pos']
@@ -811,13 +820,16 @@ class _RedundancyComputers(object):
         return nxu.is_k_edge_connected(pos_subgraph, k=k)
 
     def is_neg_redundant(infr, cc1, cc2, k=None):
-        r"""
+        """
         Tests if two disjoint groups of nodes are negative redundant
         (ie. have at least k negative edges between them).
 
+        CommandLine:
+            python -m graphid.core.mixin_dynamic _RedundancyComputers.is_neg_redundant --show
+
         Example:
-            >>> from graphid.core import demo
-            >>> infr = demo.demodata_infr(ccs=[(1, 2), (3, 4)])
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(ccs=[(1, 2), (3, 4)], ignore_pair=True)
             >>> infr.params['redun.neg'] = 2
             >>> cc1 = infr.pos_graph.connected_to(1)
             >>> cc2 = infr.pos_graph.connected_to(3)
@@ -829,6 +841,10 @@ class _RedundancyComputers(object):
             >>> flags = [flag1, flag2, flag3]
             >>> print('flags = %r' % (flags,))
             >>> assert flags == [False, False, True]
+            >>> # xdoc: +REQUIRES(--show)
+            >>> from graphid import util
+            >>> infr.show()
+            >>> util.show_if_requested()
         """
         if k is None:
             k = infr.params['redun.neg']
@@ -877,10 +893,9 @@ class _RedundancyComputers(object):
         """
         Get PCCs that are k-negative redundant with `cc`
 
-            >>> from graphid.core import demo
-            >>> import plottool as pt
-            >>> pt.qtensure()
-            >>> infr = demo.demodata_infr2()
+        Example:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr()
             >>> node = 20
             >>> cc = infr.pos_graph.connected_to(node)
             >>> infr.params['redun.neg'] = 2
@@ -922,7 +937,7 @@ class _RedundancyComputers(object):
         Get pairs of PCCs that are not complete.
 
         Example:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(pcc_sizes=[1, 1, 2, 3, 5, 8], ignore_pair=True)
             >>> non_neg_pccs = list(infr.find_non_neg_redun_pccs(k=2))
             >>> assert len(non_neg_pccs) == (6 * 5) / 2
@@ -985,7 +1000,7 @@ class Redundancy(_RedundancyComputers):
         Uses bookkeeping structures
 
         Example:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=1, size=4)
             >>> infr.clear_edges()
             >>> infr.ensure_cliques()
@@ -1236,7 +1251,7 @@ class NonDynamicUpdate(object):
         This ensures that subsequent dyanmic inference can be applied.
 
         Example:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> num_pccs = 250
             >>> kwargs = dict(num_pccs=100, p_incon=.3)
             >>> infr = demo.demodata_infr(infer=False, **kwargs)
@@ -1361,7 +1376,7 @@ class NonDynamicUpdate(object):
         the dynamic state is lost.
 
         Example:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> num_pccs = 250 if ub.argflag('--profile') else 100
             >>> kwargs = dict(num_pccs=100, p_incon=.3)
             >>> infr = demo.demodata_infr(infer=False, **kwargs)
@@ -1476,7 +1491,7 @@ class NonDynamicUpdate(object):
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/graphid/graphid.core/mixin_dynamic.py all
+        python -m graphid.core.mixin_dynamic all
     """
     import xdoctest
     xdoctest.doctest_module(__file__)

@@ -901,8 +901,12 @@ def nx_gen_edge_attrs(G, key, edges=None, default=ub.NoParam,
             Can be {'error', 'default', 'filter'}.  defaults to 'default'
             if default is specified, otherwise defaults to 'error'.
 
+    CommandLine:
+        python -m graphid.util.nx_utils nx_gen_edge_attrs
+
     Example:
         >>> from graphid import util
+        >>> from functools import partial
         >>> G = nx.Graph([(1, 2), (2, 3), (3, 4)])
         >>> nx.set_edge_attributes(G, name='part', values={(1, 2): 'bar', (2, 3): 'baz'})
         >>> edges = [(1, 2), (2, 3), (3, 4), (4, 5)]

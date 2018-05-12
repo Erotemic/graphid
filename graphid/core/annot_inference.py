@@ -391,7 +391,7 @@ class Feedback(object):
 
         Example:
             >>> from graphid.core.annot_inference import *  # NOQA
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=5)
             >>> assert len(list(infr.edges())) > 0
             >>> infr.reset(state='empty')

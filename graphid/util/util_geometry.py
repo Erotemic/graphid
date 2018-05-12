@@ -2,13 +2,9 @@
 # LICENCE
 from __future__ import absolute_import, division, print_function, unicode_literals
 from six.moves import zip
+import ubelt as ub  # NOQA
 import numpy as np
-import utool as ut
-try:
-    import cv2
-except ImportError as ex:
-    print('WARNING: import cv2 is failing!')
-(print, rrr, profile) = ut.inject2(__name__, '[geom]', DEBUG=False)
+import cv2
 
 
 def bboxes_from_vert_list(verts_list, castint=False):
@@ -80,15 +76,15 @@ def draw_border(img_in, color=(0, 128, 255), thickness=2, out=None):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> img_in = vt.imread(ut.grab_test_imgpath('carl.jpg'))
+        >>> from graphid import util
+        >>> img_in = util.imread(util.grab_test_imgpath('carl.jpg'))
         >>> color = (0, 128, 255)
         >>> thickness = 20
         >>> out = None
         >>> img = draw_border(img_in, color, thickness, out)
         >>> # verify results
-        >>> ut.quit_if_noshow()
-        >>> import plottool as pt
-        >>> pt.imshow(img)
+        >>> # xdoc: +REQUIRES(--show)
+        >>> util.imshow(img)
         >>> pt.show_if_requested()
     """
     h, w = img_in.shape[0:2]
@@ -118,9 +114,8 @@ def draw_verts(img_in, verts, color=(0, 128, 255), thickness=2, out=None):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> import plottool as pt
-        >>> # build test data
-        >>> img_in = vt.imread(ut.grab_test_imgpath('carl.jpg'))
+        >>> from graphid import util
+        >>> img_in = util.imread(util.grab_test_imgpath('carl.jpg'))
         >>> verts = ((10, 10), (10, 100), (100, 100), (100, 10))
         >>> color = (0, 128, 255)
         >>> thickness = 2
@@ -131,15 +126,14 @@ def draw_verts(img_in, verts, color=(0, 128, 255), thickness=2, out=None):
         >>> assert out is not img
         >>> assert out is not img_in
         >>> # verify results
-        >>> ut.quit_if_noshow()
-        >>> pt.imshow(img)
-        >>> pt.show_if_requested()
+        >>> # xdoc: +REQUIRES(--show)
+        >>> util.imshow(img)
+        >>> util.show_if_requested()
 
     Example1:
         >>> # ENABLE_DOCTEST
-        >>> import plottool as pt
-        >>> # build test data
-        >>> img_in = vt.imread(ut.grab_test_imgpath('carl.jpg'))
+        >>> from graphid import util
+        >>> img_in = util.imread(util.grab_test_imgpath('carl.jpg'))
         >>> verts = ((10, 10), (10, 100), (100, 100), (100, 10))
         >>> color = (0, 128, 255)
         >>> thickness = 2
@@ -149,7 +143,7 @@ def draw_verts(img_in, verts, color=(0, 128, 255), thickness=2, out=None):
         >>> assert img_in is img, 'should be in place'
         >>> assert out is img, 'should be in place'
         >>> # verify results
-        >>> ut.quit_if_noshow()
+        >>> # xdoc: +REQUIRES(--show)
         >>> pt.imshow(img)
         >>> pt.show_if_requested()
 
@@ -193,9 +187,9 @@ def closest_point_on_line_segment(p, e1, e2):
     Example:
         >>> # ENABLE_DOCTEST
         >>> #bbox = np.array([10, 10, 10, 10], dtype=np.float)
-        >>> #verts_ = np.array(vt.verts_from_bbox(bbox, close=True))
-        >>> #R = vt.rotation_around_bbox_mat3x3(vt.TAU / 3, bbox)
-        >>> #verts = vt.transform_points_with_homography(R, verts_.T).T
+        >>> #verts_ = np.array(util.verts_from_bbox(bbox, close=True))
+        >>> #R = util.rotation_around_bbox_mat3x3(util.TAU / 3, bbox)
+        >>> #verts = util.transform_points_with_homography(R, verts_.T).T
         >>> verts = np.array([[ 21.83012702,  13.16987298],
         >>>                   [ 16.83012702,  21.83012702],
         >>>                   [  8.16987298,  16.83012702],
@@ -204,19 +198,20 @@ def closest_point_on_line_segment(p, e1, e2):
         >>> rng = np.random.RandomState(0)
         >>> p_list = rng.rand(64, 2) * 20 + 5
         >>> close_pts = np.array([closest_point_on_vert_segments(p, verts) for p in p_list])
-        >>> import plottool as pt
-        >>> pt.ensureqt()
-        >>> pt.plt.plot(p_list.T[0], p_list.T[1], 'ro', label='original point')
-        >>> pt.plt.plot(close_pts.T[0], close_pts.T[1], 'rx', label='closest point on shape')
+        >>> from graphid import util
+        >>> import matplotlib.pyplot as plt
+        >>> util.qtensure()
+        >>> plt.plot(p_list.T[0], p_list.T[1], 'ro', label='original point')
+        >>> plt.plot(close_pts.T[0], close_pts.T[1], 'rx', label='closest point on shape')
         >>> for x, y in list(zip(p_list, close_pts)):
         >>>     z = np.array(list(zip(x, y)))
-        >>>     pt.plt.plot(z[0], z[1], 'r--')
-        >>> pt.plt.legend()
-        >>> pt.plt.plot(verts.T[0], verts.T[1], 'b-')
-        >>> pt.plt.xlim(0, 30)
-        >>> pt.plt.ylim(0, 30)
-        >>> pt.plt.axis('equal')
-        >>> ut.show_if_requested()
+        >>>     plt.plot(z[0], z[1], 'r--')
+        >>> plt.legend()
+        >>> plt.plot(verts.T[0], verts.T[1], 'b-')
+        >>> plt.xlim(0, 30)
+        >>> plt.ylim(0, 30)
+        >>> plt.axis('equal')
+        >>> util.show_if_requested()
     """
     # shift e1 to origin
     de = (dx, dy) = e2 - e1
@@ -240,8 +235,9 @@ def closest_point_on_line_segment(p, e1, e2):
 
 
 def distance_to_lineseg(p, e1, e2):
+    from graphid import util
     close_pt = closest_point_on_line_segment(p, e1, e2)
-    dist_to_lineseg = vt.L2(p, close_pt)
+    dist_to_lineseg = util.L2(p, close_pt)
     return dist_to_lineseg
 
 
@@ -261,23 +257,24 @@ def closest_point_on_line(p, e1, e2):
         >>> p_list = rng.rand(64, 2) * 20 + 5
         >>> close_pts = []
         >>> for p in p_list:
-        >>>     candidates = [closest_point_on_line(p, e1, e2) for e1, e2 in ut.itertwo(verts)]
-        >>>     dists = np.array([vt.L2_sqrd(p, new_pt) for new_pt in candidates])
+        >>>     candidates = [closest_point_on_line(p, e1, e2) for e1, e2 in ub.iter_window(verts, 2)]
+        >>>     dists = np.array([np.linalg.norm(p - new_pt, axis=0) for new_pt in candidates])
         >>>     close_pts.append(candidates[dists.argmin()])
         >>> close_pts = np.array(close_pts)
-        >>> import plottool as pt
-        >>> pt.ensureqt()
-        >>> pt.plt.plot(p_list.T[0], p_list.T[1], 'ro', label='original point')
-        >>> pt.plt.plot(close_pts.T[0], close_pts.T[1], 'rx', label='closest point on shape')
+        >>> from graphid import util
+        >>> import matplotlib.pyplot as plt
+        >>> util.qtensure()
+        >>> plt.plot(p_list.T[0], p_list.T[1], 'ro', label='original point')
+        >>> plt.plot(close_pts.T[0], close_pts.T[1], 'rx', label='closest point on shape')
         >>> for x, y in list(zip(p_list, close_pts)):
         >>>     z = np.array(list(zip(x, y)))
-        >>>     pt.plt.plot(z[0], z[1], 'r--')
-        >>> pt.plt.legend()
-        >>> pt.plt.plot(verts.T[0], verts.T[1], 'b-')
-        >>> pt.plt.xlim(0, 30)
-        >>> pt.plt.ylim(0, 30)
-        >>> pt.plt.axis('equal')
-        >>> ut.show_if_requested()
+        >>>     plt.plot(z[0], z[1], 'r--')
+        >>> plt.legend()
+        >>> plt.plot(verts.T[0], verts.T[1], 'b-')
+        >>> plt.xlim(0, 30)
+        >>> plt.ylim(0, 30)
+        >>> plt.axis('equal')
+        >>> util.show_if_requested()
     """
     # shift e1 to origin
     de = (dx, dy) = e2 - e1
@@ -291,9 +288,8 @@ def closest_point_on_line(p, e1, e2):
 
 
 def closest_point_on_vert_segments(p, verts):
-    import vtool as vt
-    candidates = [closest_point_on_line_segment(p, e1, e2) for e1, e2 in ut.itertwo(verts)]
-    dists = np.array([vt.L2_sqrd(p, new_pt) for new_pt in candidates])
+    candidates = [closest_point_on_line_segment(p, e1, e2) for e1, e2 in ub.iter_window(verts, 2)]
+    dists = np.array([np.linalg.norm(p - new_pt, axis=0) for new_pt in candidates])
     new_pts = candidates[dists.argmin()]
     return new_pts
 
@@ -307,7 +303,7 @@ def closest_point_on_bbox(p, bbox):
         >>> bbox = np.array([10, 10, 10, 10], dtype=np.float)
         >>> [closest_point_on_bbox(p, bbox) for p in p_list]
     """
-    verts = np.array(vt.verts_from_bbox(bbox, close=True))
+    verts = np.array(verts_from_bbox(bbox, close=True))
     new_pts = closest_point_on_vert_segments(p, verts)
     return new_pts
 
@@ -350,7 +346,7 @@ def extent_from_bbox(bbox):
         >>> # ENABLE_DOCTEST
         >>> bbox = [0, 0, 10, 10]
         >>> extent = extent_from_bbox(bbox)
-        >>> result = ('extent = %s' % (ut.repr2(extent),))
+        >>> result = ('extent = %s' % (ub.repr2(list(extent), nl=0),))
         >>> print(result)
         extent = [0, 10, 0, 10]
     """
@@ -374,8 +370,7 @@ def bbox_from_extent(extent):
         >>> # ENABLE_DOCTEST
         >>> extent = [0, 10, 0, 10]
         >>> bbox = bbox_from_extent(extent)
-        >>> result = ('bbox = %s' % (ut.repr2(bbox),))
-        >>> print(result)
+        >>> print('bbox = {}'.format(ub.repr2(list(bbox), nl=0)))
         bbox = [0, 0, 10, 10]
     """
     tl_x, br_x, tl_y, br_y = extent
@@ -413,13 +408,13 @@ def get_pointset_extent_wh(pts):
 
 def cvt_bbox_xywh_to_pt1pt2(xywh, sx=1.0, sy=1.0, round_=True):
     """ Converts bbox to thumb format with a scale factor"""
-    import vtool as vt
+    from graphid import util
     (x1, y1, _w, _h) = xywh
     x2 = (x1 + _w)
     y2 = (y1 + _h)
     if round_:
-        pt1 = (vt.iround(x1 * sx), vt.iround(y1 * sy))
-        pt2 = (vt.iround(x2 * sx), vt.iround(y2 * sy))
+        pt1 = (util.iround(x1 * sx), util.iround(y1 * sy))
+        pt2 = (util.iround(x2 * sx), util.iround(y2 * sy))
     else:
         pt1 = ((x1 * sx), (y1 * sy))
         pt2 = ((x2 * sx), (y2 * sy))
@@ -523,16 +518,16 @@ def point_inside_bbox(point, bbox):
         >>> bbox = (3, 2, 5, 7)
         >>> flag = point_inside_bbox(point, bbox)
         >>> flag = flag.astype(np.int)
-        >>> result = ('flag = %s' % (ut.repr2(flag),))
+        >>> result = ('flag = %s' % (ub.repr2(flag),))
         >>> print(result)
-        >>> ut.quit_if_noshow()
-        >>> import plottool as pt
+        >>> # xdoc: +REQUIRES(--show)
         >>> verts = np.array(verts_from_bbox(bbox, close=True))
-        >>> pt.plot(verts.T[0], verts.T[1], 'b-')
-        >>> pt.plot(point[0][flag], point[1][flag], 'go')
-        >>> pt.plot(point[0][~flag], point[1][~flag], 'rx')
-        >>> pt.plt.xlim(0, 10); pt.plt.ylim(0, 10)
-        >>> pt.show_if_requested()
+        >>> util.plot(verts.T[0], verts.T[1], 'b-')
+        >>> util.plot(point[0][flag], point[1][flag], 'go')
+        >>> util.plot(point[0][~flag], point[1][~flag], 'rx')
+        >>> plt.xlim(0, 10); plt.ylim(0, 10)
+        >>> from graphid import util
+        >>> util.show_if_requested()
         flag = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
     """
     x, y = point
@@ -541,3 +536,12 @@ def point_inside_bbox(point, bbox):
     inside_y = np.logical_and(tl_y < y, y < br_y)
     flag = np.logical_and(inside_x, inside_y)
     return flag
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m graphid.util.util_geometry all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

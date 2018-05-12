@@ -1,6 +1,7 @@
 import six
 import numpy as np
 import networkx as nx
+import ubelt as ub  # NOQA
 from graphid import util
 from graphid.core import state as const
 from graphid.util import nx_utils as nxu
@@ -14,7 +15,7 @@ class Priority(object):
 
     Example:
         >>> from graphid.core.mixin_priority import *  # NOQA
-        >>> from graphid.core import demo
+        >>> from graphid import demo
         >>> infr = demo.demodata_infr(num_pccs=20)
     """
 
@@ -104,7 +105,7 @@ class Priority(object):
 
         Doctest:
             >>> from graphid.core.mixin_priority import *  # NOQA
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=7, size=5)
             >>> infr.ensure_cliques(meta_decision=SAME)
             >>> # Add a negative edge inside a PCC
@@ -293,7 +294,7 @@ class Priority(object):
         Example:
             >>> # ENABLE_DOCTEST
             >>> from graphid.core.mixin_priority import *  # NOQA
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=7, size=5)
             >>> infr.refresh_candidate_edges()
             >>> infr.peek_many(50)
@@ -336,7 +337,7 @@ class Priority(object):
 
         Doctest:
             >>> from graphid.core.mixin_priority import *  # NOQA
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=[(1, 2), (3, 4), (5, 6), (7, 8)])
             >>> infr.add_feedback((1, 5), NEGTV)
             >>> infr.add_feedback((5, 8), NEGTV)

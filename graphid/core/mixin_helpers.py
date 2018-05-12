@@ -213,6 +213,7 @@ class Convenience(object):
         Helps debugging when ibs.nids has info that annotmatch/staging do not
 
         Examples:
+            >>> # DISABLE_DOCTEST
             >>> from graphid.core.mixin_helpers import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb(defaultdb='GZ_Master1')
@@ -234,6 +235,8 @@ class Convenience(object):
         nid1, nid2 = infr.pos_graph.node_labels(aid1, aid2)
         cc1 = infr.pos_graph.connected_to(aid1)
         cc2 = infr.pos_graph.connected_to(aid2)
+        raise NotImplementedError('need to remove ibs dependency')
+
         ibs = infr.ibs
 
         # First check directly relationships
@@ -358,7 +361,7 @@ class DummyEdges(object):
 
         Doctest:
             >>> from graphid.core.mixin_dynamic import *  # NOQA
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=3, size=4)
             >>> assert infr.status()['nCCs'] == 3
             >>> infr.clear_edges()
@@ -367,6 +370,7 @@ class DummyEdges(object):
             >>> assert infr.status()['nCCs'] == 3
 
         Doctest:
+            >>> # DISABLE_DOCTEST
             >>> from graphid.core.mixin_dynamic import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', 'all', autoinit=True)
@@ -380,7 +384,6 @@ class DummyEdges(object):
             >>> assert infr.status()['nCCs'] == 119
             >>> infr.ensure_mst()
             >>> assert infr.status()['nCCs'] == 41
-
         """
         infr.print('ensure_mst', 1)
         new_edges = infr.find_mst_edges(label=label)
@@ -411,7 +414,7 @@ class DummyEdges(object):
 
         Doctest:
             >>> from graphid.core.mixin_helpers import *  # NOQA
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> label = 'name_label'
             >>> infr = demo.demodata_infr(num_pccs=3, size=5)
             >>> print(infr.status())
@@ -472,7 +475,7 @@ class DummyEdges(object):
         they are connected with positive edges.
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # DISABLE_DOCTEST
             >>> from graphid.core.mixin_helpers import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
@@ -498,7 +501,8 @@ class DummyEdges(object):
         label_to_nodes = ub.group_items(node_to_label.keys(),
                                         node_to_label.values())
 
-        weight_heuristic = infr.ibs is not None
+        weight_heuristic = False
+        # infr.ibs is not None
         if weight_heuristic:
             annots = infr.ibs.annots(infr.aids)
             node_to_time = ub.dzip(annots, annots.time)
@@ -513,7 +517,7 @@ class DummyEdges(object):
             weights = np.ones(len(avail_uv))
 
             if 'view_weight' in enabled_heuristics:
-                from vtool import _rhomb_dist
+                from graphid.core import _rhomb_dist
                 view_edge = [(node_to_view[u], node_to_view[v])
                              for (u, v) in avail_uv]
                 view_weight = np.array([

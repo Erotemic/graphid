@@ -8,7 +8,6 @@ from functools import partial
 from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)
 from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
 from graphid import util
-pt = util
 
 
 class GraphVisualization(object):
@@ -51,7 +50,8 @@ class GraphVisualization(object):
                               [ 0.2       ,  0.65085832,  0.93960823],
                               [ 0.2       ,  0.54946918,  0.90949295],
                               [ 0.25697101,  0.44185497,  0.8138502 ]])
-            cmap = pt.mpl.colors.ListedColormap(cpool, 'indexed')
+            import matplotlib as mpl
+            cmap = mpl.colors.ListedColormap(cpool, 'indexed')
             infr._cmap = cmap
             return infr._cmap
 
@@ -111,7 +111,7 @@ class GraphVisualization(object):
                         color = truth_colors[POSTV]
                     if meta == DIFF:
                         color = truth_colors[NEGTV]
-                    # color = pt.adjust_hsv_of_rgb(
+                    # color = util.adjust_hsv_of_rgb(
                     #     color, sat_adjust=1, val_adjust=-.3)
                 edges.append(edge)
                 colors.append(color)
@@ -138,9 +138,9 @@ class GraphVisualization(object):
         cmap_ = infr._get_cmap()
         thresh = .5
         weights[np.isnan(weights)] = thresh
-        #colors = pt.scores_to_color(weights, cmap_=cmap_, logscale=True)
-        colors = pt.scores_to_color(weights, cmap_=cmap_, score_range=(0, 1),
-                                    logscale=False, cmap_range=None)
+        #colors = util.scores_to_color(weights, cmap_=cmap_, logscale=True)
+        colors = util.scores_to_color(weights, cmap_=cmap_, score_range=(0, 1),
+                                      logscale=False, cmap_range=None)
         return colors
 
     @property
@@ -346,7 +346,7 @@ class GraphVisualization(object):
             nx.set_edge_attributes(graph, name='linewidth', values=ub.dzip(edges, [unreviewed_width]))
 
         # EDGE_STROKE: based on decision and maybe_error
-        # fg = pt.WHITE if dark_background else pt.BLACK
+        # fg = util.WHITE if dark_background else util.BLACK
         # nx.set_edge_attributes(graph, name='stroke', values=ub.dzip(reviewed_edges, [{'linewidth': 3, 'foreground': fg}]))
         if show_inconsistency:
             nx.set_edge_attributes(graph, name='stroke', values=ub.dzip(recheck_edges, [{'linewidth': 5, 'foreground': infr._error_color}]))
@@ -481,7 +481,7 @@ class GraphVisualization(object):
             layoutkw.update(kwargs)
             # print(ub.repr2(graph.edges))
             try:
-                pt.nx_agraph_layout(graph, inplace=True, **layoutkw)
+                util.nx_agraph_layout(graph, inplace=True, **layoutkw)
             except AttributeError:
                 print('WARNING: errors may occur')
 
@@ -512,7 +512,7 @@ class GraphVisualization(object):
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=util.estarmap(
             >>>    range, [(1, 6), (6, 10), (10, 13), (13, 15), (15, 16),
             >>>            (17, 20)]))
@@ -536,7 +536,7 @@ class GraphVisualization(object):
             if update_attrs:
                 infr.update_visual_attrs(graph=graph, **kwargs)
             verbose = kwargs.pop('verbose', infr.verbose)
-            pt.show_nx(graph, layout='custom', as_directed=False,
+            util.show_nx(graph, layout='custom', as_directed=False,
                        modify_ax=False, use_image=use_image,
                        pnum=pnum, verbose=verbose, **kwargs)
             if zoomable:
@@ -548,7 +548,7 @@ class GraphVisualization(object):
         #     _normal_ticks = np.linspace(0, 1, num=11)
         #     _normal_scores = np.linspace(0, 1, num=500)
         #     _normal_colors = infr.get_colored_weights(_normal_scores)
-        #     cb = pt.colorbar(_normal_scores, _normal_colors, lbl='weights',
+        #     cb = util.colorbar(_normal_scores, _normal_colors, lbl='weights',
         #                      ticklabels=_normal_ticks)
 
         #     # point to threshold location
@@ -563,7 +563,7 @@ class GraphVisualization(object):
 
         # infr.graph
         if graph.graph.get('dark_background', None):
-            pt.dark_background(force=True)
+            util.dark_background(force=True)
 
         if pickable:
             fig = plt.gcf()
@@ -572,8 +572,8 @@ class GraphVisualization(object):
     def show_edge(infr, edge, fnum=None, pnum=None, **kwargs):
         import matplotlib.pyplot as plt
         match = infr._exec_pairwise_match([edge])[0]
-        fnum = pt.ensure_fnum(fnum)
-        pt.figure(fnum=fnum, pnum=pnum)
+        fnum = util.ensure_fnum(fnum)
+        util.figure(fnum=fnum, pnum=pnum)
         ax = plt.gca()
         showkw = dict(vert=False, heatmask=True, show_lines=False,
                       show_ell=False, show_ori=False, show_eig=False,
@@ -644,7 +644,7 @@ class GraphVisualization(object):
         sub_infr.show_edge(edge, fnum=1, pnum=(2, 1, 2))
         import matplotlib.pyplot as plt
         ax = plt.gca()
-        xy, w, h = pt.get_axis_xy_width_height(ax=ax)
+        xy, w, h = util.get_axis_xy_width_height(ax=ax)
 
         nx.set_node_attributes(sub_infr.graph, name='framewidth', values=1.0)
         nx.set_node_attributes(sub_infr.graph, name='framealign', values='outer')
@@ -665,7 +665,7 @@ class GraphVisualization(object):
 def on_pick(event, infr=None):
     print('ON PICK: %r' % (event,))
     artist = event.artist
-    plotdat = pt.get_plotdat_dict(artist)
+    plotdat = util.get_plotdat_dict(artist)
     if plotdat:
         if 'node' in plotdat:
             all_node_data = util.sort_dict(plotdat['node_data'].copy())
@@ -762,7 +762,7 @@ def nx_ensure_agraph_color(graph):
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/graphid/graphid.core/mixin_viz.py all
+        python ~/code/graphid/graphid/core/mixin_viz.py all
     """
     import xdoctest
     xdoctest.doctest_module(__file__)

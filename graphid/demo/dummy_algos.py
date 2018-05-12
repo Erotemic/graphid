@@ -18,7 +18,7 @@ class DummyVerif(object):
     Example:
         >>> # ENABLE_DOCTEST
         >>> from graphid.demo import *  # NOQA
-        >>> from graphid.core import demo
+        >>> from graphid import demo
         >>> import networkx as nx
         >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
         >>> infr = demo.demodata_infr(**kwargs)
@@ -44,25 +44,26 @@ class DummyVerif(object):
     def show_score_probs(verif):
         """
         CommandLine:
-            python -m graphid.demo DummyVerif.show_score_probs --show
+            python -m graphid.demo.dummy_algos DummyVerif.show_score_probs --show
 
         Example:
             >>> # ENABLE_DOCTEST
-            >>> from graphid.demo import *  # NOQA
-            >>> infr = AnnotInference(None)
-            >>> verif = DummyVerif(infr)
+            >>> from graphid import core
+            >>> from graphid import demo
+            >>> infr = core.AnnotInference(None)
+            >>> verif = demo.DummyVerif(infr)
             >>> verif.show_score_probs()
             >>> util.show_if_requested()
         """
-        import plottool as pt
+        import matplotlib.pyplot as plt
         dist = verif.score_dist
         n = 100000
         for key in verif.dummy_params.keys():
             probs = dist(shape=[n], rng=verif.rng, a_max=1, a_min=0,
                           **verif.dummy_params[key])
             color = verif.infr._get_truth_colors()[key]
-            pt.plt.hist(probs, bins=100, label=key, alpha=.8, color=color)
-        pt.legend()
+            plt.hist(probs, bins=100, label=key, alpha=.8, color=color)
+        plt.legend()
 
     def dummy_ranker(verif, u, K=10):
         """
@@ -181,3 +182,12 @@ class DummyVerif(object):
     def predict_edges(verif, edges):
         pos_scores = verif.predict_proba_df(edges)[POSTV]
         return pos_scores
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m graphid.demo.dummy_algos all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

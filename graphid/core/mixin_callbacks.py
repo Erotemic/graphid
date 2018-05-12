@@ -60,7 +60,7 @@ class InfrCandidates(object):
         This does not change the state of the queue.
 
         Doctest:
-            >>> from graphid.core import demo
+            >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=6, p_incon=.5, size_std=2)
             >>> edges = list(infr.edges())
             >>> infr.ensure_priority_scores(edges)

@@ -1,4 +1,4 @@
-from graphid.core import demo
+from graphid import demo
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
 from graphid.core.state import SAME, DIFF, NULL  # NOQA
 from graphid import util

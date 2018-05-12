@@ -39,6 +39,8 @@ def demodata_infr(**kwargs):
         >>> infr.show(pickable=True, groupby='name_label')
         >>> util.show_if_requested()
     """
+    from graphid.core.annot_inference import AnnotInference
+    from graphid.demo import dummy_algos
 
     def kwalias(*args):
         params = args[0:-1]
@@ -214,7 +216,6 @@ def demodata_infr(**kwargs):
     else:
         print('ignoring pairs')
 
-    from graphid.core.annot_inference import AnnotInference
     G = AnnotInference._graph_cls()
     G.add_nodes_from(pos_g.nodes(data=True))
     G.add_edges_from(pos_g.edges(data=True))
@@ -245,7 +246,6 @@ def demodata_infr(**kwargs):
     # Set synthetic ground-truth attributes for testing
     infr.edge_truth = infr.get_edge_attrs('truth')
     # Make synthetic verif
-    from graphid.demo import dummy_algos
     infr.dummy_verif = dummy_algos.DummyVerif(infr)
     infr.verifiers = {}
     infr.verifiers['match_state'] = infr.dummy_verif
