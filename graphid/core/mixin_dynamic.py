@@ -268,7 +268,7 @@ class DynamicUpdate(object):
             nmg.add_edges_from(split_edges)
 
     def _positive_decision(infr, edge):
-        r"""
+        """
         Logic for a dynamic positive decision.  A positive decision is evidence
         that two annots should be in the same PCC
 
@@ -695,7 +695,7 @@ class Recovery(object):
 
 class Consistency(object):
     def is_consistent(infr, cc):
-        r"""
+        """
         Determines if a PCC contains inconsistencies
 
         Args:
@@ -714,7 +714,7 @@ class Consistency(object):
         return len(cc) <= 2 or not any(nxu.edges_inside(infr.neg_graph, cc))
 
     def positive_components(infr, graph=None):
-        r"""
+        """
         Generates the positive connected compoments (PCCs) in the graph
         These will contain both consistent and inconsinstent PCCs.
 
@@ -741,7 +741,7 @@ class Consistency(object):
                 yield cc
 
     def consistent_components(infr, graph=None):
-        r"""
+        """
         Generates consistent PCCs.
         These PCCs contain no internal negative edges.
 
@@ -1432,7 +1432,7 @@ class Redundancy(_RedundancyComputers, _RedundancyAugmentation):
 class NonDynamicUpdate(object):
 
     def apply_nondynamic_update(infr, graph=None):
-        r"""
+        """
         Recomputes all dynamic bookkeeping for a graph in any state.
         This ensures that subsequent dyanmic inference can be applied.
 
@@ -1444,7 +1444,6 @@ class NonDynamicUpdate(object):
             >>> graph = None
             >>> infr.apply_nondynamic_update()
             >>> infr.assert_neg_metagraph()
-
         """
         # Cluster edges by category
         ne_to_edges = infr.collapsed_meta_edges()
@@ -1556,7 +1555,7 @@ class NonDynamicUpdate(object):
         return ne_to_edges
 
     def categorize_edges(infr, graph=None, ne_to_edges=None):
-        r"""
+        """
         Non-dynamically computes the status of each edge in the graph.
         This is can be used to verify the dynamic computations and update when
         the dynamic state is lost.

@@ -1016,6 +1016,9 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
     """
     import plottool as pt
     import matplotlib as mpl
+    from matplotlib import patches
+    from matplotlib import patheffects
+    from graphid import util
 
     # figsize = ub.argval('--figsize', type_=list, default=None)
     figsize = None
@@ -1089,8 +1092,6 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
             node_dict = graph.nodes
             rounded = 'rounded' in node_dict.get(node, {}).get('style', '')
             isdiag = 'diagonals' in node_dict.get(node, {}).get('style', '')
-
-            from matplotlib import patches
 
             if rounded:
                 rpad = 20
@@ -1316,7 +1317,6 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
             full_lw = lw
 
             #effects = data.get('stroke', None)
-            from matplotlib import patheffects
             path_effects = []
 
             sketch_params = data.get('sketch')
@@ -1355,7 +1355,7 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
                     scale = shadowkw.pop('scale', 1.0)
                     shadow_color = shadowkw.pop('color', 'k')
                     shadow_color = shadowkw.pop('shadow_color', shadow_color)
-                    offset = ub.ensure_iterable(shadowkw.pop('offset', (2, -2)))
+                    offset = util.ensure_iterable(shadowkw.pop('offset', (2, -2)))
                     if len(offset) == 1:
                         offset = offset * 2
                     shadowkw_ = dict(offset=offset, shadow_color=shadow_color,

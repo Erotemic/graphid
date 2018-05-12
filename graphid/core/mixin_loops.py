@@ -487,7 +487,8 @@ class InfrReviewers(object):
                 # decision = decision_flags.argmax()
                 evidence_decision = ub.argmax(decision_probs)
                 review['evidence_decision'] = evidence_decision
-                truth = infr.match_state_gt(edge)
+                # truth = infr.match_state_gt(edge)
+                truth = infr.dummy_verif._get_truth(edge)
                 if review['evidence_decision'] != truth:
                     infr.print(
                         'AUTOMATIC ERROR edge={}, truth={}, decision={}, probs={}'.format(
@@ -503,7 +504,8 @@ class InfrReviewers(object):
             return None
 
     def request_oracle_review(infr, edge, **kw):
-        truth = infr.match_state_gt(edge)
+        truth = infr.dummy_verif._get_truth(edge)
+        # truth = infr.match_state_gt(edge)
         feedback = infr.oracle.review(edge, truth, infr, **kw)
         return feedback
 

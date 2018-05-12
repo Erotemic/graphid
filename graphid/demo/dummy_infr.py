@@ -246,9 +246,12 @@ def demodata_infr(**kwargs):
     # Set synthetic ground-truth attributes for testing
     infr.edge_truth = infr.get_edge_attrs('truth')
     # Make synthetic verif
-    infr.dummy_verif = dummy_algos.DummyVerif(infr)
-    infr.verifiers = {}
-    infr.verifiers['match_state'] = infr.dummy_verif
+    dummy_verif = dummy_algos.DummyVerif(infr)
+    dummy_ranker = dummy_algos.DummyRanker(dummy_verif)
+    infr.set_verifier(dummy_verif)
+    infr.set_ranker(dummy_ranker)
+
+    infr.dummy_verif = dummy_verif
     infr.demokw = kwargs
     return infr
 

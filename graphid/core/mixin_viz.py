@@ -17,17 +17,17 @@ class GraphVisualization(object):
         # TODO: change to cs4 colors with util.Color
         # util.Color('dodgerblue')
         truth_colors = {
-            POSTV: util.Color('blue').as01('bgr'),
-            NEGTV: util.Color('red').as01('bgr'),
-            INCMP: util.Color('yellow').as01('bgr'),
-            UNKWN: util.Color('purple').as01('bgr'),
-            UNREV: util.Color('gray').as01('bgr'),
+            POSTV: util.Color('blue').as01(),
+            NEGTV: util.Color('red').as01(),
+            INCMP: util.Color('yellow').as01(),
+            UNKWN: util.Color('purple').as01(),
+            UNREV: util.Color('gray').as01(),
         }
         return truth_colors
 
     @property
     def _error_color(infr):
-        return util.Color('orange').as255('bgr')
+        return util.Color('orange').as01('bgr')
 
     def _get_cmap(infr):
         if hasattr(infr, '_cmap'):
@@ -131,7 +131,7 @@ class GraphVisualization(object):
             #print('!! colors = %r' % (len(colors),))
             if len(nan_idxs) > 0:
                 for idx in nan_idxs:
-                    colors[idx] = util.Color('gray').as255('bgr')
+                    colors[idx] = util.Color('gray').as01()
         return edges, colors
 
     def get_colored_weights(infr, weights):

@@ -3,75 +3,27 @@ import itertools as it
 import numpy as np
 import pandas as pd
 import ubelt as ub
+import networkx as nx  # NOQA
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
 from graphid.core.state import SAME, DIFF, NULL  # NOQA
 from graphid import util
 
 
-class DummyVerif(object):
+class DummyRanker(object):
     """
-    generates dummy scores between edges (not necesarilly in the graph)
-
-    CommandLine:
-        python -m graphid.demo DummyVerif:1
-
-    Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.demo import *  # NOQA
-        >>> from graphid import demo
-        >>> import networkx as nx
-        >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
-        >>> infr = demo.demodata_infr(**kwargs)
-        >>> infr.dummy_verif.predict_edges([(1, 2)])
-        >>> infr.dummy_verif.predict_edges([(1, 21)])
-        >>> assert len(infr.dummy_verif.infr.task_probs['match_state']) == 2
+    Generates dummy rankings
     """
-    def __init__(verif, infr):
-        verif.rng = np.random.RandomState(4033913)
-        verif.dummy_params = {
-            NEGTV: {'mean': .2, 'std': .25},
-            POSTV: {'mean': .85, 'std': .2},
-            INCMP: {'mean': .15, 'std': .1},
-        }
-        verif.score_dist = util.randn
+    def __init__(ranker, verif):
+        ranker.verif = verif
 
-        verif.infr = infr
-        verif.orig_nodes = set(infr.aids)
-        verif.orig_labels = infr.get_node_attrs('orig_name_label')
-        verif.orig_groups = ub.invert_dict(verif.orig_labels, False)
-        verif.orig_groups = ub.map_vals(set, verif.orig_groups)
-
-    def show_score_probs(verif):
-        """
-        CommandLine:
-            python -m graphid.demo.dummy_algos DummyVerif.show_score_probs --show
-
-        Example:
-            >>> # ENABLE_DOCTEST
-            >>> from graphid import core
-            >>> from graphid import demo
-            >>> infr = core.AnnotInference()
-            >>> verif = demo.DummyVerif(infr)
-            >>> verif.show_score_probs()
-            >>> util.show_if_requested()
-        """
-        import matplotlib.pyplot as plt
-        dist = verif.score_dist
-        n = 100000
-        for key in verif.dummy_params.keys():
-            probs = dist(shape=[n], rng=verif.rng, a_max=1, a_min=0,
-                          **verif.dummy_params[key])
-            color = verif.infr._get_truth_colors()[key]
-            plt.hist(probs, bins=100, label=key, alpha=.8, color=color)
-        plt.legend()
-
-    def dummy_ranker(verif, u, K=10):
+    def predict_single_ranking(ranker, u, K=10):
         """
         simulates the ranking algorithm. Order is defined using the dummy vsone
         scores, but tests are only applied to randomly selected gt and gf
         pairs. So, you usually will get a gt result, but you might not if all
         the scores are bad.
         """
+        verif = ranker.verif
         infr = verif.infr
 
         nid = verif.orig_labels[u]
@@ -93,7 +45,7 @@ class DummyVerif(object):
             vs_list.append(gf)
 
         u_edges = [infr.e_(u, v) for v in it.chain.from_iterable(vs_list)]
-        u_probs = np.array(infr.dummy_verif.predict_edges(u_edges))
+        u_probs = np.array(verif.predict_edges(u_edges))
         # infr.set_edge_attrs('prob_match', ub.dzip(u_edges, u_probs))
 
         # Need to determenistically sort here
@@ -101,36 +53,67 @@ class DummyVerif(object):
 
         sortx = np.argsort(u_probs)[::-1][0:K]
         ranked_edges = list(ub.take(u_edges, sortx))
+        ranked_nodes = [edge[0] if u != edge[0] else edge[1]
+                        for edge in ranked_edges]
         # assert len(ranked_edges) == K
-        return ranked_edges
+        return ranked_nodes
 
-    def find_candidate_edges(verif, K=10):
+    def predict_rankings(ranker, nodes, K=10):
         """
+        Yields a list ranked edges connected to each node.
+        """
+        for u in nodes:
+            yield ranker.predict_single_ranking(u, K=K)
+
+    def predict_candidate_edges(ranker, nodes, K=10):
+        """
+        CommandLine:
+            python -m graphid.demo.dummy_algos DummyRanker.predict_candidate_edges
+
         Example:
-            >>> # ENABLE_DOCTEST
             >>> from graphid import demo
-            >>> import networkx as nx
             >>> kwargs = dict(num_pccs=40, size=2)
             >>> infr = demo.demodata_infr(**kwargs)
-            >>> edges = list(infr.dummy_verif.find_candidate_edges(K=100))
-            >>> scores = np.array(infr.dummy_verif.predict_edges(edges))
+            >>> edges = list(infr.ranker.predict_candidate_edges(infr.aids, K=100))
+            >>> scores = np.array(infr.verifier.predict_edges(edges))
+            >>> assert len(edges) > 0
         """
         new_edges = []
-        nodes = list(verif.infr.graph.nodes())
-        for u in nodes:
-            new_edges.extend(verif.dummy_ranker(u, K=K))
-        # print('new_edges = %r' % (ub.hash_data(new_edges),))
+        for edges in ranker.predict_rankings(nodes, K=K):
+            new_edges.extend(edges)
         new_edges = set(new_edges)
         return new_edges
 
-    def _get_truth(verif, edge):
-        infr = verif.infr
-        if edge in infr.edge_truth:
-            return infr.edge_truth[edge]
-        node_dict = infr.graph.nodes
-        nid1 = node_dict[edge[0]]['orig_name_label']
-        nid2 = node_dict[edge[1]]['orig_name_label']
-        return POSTV if nid1 == nid2 else NEGTV
+
+class DummyVerif(object):
+    """
+    Generates dummy scores between pairs of annotations.
+    (not necesarilly existing edges in the graph)
+
+    CommandLine:
+        python -m graphid.demo DummyVerif:1
+
+    Example:
+        >>> from graphid.demo import *  # NOQA
+        >>> from graphid import demo
+        >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
+        >>> infr = demo.demodata_infr(**kwargs)
+        >>> infr.dummy_verif.predict_edges([(1, 2)])
+        >>> infr.dummy_verif.predict_edges([(1, 21)])
+        >>> assert len(infr.dummy_verif.infr.task_probs['match_state']) == 2
+    """
+    def __init__(verif, infr):
+        verif.rng = np.random.RandomState(4033913)
+        verif.dummy_params = {
+            NEGTV: {'mean': .2, 'std': .25},
+            POSTV: {'mean': .85, 'std': .2},
+            INCMP: {'mean': .15, 'std': .1},
+        }
+        verif.infr = infr
+        verif.orig_nodes = set(infr.aids)
+        verif.orig_labels = infr.get_node_attrs('orig_name_label')
+        verif.orig_groups = ub.invert_dict(verif.orig_labels, False)
+        verif.orig_groups = ub.map_vals(set, verif.orig_groups)
 
     def predict_proba_df(verif, edges):
         """
@@ -138,18 +121,12 @@ class DummyVerif(object):
             python -m graphid.demo DummyVerif.predict_edges
 
         Example:
-            >>> # ENABLE_DOCTEST
             >>> from graphid import demo
-            >>> import networkx as nx
             >>> kwargs = dict(num_pccs=40, size=2)
             >>> infr = demo.demodata_infr(**kwargs)
             >>> verif = infr.dummy_verif
             >>> edges = list(infr.graph.edges())
             >>> probs = verif.predict_proba_df(edges)
-            >>> #print('scores = %r' % (scores,))
-            >>> #hashid = ub.hash_data(scores)
-            >>> #print('hashid = %r' % (hashid,))
-            >>> #assert hashid == 'cdlkytilfeqgmtsihvhqwffmhczqmpil'
         """
         infr = verif.infr
         edges = list(it.starmap(verif.infr.e_, edges))
@@ -182,6 +159,37 @@ class DummyVerif(object):
     def predict_edges(verif, edges):
         pos_scores = verif.predict_proba_df(edges)[POSTV]
         return pos_scores
+
+    def show_score_probs(verif):
+        """
+        CommandLine:
+            python -m graphid.demo.dummy_algos DummyVerif.show_score_probs --show
+
+        Example:
+            >>> from graphid import core
+            >>> from graphid import demo
+            >>> infr = core.AnnotInference()
+            >>> verif = demo.DummyVerif(infr)
+            >>> verif.show_score_probs()
+            >>> util.show_if_requested()
+        """
+        import matplotlib.pyplot as plt
+        n = 100000
+        for key in verif.dummy_params.keys():
+            probs = util.randn(shape=[n], rng=verif.rng, a_max=1, a_min=0,
+                               **verif.dummy_params[key])
+            color = verif.infr._get_truth_colors()[key]
+            plt.hist(probs, bins=100, label=key, alpha=.8, color=color)
+        plt.legend()
+
+    def _get_truth(verif, edge):
+        infr = verif.infr
+        if edge in infr.edge_truth:
+            return infr.edge_truth[edge]
+        node_dict = infr.graph.nodes
+        nid1 = node_dict[edge[0]]['orig_name_label']
+        nid2 = node_dict[edge[1]]['orig_name_label']
+        return POSTV if nid1 == nid2 else NEGTV
 
 
 if __name__ == '__main__':

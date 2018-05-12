@@ -853,6 +853,7 @@ class AnnotInference(ub.NiceRepr,
                      mixin_loops.InfrLoops,
                      # For matching and candidate edge callbacks
                      mixin_callbacks.InfrCallbacks,
+                     mixin_callbacks.InfrCandidates,
                      # Visualization
                      mixin_viz.GraphVisualization,
                      ):

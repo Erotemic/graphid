@@ -11,20 +11,65 @@ class InfrCallbacks(object):
     object for it to work properly.
     """
 
-    def set_candidate_predictor(infr, func):
-        infr.predict_candidate_edges = func
+    def set_ranker(infr, ranker):
+        """
+        ranker should be a function that accepts a list of annotation ids and
+        return a list of the top K ranked annotations.
+        """
+        infr.ranker = ranker
 
-    def set_edge_attr_predictor(infr, func):
-        infr.predict_edge_attrs = func
+    def set_verifier(infr, verifier, task='match_state'):
+        """
+        verifier should be a function that accepts a list of annotation pairs
+        and produces the 3-state match_state probabilities.
+        """
+        if infr.verifiers is None:
+            infr.verifiers = {}
+        infr.verifiers[task] = verifier
+        infr.verifier = verifier
 
-    def set_node_attr_predictor(infr, func):
-        infr.predict_node_attrs = func
+    # def set_edge_attr_predictor(infr, func):
+    #     infr.predict_edge_attrs = func
 
-    def _default_candidate_edge_search(infr):
-        raise NotImplementedError
+    # def set_node_attr_predictor(infr, func):
+    #     infr.predict_node_attrs = func
+
+    # def _default_candidate_edge_search(infr):
+    #     raise NotImplementedError
 
     def refresh_candidate_edges(infr):
-        print('Warning: matching algorithm callbacks are not implemented yet')
+        """
+        CommandLine:
+            python -m graphid.core.mixin_callbacks InfrCallbacks.refresh_candidate_edges
+
+        Example:
+            >>> from graphid import demo
+            >>> kwargs = dict(num_pccs=40, size=2)
+            >>> infr = demo.demodata_infr(**kwargs)
+            >>> infr.refresh_candidate_edges()
+        """
+        infr.print('refresh_candidate_edges', 1)
+        infr.assert_consistency_invariant()
+
+        if hasattr(infr, 'dummy_verif'):
+            infr.print('Searching for dummy candidates')
+            infr.print('dummy vsone params =' + ub.repr2(
+                infr.dummy_verif.dummy_params, nl=1, si=True))
+
+        if infr.ranker is None:
+            raise Exception(
+                'No method available to search for candidate edges')
+
+        ranks_top = infr.params['ranking.ntop']
+        qaids = list(infr.aids)
+        rankings = infr.ranker.predict_rankings(qaids, K=ranks_top)
+        candidate_edges = [
+            infr.e_(aid, v)
+            for aid, rankings in zip(qaids, rankings)
+            for v in rankings
+        ]
+        infr.add_candidate_edges(candidate_edges)
+        infr.assert_consistency_invariant()
 
 
 class InfrCandidates(object):
@@ -60,6 +105,54 @@ class InfrCandidates(object):
                 # hack callback for demo
                 infr.on_new_candidate_edges(infr, new_edges)
         return len(priority_edges)
+
+    def ensure_task_probs(infr, edges):
+        """
+        Ensures that probabilities are assigned to the edges.
+        This gaurentees that infr.task_probs contains data for edges.
+        (Currently only the primary task is actually ensured)
+
+        CommandLine:
+            python -m graphid.core.mixin_callbacks InfrCandidates.ensure_task_probs
+
+        Doctest:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(num_pccs=6, p_incon=.5, size_std=2)
+            >>> edges = list(infr.edges())
+            >>> infr.ensure_task_probs(edges)
+            >>> assert all([np.isclose(sum(p.values()), 1)
+            >>>             for p in infr.task_probs['match_state'].values()])
+        """
+        if not infr.verifiers:
+            raise Exception('Verifiers are needed to predict probabilities')
+
+        # Construct pairwise features on edges in infr
+        primary_task = 'match_state'
+
+        match_task = infr.task_probs[primary_task]
+        need_flags = [e not in match_task for e in edges]
+
+        if any(need_flags):
+            need_edges = list(ub.compress(edges, need_flags))
+            infr.print('There are {} edges without probabilities'.format(
+                    len(need_edges)), 1)
+
+            # Only recompute for the needed edges
+            # task_probs = infr._make_task_probs(need_edges)
+            task_probs = {
+                primary_task: infr.verifier.predict_proba_df(need_edges)
+            }
+            # Store task probs in internal data structure
+            # FIXME: this is slow
+            for task, probs in task_probs.items():
+                probs_dict = probs.to_dict(orient='index')
+                if task not in infr.task_probs:
+                    infr.task_probs[task] = probs_dict
+                else:
+                    infr.task_probs[task].update(probs_dict)
+
+                # Set edge task attribute as well
+                infr.set_edge_attrs(task, probs_dict)
 
     def ensure_priority_scores(infr, priority_edges):
         """
@@ -145,3 +238,12 @@ class InfrCandidates(object):
 
         infr.set_edge_attrs(metric, ub.dzip(priority_edges, priority))
         return metric, priority
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m graphid.core.mixin_callbacks all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)
