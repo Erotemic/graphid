@@ -900,7 +900,7 @@ class CandidateSearch(_RedundancyAugmentation):
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/graphid/graphid/core/mixin_matching.py all
+        python ~/code/graphid/graphid/ibeis/mixin_matching.py all
     """
     import xdoctest
     xdoctest.doctest_module(__file__)

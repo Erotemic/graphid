@@ -420,7 +420,7 @@ class DummyEdges(object):
             >>> assert infr.status()['nEdges'] < 33
             >>> infr.ensure_cliques()
             >>> print(ub.repr2(infr.status()))
-            >>> assert infr.status()['nEdges'] == 33
+            >>> assert infr.status()['nEdges'] == 31
             >>> assert infr.status()['nUnrevEdges'] == 12
             >>> assert len(list(infr.find_clique_edges(label))) > 0
             >>> infr.ensure_cliques(meta_decision=SAME)

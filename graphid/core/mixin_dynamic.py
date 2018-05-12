@@ -23,6 +23,8 @@ import itertools as it
 from functools import partial
 from graphid.core import state as const
 from graphid.util import nx_utils as nxu
+from graphid import util
+from graphid.util.nx_utils import e_
 from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN,
                                     UNINFERABLE)
 from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
@@ -968,7 +970,191 @@ class _RedundancyComputers(object):
                     yield nid1, nid2
 
 
-class Redundancy(_RedundancyComputers):
+class _RedundancyAugmentation(object):
+
+    def find_neg_augment_edges(infr, cc1, cc2, k=None):
+        """
+        Find enough edges to between two pccs to make them k-negative complete
+        The two CCs should be disjoint and not have any positive edges between
+        them.
+
+        Args:
+            cc1 (set): nodes in one PCC
+            cc2 (set): nodes in another positive-disjoint PCC
+            k (int): redundnacy level (if None uses infr.params['redun.neg'])
+
+        Example:
+            >>> from graphid import demo
+            >>> k = 2
+            >>> cc1, cc2 = {1}, {2, 3}
+            >>> # --- return an augmentation if feasible
+            >>> infr = demo.demodata_infr(ccs=[cc1, cc2], ignore_pair=True)
+            >>> edges = set(infr.find_neg_augment_edges(cc1, cc2, k=k))
+            >>> assert edges == {(1, 2), (1, 3)}
+            >>> # --- if infeasible return a partial augmentation
+            >>> infr.add_feedback((1, 2), INCMP)
+            >>> edges = set(infr.find_neg_augment_edges(cc1, cc2, k=k))
+            >>> assert edges == {(1, 3)}
+        """
+        if k is None:
+            k = infr.params['redun.neg']
+        assert cc1 is not cc2, 'CCs should be disjoint (but they are the same)'
+        assert len(cc1.intersection(cc2)) == 0, 'CCs should be disjoint'
+        existing_edges = set(nxu.edges_cross(infr.graph, cc1, cc2))
+
+        reviewed_edges = {
+            edge: state
+            for edge, state in zip(existing_edges,
+                                   infr.edge_decision_from(existing_edges))
+            if state != UNREV
+        }
+
+        # Find how many negative edges we already have
+        num = sum([state == NEGTV for state in reviewed_edges.values()])
+        if num < k:
+            # Find k random negative edges
+            check_edges = existing_edges - set(reviewed_edges)
+            # Check the existing but unreviewed edges first
+            for edge in check_edges:
+                num += 1
+                yield edge
+                if num >= k:
+                    raise StopIteration()
+            # Check non-existing edges next
+            seed = 2827295125
+            try:
+                seed += sum(cc1) + sum(cc2)
+            except Exception:
+                pass
+            rng = np.random.RandomState(seed)
+            cc1 = util.shuffle(list(cc1), rng=rng)
+            cc2 = util.shuffle(list(cc2), rng=rng)
+            cc1 = util.shuffle(list(cc1), rng=rng)
+            for edge in it.starmap(nxu.e_, nxu.diag_product(cc1, cc2)):
+                if edge not in existing_edges:
+                    num += 1
+                    yield edge
+                    if num >= k:
+                        raise StopIteration()
+
+    def find_pos_augment_edges(infr, pcc, k=None):
+        """
+        # [[1, 0], [0, 2], [1, 2], [3, 1]]
+        pos_sub = nx.Graph([[0, 1], [1, 2], [0, 2], [1, 3]])
+        """
+        if k is None:
+            pos_k = infr.params['redun.pos']
+        else:
+            pos_k = k
+        pos_sub = infr.pos_graph.subgraph(pcc)
+
+        # TODO:
+        # weight by pairs most likely to be comparable
+
+        # First try to augment only with unreviewed existing edges
+        unrev_avail = list(nxu.edges_inside(infr.unreviewed_graph, pcc))
+        try:
+            check_edges = list(nxu.k_edge_augmentation(
+                pos_sub, k=pos_k, avail=unrev_avail, partial=False))
+        except nx.NetworkXUnfeasible:
+            check_edges = None
+        if not check_edges:
+            # Allow new edges to be introduced
+            full_sub = infr.graph.subgraph(pcc).copy()
+            new_avail = util.estarmap(infr.e_, nx.complement(full_sub).edges())
+            full_avail = unrev_avail + new_avail
+            n_max = (len(pos_sub) * (len(pos_sub) - 1)) // 2
+            n_complement = n_max - pos_sub.number_of_edges()
+            if len(full_avail) == n_complement:
+                # can use the faster algorithm
+                check_edges = list(nxu.k_edge_augmentation(
+                    pos_sub, k=pos_k, partial=True))
+            else:
+                # have to use the slow approximate algo
+                check_edges = list(nxu.k_edge_augmentation(
+                    pos_sub, k=pos_k, avail=full_avail, partial=True))
+        check_edges = set(it.starmap(e_, check_edges))
+        return check_edges
+
+    def find_pos_redun_candidate_edges(infr, k=None, verbose=False):
+        """
+        Searches for augmenting edges that would make PCCs k-positive redundant
+
+        CommandLine:
+            python -m graphid.core.mixin_dynamic _RedundancyAugmentation.find_pos_redun_candidate_edges
+
+        Doctest:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(ccs=[(1, 2, 3, 4, 5), (7, 8, 9, 10)], pos_redun=1)
+            >>> infr.add_feedback((2, 5), 'match')
+            >>> infr.add_feedback((1, 5), 'notcomp')
+            >>> infr.params['redun.pos'] = 2
+            >>> candidate_edges = list(infr.find_pos_redun_candidate_edges())
+            >>> result = ('candidate_edges = ' + ub.repr2(candidate_edges, nl=0))
+            >>> print(result)
+            candidate_edges = [(1, 4), (3, 5), (7, 10)]
+        """
+        # Add random edges between exisiting non-redundant PCCs
+        if k is None:
+            k = infr.params['redun.pos']
+        # infr.find_non_pos_redundant_pccs(k=k, relax=True)
+        pcc_gen = list(infr.positive_components())
+        prog = ub.ProgIter(pcc_gen, enabled=verbose, freq=1, adjust=False)
+        for pcc in prog:
+            if not infr.is_pos_redundant(pcc, k=k, relax=True,
+                                         assume_connected=True):
+                for edge in infr.find_pos_augment_edges(pcc, k=k):
+                    yield nxu.e_(*edge)
+
+    def find_neg_redun_candidate_edges(infr, k=None):
+        """
+        Get pairs of PCCs that are not complete.
+        Finds edges that might complete them.
+
+        Example:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(ccs=[(1,), (2,), (3,)], ignore_pair=True)
+            >>> edges = list(infr.find_neg_redun_candidate_edges())
+            >>> assert len(edges) == 3, 'all should be needed here'
+            >>> infr.add_feedback_from(edges, evidence_decision=NEGTV)
+            >>> assert len(list(infr.find_neg_redun_candidate_edges())) == 0
+
+        Example:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(pcc_sizes=[3] * 20, ignore_pair=True)
+            >>> ccs = list(infr.positive_components())
+            >>> gen = infr.find_neg_redun_candidate_edges(k=2)
+            >>> for edge in gen:
+            >>>     # What happens when we make ccs positive
+            >>>     print(infr.node_labels(edge))
+            >>>     infr.add_feedback(edge, evidence_decision=POSTV)
+            >>> import ubelt as ub
+            >>> infr = demo.demodata_infr(pcc_sizes=[1] * 30, ignore_pair=True)
+            >>> ccs = list(infr.positive_components())
+            >>> gen = infr.find_neg_redun_candidate_edges(k=3)
+            >>> for chunk in ub.chunks(gen, 2):
+            >>>     for edge in chunk:
+            >>>         # What happens when we make ccs positive
+            >>>         print(infr.node_labels(edge))
+            >>>         infr.add_feedback(edge, evidence_decision=POSTV)
+
+            list(gen)
+        """
+        if k is None:
+            k = infr.params['redun.neg']
+        # Loop through all pairs
+        for cc1, cc2 in infr.find_non_neg_redun_pccs(k=k):
+            if len(cc1.intersection(cc2)) > 0:
+                # If there is modification of the underlying graph while we
+                # iterate, then two ccs may not be disjoint. Skip these cases.
+                continue
+            for u, v in infr.find_neg_augment_edges(cc1, cc2, k):
+                edge = e_(u, v)
+                infr.assert_edge(edge)
+                yield edge
+
+
+class Redundancy(_RedundancyComputers, _RedundancyAugmentation):
     """ methods for dynamic redundancy book-keeping """
 
     # def pos_redun_edge_flag(infr, edge):
@@ -1492,6 +1678,7 @@ if __name__ == '__main__':
     """
     CommandLine:
         python -m graphid.core.mixin_dynamic all
+        python ~/code/graphid/graphid/ibeis/mixin_matching.py all
     """
     import xdoctest
     xdoctest.doctest_module(__file__)

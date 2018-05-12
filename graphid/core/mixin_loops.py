@@ -34,11 +34,12 @@ class InfrLoops(object):
             Different phases of the main loop are implemented as subiterators
 
         CommandLine:
-            python -m graphid.core.mixin_loops main_gen
+            python -m graphid.core.mixin_loops InfrLoops.main_gen
 
         Doctest:
             >>> from graphid.core.mixin_simulation import UserOracle
-            >>> infr = todo_make_a_demo_graph
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(num_pccs=3, size=5)
             >>> infr.params['manual.n_peek'] = 10
             >>> infr.params['ranking.ntop'] = 1
             >>> infr.oracle = UserOracle(.99, rng=0)
@@ -250,9 +251,13 @@ class InfrLoops(object):
 
         Searches for decisions that would commplete positive redundancy
 
+        CommandLine:
+            python -m graphid.core.mixin_loops InfrLoops.pos_redun_gen
+
         Doctest:
             >>> from graphid.core.mixin_loops import *
-            >>> infr = todo_make_a_demo_graph
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(num_pccs=3, size=5)
             >>> gen = infr.pos_redun_gen()
             >>> feedback = next(gen)
         """

@@ -1,3 +1,10 @@
+import numpy as np
+import ubelt as ub
+import pandas as pd
+from graphid.core.state import (POSTV, NEGTV, INCMP, NULL)  # NOQA
+from graphid import util
+
+
 class InfrCallbacks(object):
     """
     Methods relating to callbacks that must be registered with the inference
@@ -78,7 +85,7 @@ class InfrCandidates(object):
             # Read match_probs into a DataFrame
             primary_probs = pd.DataFrame(
                 list(ub.take(match_probs, priority_edges)),
-                index=nxu.ensure_multi_index(priority_edges, ('aid1', 'aid2'))
+                index=util.ensure_multi_index(priority_edges, ('aid1', 'aid2'))
             )
 
             # Convert match-state probabilities into priorities
