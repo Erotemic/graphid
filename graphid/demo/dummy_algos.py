@@ -7,6 +7,7 @@ import networkx as nx  # NOQA
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
 from graphid.core.state import SAME, DIFF, NULL  # NOQA
 from graphid import util
+from numpy.core.umath_tests import matrix_multiply  # NOQA
 
 
 class DummyRanker(object):
@@ -79,8 +80,8 @@ class DummyRanker(object):
             >>> assert len(edges) > 0
         """
         new_edges = []
-        for edges in ranker.predict_rankings(nodes, K=K):
-            new_edges.extend(edges)
+        for u, ranks in zip(nodes, ranker.predict_rankings(nodes, K=K)):
+            new_edges.extend([util.e_(u, v) for v in ranks])
         new_edges = set(new_edges)
         return new_edges
 

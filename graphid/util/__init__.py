@@ -16,14 +16,16 @@ else:
     from graphid.util import nx_utils
     from graphid.util import priority_queue
     from graphid.util import util_geometry
+    from graphid.util import util_grabdata
     from graphid.util import util_graphviz
     from graphid.util import util_group
+    from graphid.util import util_image
     from graphid.util import util_kw
     from graphid.util import util_misc
     from graphid.util import util_numpy
     from graphid.util import util_random
     from graphid.util import util_tags
-    from graphid.util.mplutil import (Color, PlotNums, adjust_subplots,
+    from graphid.util.mplutil import (Color, PanEvents, PlotNums, adjust_subplots,
                                       axes_extent, colorbar, colorbar_image,
                                       copy_figure_to_clipboard,
                                       deterministic_shuffle, dict_intersection,
@@ -31,11 +33,12 @@ else:
                                       draw_border, draw_boxes, draw_line_segments,
                                       ensure_fnum, extract_axes_extents, figure,
                                       imshow, legend, make_heatmask, multi_plot,
-                                      next_fnum, pandas_plot_matrix, qtensure,
-                                      render_figure_to_image, reverse_colormap,
-                                      save_parts, savefig2, scores_to_cmap,
-                                      scores_to_color, set_figtitle,
-                                      show_if_requested,)
+                                      next_fnum, pan_factory, pandas_plot_matrix,
+                                      qtensure, render_figure_to_image,
+                                      reverse_colormap, save_parts, savefig2,
+                                      scores_to_cmap, scores_to_color,
+                                      set_figtitle, show_if_requested,
+                                      zoom_factory,)
     from graphid.util.name_rectifier import (demodata_oldnames,
                                              find_consistent_labeling,
                                              simple_munkres,)
@@ -76,6 +79,7 @@ else:
                                             scaled_verts_from_bbox_gen,
                                             union_extents, verts_from_bbox,
                                             verts_list_from_bboxes_list,)
+    from graphid.util.util_grabdata import (TESTIMG_URL_DICT, grab_test_imgpath,)
     from graphid.util.util_graphviz import (GRAPHVIZ_KEYS, LARGE_GRAPH,
                                             apply_graph_layout_attrs,
                                             draw_network2, dump_nx_ondisk,
@@ -94,6 +98,15 @@ else:
                                             translate_graph_to_origin,)
     from graphid.util.util_group import (group_pairs, grouping_delta,
                                          order_dict_by, sort_dict, sortedby,)
+    from graphid.util.util_image import (CV2_INTERPOLATION_TYPES, adjust_gamma,
+                                         atleast_3channels, convert_colorspace,
+                                         ensure_alpha_channel, ensure_float01,
+                                         ensure_grayscale, get_num_channels,
+                                         image_slices, imread, imscale, imwrite,
+                                         load_image_paths,
+                                         make_channels_comparable,
+                                         overlay_alpha_images, overlay_colorized,
+                                         run_length_encoding, wide_strides_1d,)
     from graphid.util.util_kw import (KWSpec,)
     from graphid.util.util_misc import (all_dict_combinations, aslist,
                                         classproperty, cprint, delete_dict_keys,

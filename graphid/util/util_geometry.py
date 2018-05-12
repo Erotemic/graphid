@@ -2,9 +2,11 @@
 # LICENCE
 from __future__ import absolute_import, division, print_function, unicode_literals
 from six.moves import zip
+import warnings
 import ubelt as ub  # NOQA
 import numpy as np
 import cv2
+from numpy.core.umath_tests import matrix_multiply  # NOQA
 
 
 def bboxes_from_vert_list(verts_list, castint=False):
@@ -27,7 +29,7 @@ def verts_list_from_bboxes_list(bboxes_list):
 
 
 def verts_from_bbox(bbox, close=False):
-    r"""
+    """
     Args:
         bbox (tuple):  bounding box in the format (x, y, w, h)
         close (bool): (default = False)
@@ -67,7 +69,7 @@ def bbox_from_verts(verts, castint=False):
 
 
 def draw_border(img_in, color=(0, 128, 255), thickness=2, out=None):
-    r"""
+    """
     Args:
         img_in (ndarray[uint8_t, ndim=2]):  image data
         color (tuple): in bgr
@@ -99,7 +101,7 @@ def draw_border(img_in, color=(0, 128, 255), thickness=2, out=None):
 
 
 def draw_verts(img_in, verts, color=(0, 128, 255), thickness=2, out=None):
-    r"""
+    """
     Args:
         img_in (?):
         verts (?):
@@ -407,7 +409,7 @@ def get_pointset_extent_wh(pts):
 
 
 def cvt_bbox_xywh_to_pt1pt2(xywh, sx=1.0, sy=1.0, round_=True):
-    """ Converts bbox to thumb format with a scale factor"""
+    """ Converts bbox to thumb format with a scale facto"""
     from graphid import util
     (x1, y1, _w, _h) = xywh
     x2 = (x1 + _w)
@@ -424,13 +426,55 @@ def cvt_bbox_xywh_to_pt1pt2(xywh, sx=1.0, sy=1.0, round_=True):
 def scale_bbox(bbox, sx, sy=None):
     if sy is None:
         sy = sx
-    from vtool import linalg
     centerx, centery = bbox_center(bbox)
-    S = linalg.scale_around_mat3x3(sx, sy, centerx, centery)
+    S = scale_around_mat3x3(sx, sy, centerx, centery)
     verts = np.array(verts_from_bbox(bbox))
-    vertsT = linalg.transform_points_with_homography(S, verts.T).T
+    vertsT = transform_points_with_homography(S, verts.T).T
     bboxT = bbox_from_verts(vertsT)
     return bboxT
+
+
+def scale_around_mat3x3(sx, sy, x, y):
+    scale_ = scale_mat3x3(sx, sy)
+    return transform_around(scale_, x, y)
+
+
+TRANSFORM_DTYPE = np.float64
+
+
+def translation_mat3x3(x, y, dtype=TRANSFORM_DTYPE):
+    T = np.array([[1, 0,  x],
+                  [0, 1,  y],
+                  [0, 0,  1]], dtype=dtype)
+    return T
+
+
+def transform_around(M, x, y):
+    """ translates to origin, applies transform and then translates back """
+    tr1_ = translation_mat3x3(-x, -y)
+    tr2_ = translation_mat3x3(x, y)
+    M_ = tr2_.dot(M).dot(tr1_)
+    return M_
+
+
+def scale_mat3x3(sx, sy=None, dtype=TRANSFORM_DTYPE):
+    sy = sx if sy is None else sy
+    S = np.array([[sx, 0, 0],
+                  [0, sy, 0],
+                  [0,  0, 1]], dtype=dtype)
+    return S
+
+
+def transform_points_with_homography(H, _xys):
+    """
+    Args:
+        H (ndarray[float64_t, ndim=2]):  homography/perspective matrix
+        _xys (ndarray[ndim=2]): (2 x N) array
+    """
+    xyz  = add_homogenous_coordinate(_xys)
+    xyz_t = matrix_multiply(H, xyz)
+    xy_t  = remove_homogenous_coordinate(xyz_t)
+    return xy_t
 
 
 def scale_extents(extents, sx, sy=None):
@@ -445,7 +489,7 @@ def scale_extents(extents, sx, sy=None):
 
 
 def scaled_verts_from_bbox_gen(bbox_list, theta_list, sx=1, sy=1):
-    r"""
+    """
     Helps with drawing scaled bbounding boxes on thumbnails
 
     Args:
@@ -491,14 +535,14 @@ def scaled_verts_from_bbox(bbox, theta, sx, sy):
     # Get verticies of the annotation polygon
     verts = verts_from_bbox(bbox, close=True)
     # Rotate and transform to thumbnail space
-    xyz_pts = linalg.add_homogenous_coordinate(np.array(verts).T)
-    trans_pts = linalg.remove_homogenous_coordinate(S.dot(R).dot(xyz_pts))
+    xyz_pts = add_homogenous_coordinate(np.array(verts).T)
+    trans_pts = remove_homogenous_coordinate(S.dot(R).dot(xyz_pts))
     new_verts = np.round(trans_pts).astype(np.int32).T.tolist()
     return new_verts
 
 
 def point_inside_bbox(point, bbox):
-    r"""
+    """
     Flags points that are strictly inside a bounding box.
     Points on the boundary are not considered inside.
 
@@ -536,6 +580,69 @@ def point_inside_bbox(point, bbox):
     inside_y = np.logical_and(tl_y < y, y < br_y)
     flag = np.logical_and(inside_x, inside_y)
     return flag
+
+
+def add_homogenous_coordinate(_xys):
+    """
+    CommandLine:
+        python -m vtool.linalg --test-add_homogenous_coordinate
+
+    Example:
+        >>> # build test data
+        >>> _xys = np.array([[ 2.,  0.,  0.,  2.],
+        ...                  [ 2.,  2.,  0.,  0.]], dtype=np.float32)
+        >>> # execute function
+        >>> _xyzs = add_homogenous_coordinate(_xys)
+        >>> # verify results
+        >>> assert np.all(_xys == remove_homogenous_coordinate(_xyzs))
+        >>> result = ub.repr2(_xyzs, with_dtype=True)
+        >>> print(result)
+        np.array([[ 2.,  0.,  0.,  2.],
+                  [ 2.,  2.,  0.,  0.],
+                  [ 1.,  1.,  1.,  1.]], dtype=np.float32)
+    """
+    assert _xys.shape[0] == 2
+    _zs = np.ones((1, _xys.shape[1]), dtype=_xys.dtype)
+    _xyzs = np.vstack((_xys, _zs))
+    return _xyzs
+
+
+def remove_homogenous_coordinate(_xyzs):
+    """
+    normalizes 3d homogonous coordinates into 2d coordinates
+
+    Args:
+        _xyzs (ndarray): of shape (3, N)
+
+    Returns:
+        ndarray: _xys of shape (2, N)
+
+    Example0:
+        >>> _xyzs = np.array([[ 2.,   0.,  0.,  2.],
+        ...                   [ 2.,   2.,  0.,  0.],
+        ...                   [ 1.2,  1.,  1.,  2.]], dtype=np.float32)
+        >>> _xys = remove_homogenous_coordinate(_xyzs)
+        >>> result = ub.repr2(_xys, precision=3, with_dtype=True)
+        >>> print(result)
+        np.array([[ 1.667,  0.   ,  0.   ,  1.   ],
+                  [ 1.667,  2.   ,  0.   ,  0.   ]], dtype=np.float32)
+
+    Example1:
+        >>> # ENABLE_DOCTEST
+        >>> _xyzs = np.array([[ 140.,  167.,  185.,  185.,  194.],
+        ...                   [ 121.,  139.,  156.,  155.,  163.],
+        ...                   [  47.,   56.,   62.,   62.,   65.]])
+        >>> _xys = remove_homogenous_coordinate(_xyzs)
+        >>> result = ub.repr2(_xys, precision=3)
+        >>> print(result)
+        np.array([[ 2.979,  2.982,  2.984,  2.984,  2.985],
+                  [ 2.574,  2.482,  2.516,  2.5  ,  2.508]])
+    """
+    assert _xyzs.shape[0] == 3
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _xys = np.divide(_xyzs[0:2], _xyzs[None, 2])
+    return _xys
 
 
 if __name__ == '__main__':

@@ -356,7 +356,7 @@ def ensure_alpha_channel(img, alpha=1.0):
 
 
 def atleast_3channels(arr, copy=True):
-    r"""
+    """
     Ensures that there are 3 channels in the image
 
     Args:
@@ -400,7 +400,7 @@ def ensure_grayscale(img, colorspace_hint='BGR'):
 
 
 def convert_colorspace(img, dst_space, src_space='BGR', copy=False, dst=None):
-    r"""
+    """
     Converts colorspace of img.
     Convinience function around cv2.cvtColor
 
@@ -739,7 +739,7 @@ def run_length_encoding(img):
 
 
 if __name__ == '__main__':
-    r"""
+    """
     CommandLine:
         python -m graphid.util.util_image all
     """

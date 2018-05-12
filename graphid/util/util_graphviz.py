@@ -62,7 +62,7 @@ def ensure_nonhex_color(orig_color):
 def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
             ax=None, pos=None, img_dict=None, title=None, layoutkw=None,
             verbose=None, **kwargs):
-    r"""
+    """
     Args:
         graph (networkx.Graph):
         with_labels (bool): (default = True)
@@ -83,14 +83,10 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
 
     CommandLine:
         python -m graphid.util.util_graphviz show_nx --show
-        python -m ibeis.scripts.specialdraw double_depcache_graph --show --testmode
-        python -m vtool.clustering2 unsupervised_multicut_labeling --show
-
 
     Example:
         >>> # ENABLE_DOCTEST
         >>> from graphid.util.util_graphviz import *  # NOQA
-        >>> import utool as ut
         >>> graph = nx.DiGraph()
         >>> graph.add_nodes_from(['a', 'b', 'c', 'd'])
         >>> graph.add_edges_from({'a': 'b', 'b': 'c', 'b': 'd', 'c': 'd'}.items())
@@ -164,7 +160,7 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
         pos_list = list(ub.dict_take(node_pos, node_list))
         img_list = list(ub.dict_take(img_dict, node_list))
         size_list = list(ub.dict_take(node_size, node_list))
-        #color_list = ut.dict_take(nx.get_node_attributes(graph, 'color'), node_list, None)
+        #color_list = ub.dict_take(nx.get_node_attributes(graph, 'color'), node_list, None)
         color_list = list(ub.dict_take(nx.get_node_attributes(graph, 'framecolor'), node_list, None))
         framewidth_list = list(ub.dict_take(nx.get_node_attributes(graph, 'framewidth'),
                                             node_list, framewidth))
@@ -197,18 +193,18 @@ def netx_draw_images_at_positions(img_list, pos_list, size_list, color_list,
         http://matplotlib.org/api/text_api.html
         http://matplotlib.org/api/offsetbox_api.html
     """
-    import vtool as vt
+    from graphid import util
     from matplotlib import pyplot as plt
     # Ensure all images have been read
-    img_list_ = [vt.convert_colorspace(vt.imread(img), 'RGB')
+    img_list_ = [util.convert_colorspace(util.imread(img), 'RGB', src_space='BGR')
                  if isinstance(img, six.string_types) else img
                  for img in img_list]
-    size_list_ = [vt.get_size(img) if size is None else size
+    size_list_ = [tuple(img.shape[0:2][::-1]) if size is None else size
                   for size, img in zip(size_list, img_list)]
 
     for pos, img, size in zip(pos_list, img_list_, size_list_):
-        bbox = vt.bbox_from_center_wh(pos, size)
-        extent = vt.extent_from_bbox(bbox)
+        bbox = util.bbox_from_center_wh(pos, size)
+        extent = util.extent_from_bbox(bbox)
         plt.imshow(img, extent=extent)
 
 
@@ -217,7 +213,6 @@ def parse_html_graphviz_attrs():
     import bs4
     import requests
     import pandas as pd
-    import utool as ut
     r  = requests.get(r"http://www.graphviz.org/doc/info/attrs.html")
     data = r.text
     soup = bs4.BeautifulSoup(data, 'html5lib')
@@ -277,14 +272,16 @@ def parse_html_graphviz_attrs():
     for t in {'E', 'N', 'G', 'S', 'C'}:
         flags = [t in x for x in df['Used By']]
         typed_keys[t] = df[flags]['Name'].tolist()
-    print(ut.format_single_paragraph_sentences(', '.join(typed_keys['G'])))
+    # print(format_single_paragraph_sentences(', '.join(typed_keys['G'])))
+    print((', '.join(typed_keys['G'])))
 
     df = full_df[neato_]
     neato_keys = {}
     for t in {'E', 'N', 'G', 'S', 'C'}:
         flags = [t in x for x in df['Used By']]
         neato_keys[t] = df[flags]['Name'].tolist()
-    print(ut.format_single_paragraph_sentences(', '.join(neato_keys['G'])))
+    # print(format_single_paragraph_sentences(', '.join(neato_keys['G'])))
+    print((', '.join(neato_keys['G'])))
 
 
 class GRAPHVIZ_KEYS(object):
@@ -481,7 +478,6 @@ def make_agraph(graph_):
     # FIXME; make this not an inplace operation
     import networkx as nx
     import pygraphviz
-    import utool as ut
     patch_pygraphviz()
     # Convert to agraph format
 
@@ -501,9 +497,9 @@ def make_agraph(graph_):
     node_dict = graph_.node
     node_attrs = list(ub.take(node_dict, shaped_nodes))
 
-    width_px = np.array(ut.take_column(node_attrs, 'width'))
-    height_px = np.array(ut.take_column(node_attrs, 'height'))
-    scale = np.array(ut.dict_take_column(node_attrs, 'scale', default=1.0))
+    width_px = np.array(util.take_column(node_attrs, 'width'))
+    height_px = np.array(util.take_column(node_attrs, 'height'))
+    scale = np.array(util.dict_take_column(node_attrs, 'scale', default=1.0))
 
     inputscale = 72.0
     width_in = width_px / inputscale * scale
@@ -513,16 +509,16 @@ def make_agraph(graph_):
 
     nx.set_node_attributes(graph_, name='width', values=width_in_dict)
     nx.set_node_attributes(graph_, name='height', values=height_in_dict)
-    ut.nx_delete_node_attr(graph_, name='scale')
+    util.nx_delete_node_attr(graph_, name='scale')
 
     # Check for any nodes with groupids
     node_to_groupid = nx.get_node_attributes(graph_, 'groupid')
     if node_to_groupid:
-        groupid_to_nodes = ut.group_items(*zip(*node_to_groupid.items()))
+        groupid_to_nodes = ub.group_items(*zip(*node_to_groupid.items()))
     else:
         groupid_to_nodes = {}
     # Initialize agraph format
-    ut.nx_delete_None_edge_attr(graph_)
+    util.nx_delete_None_edge_attr(graph_)
     agraph = nx.nx_agraph.to_agraph(graph_)
     # Add subgraphs labels
     # TODO: subgraph attrs
@@ -632,7 +628,7 @@ def _groupby_prelayout(graph_, layoutkw, groupby):
 
 def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
                      return_agraph=False, groupby=None, **layoutkw):
-    r"""
+    """
     Uses graphviz and custom code to determine position attributes of nodes and
     edges.
 
@@ -655,12 +651,12 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
     Doctest:
         >>> from graphid.util.util_graphviz import *  # NOQA
         >>> import networkx as nx
-        >>> import utool as ut
+        >>> import itertools as it
         >>> from graphid import util
         >>> n, s = 9, 4
         >>> offsets = list(range(0, (1 + n) * s, s))
-        >>> node_groups = [ut.lmap(str, range(*o)) for o in ub.iter_window(offsets, 2)]
-        >>> edge_groups = [ut.combinations(nodes, 2) for nodes in node_groups]
+        >>> node_groups = [list(map(str, range(*o))) for o in ub.iter_window(offsets, 2)]
+        >>> edge_groups = [it.combinations(nodes, 2) for nodes in node_groups]
         >>> graph = nx.Graph()
         >>> [graph.add_nodes_from(nodes) for nodes in node_groups]
         >>> [graph.add_edges_from(edges) for edges in edge_groups]
@@ -998,8 +994,8 @@ def _get_node_size(graph, node, node_size):
     else:
         if 'image' in nattrs:
             img_fpath = nattrs['image']
-            import vtool as vt
-            width, height = vt.image.open_image_size(img_fpath)
+            from PIL import Image
+            width, height = Image.open(img_fpath).size
         else:
             height = width = 1100 / 50 * scale
     return width, height
@@ -1104,8 +1100,7 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
             else:
                 bbox = list(xy_bl) + [width, height]
                 if isdiag:
-                    import vtool as vt
-                    center_xy  = vt.bbox_center(bbox)
+                    center_xy  = util.bbox_center(bbox)
                     _xy =  np.array(center_xy)
                     newverts_ = [
                         _xy + [         0, -height / 2],
@@ -1284,18 +1279,17 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
                 width = .5
                 lw = 1.0
                 try:
-                    import vtool as vt
                     # Compute arrow width using estimated graph size
                     if node_size is not None and node_pos is not None:
                         xys = np.array(list(ub.take(node_pos, node_pos.keys()))).T
                         whs = np.array(list(ub.take(node_size, node_pos.keys()))).T
-                        bboxes = vt.bbox_from_xywh(xys, whs, [.5, .5])
-                        extents = vt.extent_from_bbox(bboxes)
+                        bboxes = util.bbox_from_xywh(xys, whs, [.5, .5])
+                        extents = util.extent_from_bbox(bboxes)
                         tl_pts = np.array([extents[0], extents[2]]).T
                         br_pts = np.array([extents[1], extents[3]]).T
                         pts = np.vstack([tl_pts, br_pts])
-                        extent = vt.get_pointset_extents(pts)
-                        graph_w, graph_h = vt.bbox_from_extent(extent)[2:4]
+                        extent = util.get_pointset_extents(pts)
+                        graph_w, graph_h = util.bbox_from_extent(extent)[2:4]
                         graph_dim = np.sqrt(graph_w ** 2 + graph_h ** 2)
 
                         # width = graph_dim * .0005
@@ -1589,8 +1583,6 @@ def nx_ensure_agraph_color(graph):
                 else:
                     data['color'] = '#%02x%02x%02x%02x' % color
         except Exception as ex:
-            # import utool as ut
-            # ut.printex(ex, keys=['color', 'orig_color', 'data'])
             raise
 
     for node, node_data in graph.nodes(data=True):
