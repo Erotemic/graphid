@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
-import numpy as np
-import itertools as it
 import copy
 import six
+import logging
 import collections
+import ubelt as ub
+import numpy as np
 import pandas as pd
 import networkx as nx
-import logging
-import ubelt as ub
-from graphid.core import state as const
+import itertools as it
 from graphid import util
+from graphid.core import state as const
 from graphid.core import mixin_viz
 from graphid.core import mixin_helpers
 from graphid.core import mixin_dynamic
@@ -21,7 +21,6 @@ from graphid.core import mixin_simulation
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
 from graphid.core.state import UNINFERABLE
 from graphid.core.state import SAME, DIFF, NULL
-from graphid.util import nx_utils as nxu
 
 
 def _rectify_decision(evidence_decision, meta_decision):
@@ -120,7 +119,39 @@ class Feedback(object):
                      timestamp_c1=None, timestamp_c2=None, timestamp_s1=None,
                      timestamp=None, verbose=None, priority=None):
         """
-        Doctest:
+        Primary method for adding feedback and review edges to the graph.
+
+        Args:
+            edge (tuple): an undirected edge represented as a pair of aids
+            evidence_decision (str): decision made based on visual evidence
+                between the two photos. Can be POSTV, NEGTV, INCMP, or UNKWN.
+                Note: POSTV etc... are the variables not the strings.
+            tags (list of str): additional information to specify
+            user_id (str): who is doing this review. This can identify a human
+                or algorithm reviewer (e.g. 'user:joncrall' or 'algo:vamp').
+            meta_decision (str): decision made based on external knowledge.
+                Perhaps the photographer knows that two animals are the same
+                because all photos are of the same animal. This constrains
+                the identity problem, but does not impact the computer vision
+                learning algorithms, which aren't given the info needed to make
+                this sort of decision.
+            confidence (str): how sure is the user of this decision.
+            timestamp_c1 (int): Time that the review client started
+            timestamp_c2 (int): Time that the review client ended
+            timestamp_s1 (int): Time that the review server started
+            timestamp (int): Time that the review server ended
+            verbose (bool): verbosity
+            priority (float, optional): the priority assigned to this edge
+                before review. This is only relevant for the termination
+                criterion.
+
+        Notes:
+            If `infr.params['inference.enabled']` is True, then the edge is
+            inserted into the graph and its properties are updated dynamically.
+            Otherwise it is only added to the internal feedback dictionary and
+            the `apply_feedback_edges` method must be called.
+
+        Example:
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=5)
             >>> infr.add_feedback((5, 6), POSTV)
@@ -135,10 +166,10 @@ class Feedback(object):
         prev_verbose = infr.verbose
         if verbose is not None:
             infr.verbose = verbose
-        edge = aid1, aid2 = nxu.e_(*edge)
+        edge = aid1, aid2 = util.e_(*edge)
 
         if not infr.has_edge(edge):
-            if True:
+            if infr.params['allow_unseen_nodes']:
                 # Allow new aids
                 if not infr.graph.has_node(aid1):
                     infr.add_aids([aid1])
@@ -217,8 +248,16 @@ class Feedback(object):
         if infr.params['inference.enabled']:
             assert infr.dirty is False, (
                 'need to recompute before dynamic inference continues')
-            # Update priority queue based on the new edge
-            action = infr.add_review_edge(edge, decision)
+            # Dynamically update priority queue based on the new edge
+            if decision == POSTV:
+                action = infr._positive_decision(edge)
+            elif decision == NEGTV:
+                action = infr._negative_decision(edge)
+            elif decision in UNINFERABLE:
+                # incomparable and unreview have the same inference structure
+                action = infr._uninferable_decision(edge, decision)
+            else:
+                raise AssertionError('Unknown decision=%r' % (decision,))
             if infr.test_mode:
                 infr.test_state['action'] = action
             if False:
@@ -268,7 +307,8 @@ class Feedback(object):
 
     def apply_feedback_edges(infr):
         """
-        Transforms the feedback dictionaries into nx graph edge attributes
+        Transforms the feedback dictionaries into nx graph edge attributes.
+        This
         """
         infr.print('apply_feedback_edges', 1)
         # Transforms dictionary feedback into numpy array
@@ -374,6 +414,7 @@ class Feedback(object):
     def reset_feedback(infr, mode='annotmatch', apply=True):
         """ Resets feedback edges to state of the SQL annotmatch table """
         infr.print('reset_feedback mode={}'.format(mode), 1)
+        raise Exception('DEPRICATED IN STANDALONE VERSION')
         infr.clear_feedback()
         if mode == 'annotmatch':
             infr.external_feedback = infr.read_ibeis_annotmatch_feedback()
@@ -620,6 +661,21 @@ class MiscHelpers(object):
         infr.incomp_graph.remove_nodes_from(aids)
 
     def add_aids(infr, aids, nids=None):
+        """
+        CommandLine:
+            python -m graphid.core.annot_inference MiscHelpers.add_aids
+
+        Doctest:
+            >>> aids_ = [1, 2, 3, 4, 5, 6, 7, 9]
+            >>> infr = AnnotInference(aids=aids_, autoinit=True)
+            >>> aids = [2, 22, 7, 9, 8]
+            >>> nids = None
+            >>> infr.add_aids(aids, nids)
+            >>> result = infr.aids
+            >>> print(result)
+            >>> assert len(infr.graph) == len(infr.aids)
+            [1, 2, 3, 4, 5, 6, 7, 9, 22, 8]
+        """
         if aids is None:
             raise ValueError('aids cannot be None')
         nids = infr._rectify_nids(aids, nids)
@@ -859,6 +915,33 @@ class AnnotInference(ub.NiceRepr,
                      ):
     """
     class for maintaining state of an identification
+
+    CommandLine:
+        python -m graphid.core.annot_inference AnnotInference --show
+
+    Example:
+        >>> from graphid.core import AnnotInference
+        >>> import pytest
+        >>> infr = AnnotInference()
+        >>> print('infr = {}'.format(infr))
+        infr = <AnnotInference(nNodes=0, nEdges=0, nCCs=0)>
+        >>> infr.add_aids(list(range(1, 6)))
+        >>> print('infr = {}'.format(infr))
+        infr = <AnnotInference(nNodes=5, nEdges=0, nCCs=5)>
+        >>> # Add some feedback
+        >>> infr.params['allow_unseen_nodes'] = False
+        >>> infr.add_feedback((1, 2), POSTV)
+        >>> infr.add_feedback((1, 3), INCMP)
+        >>> infr.add_feedback((1, 4), NEGTV)
+        >>> with pytest.raises(ValueError):
+        >>>     infr.add_feedback((1, 10), NEGTV)
+        >>> with pytest.raises(ValueError):
+        >>>     infr.add_feedback((11, 12), NEGTV)
+        >>> print('infr = {}'.format(infr))
+        infr = <AnnotInference(nNodes=5, nEdges=3, nCCs=4)>
+        >>> # xdoc: +REQUIRES(--show)
+        >>> infr.show_graph()
+        >>> util.show_if_requested()
     """
 
     def __getstate__(self):
@@ -963,6 +1046,10 @@ class AnnotInference(ub.NiceRepr,
         }
 
         infr.params = {
+            # If False, adding edges with non-existant nodes will error
+            # Otherwise it will silently add them.
+            'allow_unseen_nodes': True,
+
             'manual.n_peek': 1,
 
             'ranking.enabled': True,
@@ -1040,6 +1127,7 @@ class AnnotInference(ub.NiceRepr,
         if autoinit:
             infr.initialize_graph()
             if isinstance(autoinit, six.string_types):
+                raise Exception('Cannot autoinit this way anymore')
                 infr.reset_feedback(autoinit)
 
     def subparams(infr, prefix):
@@ -1047,10 +1135,7 @@ class AnnotInference(ub.NiceRepr,
         Returns dict of params prefixed with <prefix>.
         The returned dict does not contain the prefix
 
-        CommandLine:
-            python -m graphid.core.annot_inference AnnotInference.subparams
-
-        Doctest:
+        Example:
             >>> infr = AnnotInference()
             >>> result = ub.repr2(infr.subparams('refresh'), nl=0, precision=1)
             >>> print(result)

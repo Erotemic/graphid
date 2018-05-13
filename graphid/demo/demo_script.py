@@ -15,6 +15,22 @@ def run_demo():
         >>> result = run_demo()
         >>> print(result)
     """
+    from graphid import demo
+    import matplotlib as mpl
+    TMP_RC = {
+        'axes.titlesize': 12,
+        'axes.labelsize': int(ub.argval('--labelsize', default=8)),
+        'font.family': 'sans-serif',
+        'font.serif': 'CMU Serif',
+        'font.sans-serif': 'CMU Sans Serif',
+        'font.monospace': 'CMU Typewriter Text',
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        # 'legend.alpha': .8,
+        'legend.fontsize': 12,
+        'legend.facecolor': 'w',
+    }
+    mpl.rcParams.update(TMP_RC)
     # ---- Synthetic data params
     params = {
         'redun.pos': 2,
@@ -40,27 +56,26 @@ def run_demo():
     # ------------------
 
     # rng = np.random.RandomState(42)
-    from graphid.demo.dummy_infr import demodata_infr
-    # infr = demodata_infr(num_pccs=4, size=3, size_std=1, p_incon=0)
-    # infr = demodata_infr(num_pccs=6, size=7, size_std=1, p_incon=0)
-    # infr = demodata_infr(num_pccs=3, size=5, size_std=.2, p_incon=0)
-    infr = demodata_infr(pcc_sizes=[5, 2, 4])
+    # infr = demo.demodata_infr(num_pccs=4, size=3, size_std=1, p_incon=0)
+    # infr = demo.demodata_infr(num_pccs=6, size=7, size_std=1, p_incon=0)
+    # infr = demo.demodata_infr(num_pccs=3, size=5, size_std=.2, p_incon=0)
+    infr = demo.demodata_infr(pcc_sizes=[5, 2, 4])
     infr.verbose = 100
     infr.ensure_cliques()
     infr.ensure_full()
     # Dummy scoring
 
     infr.init_simulation(oracle_accuracy=oracle_accuracy, name='run_demo')
-
     # infr_gt = infr.copy()
-
     dpath = ub.ensuredir(ub.truepath('~/Desktop/demo'))
-    ub.delete(dpath)
+    if 0:
+        ub.delete(dpath)
     ub.ensuredir(dpath)
 
     fig_counter = it.count(0)
 
     def show_graph(infr, title, final=False, selected_edges=None):
+        from matplotlib import pyplot as plt
         if not VISUALIZE:
             return
         # TODO: rich colored text?
@@ -92,11 +107,11 @@ def run_demo():
         infr.verbose = verbose
         # print('status ' + ub.repr2(infr_.status()))
         # infr.show(**showkw)
-        from matplotlib import pyplot as plt
         ax = plt.gca()
         ax.set_title(title, fontsize=20)
         fig = plt.gcf()
-        fontsize = 22
+        # fontsize = 22
+        fontsize = 12
         if True:
             # postprocess xlabel
             lines = []
@@ -125,7 +140,8 @@ def run_demo():
             xlabel = ax.get_xaxis().get_label()
             xlabel.set_horizontalalignment('left')
             # xlabel.set_x(.025)
-            xlabel.set_x(-.6)
+            # xlabel.set_x(-.6)
+            xlabel.set_x(-2.0)
             # xlabel.set_fontname('CMU Typewriter Text')
             xlabel.set_fontname('Inconsolata')
             xlabel.set_fontsize(fontsize)

@@ -18,16 +18,11 @@ def demodata_infr(**kwargs):
 
     CommandLine:
         python -m graphid.demo.dummy_infr demodata_infr --show
-        python -m graphid.demo.dummy_infr demodata_infr --show
-        python -m graphid.demo.dummy_infr demodata_infr --num_pccs=25
-        python -m graphid.demo.dummy_infr demodata_infr --num_pccs=100
 
     Example:
         >>> from graphid import demo
         >>> import networkx as nx
-        >>> import utool as ut
         >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
-        >>> kwargs = ut.argparse_dict(kwargs)
         >>> infr = demo.demodata_infr(**kwargs)
         >>> pccs = list(infr.positive_components())
         >>> assert len(pccs) == kwargs['num_pccs']

@@ -4,7 +4,7 @@ mkinit graphid.util
 # flake8: noqa
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__DYNAMIC__ = True
+__DYNAMIC__ = False
 if __DYNAMIC__:
     import mkinit
     exec(mkinit.dynamic_init(__name__))
@@ -15,6 +15,7 @@ else:
     from graphid.util import nx_dynamic_graph
     from graphid.util import nx_utils
     from graphid.util import priority_queue
+    from graphid.util import util_boxes
     from graphid.util import util_geometry
     from graphid.util import util_grabdata
     from graphid.util import util_graphviz
@@ -61,9 +62,12 @@ else:
                                        nx_gen_node_values, nx_node_dict,
                                        random_k_edge_connected_graph, take_column,)
     from graphid.util.priority_queue import (PriorityQueue,)
-    from graphid.util.util_geometry import (bbox_center, bbox_from_center_wh,
-                                            bbox_from_extent, bbox_from_verts,
-                                            bbox_from_xywh, bboxes_from_vert_list,
+    from graphid.util.util_boxes import (Boxes, box_ious_py,)
+    from graphid.util.util_geometry import (TRANSFORM_DTYPE,
+                                            add_homogenous_coordinate, bbox_center,
+                                            bbox_from_center_wh, bbox_from_extent,
+                                            bbox_from_verts, bbox_from_xywh,
+                                            bboxes_from_vert_list,
                                             closest_point_on_bbox,
                                             closest_point_on_line,
                                             closest_point_on_line_segment,
@@ -74,10 +78,18 @@ else:
                                             extent_from_verts,
                                             get_pointset_extent_wh,
                                             get_pointset_extents,
-                                            point_inside_bbox, scale_bbox,
-                                            scale_extents, scaled_verts_from_bbox,
+                                            point_inside_bbox,
+                                            remove_homogenous_coordinate,
+                                            rotation_around_bbox_mat3x3,
+                                            rotation_around_mat3x3,
+                                            rotation_mat3x3, scale_around_mat3x3,
+                                            scale_bbox, scale_extents,
+                                            scale_mat3x3, scaled_verts_from_bbox,
                                             scaled_verts_from_bbox_gen,
-                                            union_extents, verts_from_bbox,
+                                            transform_around,
+                                            transform_points_with_homography,
+                                            translation_mat3x3, union_extents,
+                                            verts_from_bbox,
                                             verts_list_from_bboxes_list,)
     from graphid.util.util_grabdata import (TESTIMG_URL_DICT, grab_test_imgpath,)
     from graphid.util.util_graphviz import (GRAPHVIZ_KEYS, LARGE_GRAPH,

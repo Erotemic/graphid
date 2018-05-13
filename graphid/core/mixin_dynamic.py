@@ -90,22 +90,6 @@ class DynamicUpdate(object):
         infr._add_review_edges_from(new_edges, decision=UNREV)
         return new_edges
 
-    def add_review_edge(infr, edge, decision):
-        """
-        Adds edge to the dynamically connected graphs and updates dynamically
-        inferrable edge attributes.
-        """
-        if decision == POSTV:
-            action = infr._positive_decision(edge)
-        elif decision == NEGTV:
-            action = infr._negative_decision(edge)
-        elif decision in UNINFERABLE:
-            # incomparable and unreview have the same inference structure
-            action = infr._uninferable_decision(edge, decision)
-        else:
-            raise AssertionError('Unknown decision=%r' % (decision,))
-        return action
-
     def _add_review_edges_from(infr, edges, decision=UNREV):
         infr.print('add {} edges decision={}'.format(len(edges), decision), 1)
         # Add to review graph corresponding to decision

@@ -38,7 +38,6 @@ def verts_from_bbox(bbox, close=False):
         list: verts
 
     Example:
-        >>> # ENABLE_DOCTEST
         >>> bbox = (10, 10, 50, 50)
         >>> close = False
         >>> verts = verts_from_bbox(bbox, close)
@@ -77,14 +76,12 @@ def draw_border(img_in, color=(0, 128, 255), thickness=2, out=None):
         out (None):
 
     Example:
-        >>> # ENABLE_DOCTEST
         >>> from graphid import util
         >>> img_in = util.imread(util.grab_test_imgpath('carl.jpg'))
         >>> color = (0, 128, 255)
         >>> thickness = 20
         >>> out = None
         >>> img = draw_border(img_in, color, thickness, out)
-        >>> # verify results
         >>> # xdoc: +REQUIRES(--show)
         >>> util.imshow(img)
         >>> pt.show_if_requested()
@@ -115,36 +112,30 @@ def draw_verts(img_in, verts, color=(0, 128, 255), thickness=2, out=None):
         http://docs.opencv.org/modules/core/doc/drawing_functions.html#line
 
     Example:
-        >>> # ENABLE_DOCTEST
         >>> from graphid import util
         >>> img_in = util.imread(util.grab_test_imgpath('carl.jpg'))
         >>> verts = ((10, 10), (10, 100), (100, 100), (100, 10))
         >>> color = (0, 128, 255)
         >>> thickness = 2
-        >>> # execute function
         >>> out = None
         >>> img = draw_verts(img_in, verts, color, thickness, out)
         >>> assert img_in is not img
         >>> assert out is not img
         >>> assert out is not img_in
-        >>> # verify results
         >>> # xdoc: +REQUIRES(--show)
         >>> util.imshow(img)
         >>> util.show_if_requested()
 
     Example1:
-        >>> # ENABLE_DOCTEST
         >>> from graphid import util
         >>> img_in = util.imread(util.grab_test_imgpath('carl.jpg'))
         >>> verts = ((10, 10), (10, 100), (100, 100), (100, 10))
         >>> color = (0, 128, 255)
         >>> thickness = 2
         >>> out = img_in
-        >>> # execute function
         >>> img = draw_verts(img_in, verts, color, thickness, out)
         >>> assert img_in is img, 'should be in place'
         >>> assert out is img, 'should be in place'
-        >>> # verify results
         >>> # xdoc: +REQUIRES(--show)
         >>> pt.imshow(img)
         >>> pt.show_if_requested()
@@ -187,11 +178,6 @@ def closest_point_on_line_segment(p, e1, e2):
         http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> #bbox = np.array([10, 10, 10, 10], dtype=np.float)
-        >>> #verts_ = np.array(util.verts_from_bbox(bbox, close=True))
-        >>> #R = util.rotation_around_bbox_mat3x3(util.TAU / 3, bbox)
-        >>> #verts = util.transform_points_with_homography(R, verts_.T).T
         >>> verts = np.array([[ 21.83012702,  13.16987298],
         >>>                   [ 16.83012702,  21.83012702],
         >>>                   [  8.16987298,  16.83012702],
@@ -249,7 +235,6 @@ def closest_point_on_line(p, e1, e2):
     Does not clip to the segment.
 
     Example:
-        >>> # ENABLE_DOCTEST
         >>> verts = np.array([[ 21.83012702,  13.16987298],
         >>>                   [ 16.83012702,  21.83012702],
         >>>                   [  8.16987298,  16.83012702],
@@ -300,7 +285,6 @@ def closest_point_on_bbox(p, bbox):
     """
 
     Example1:
-        >>> # ENABLE_DOCTEST
         >>> p_list = np.array([[19, 7], [7, 14], [14, 11], [8, 7], [23, 21]], dtype=np.float)
         >>> bbox = np.array([10, 10, 10, 10], dtype=np.float)
         >>> [closest_point_on_bbox(p, bbox) for p in p_list]
@@ -345,7 +329,6 @@ def extent_from_bbox(bbox):
         extent (ndarray): tl_x, br_x, tl_y, br_y
 
     Example:
-        >>> # ENABLE_DOCTEST
         >>> bbox = [0, 0, 10, 10]
         >>> extent = extent_from_bbox(bbox)
         >>> result = ('extent = %s' % (ub.repr2(list(extent), nl=0),))
@@ -369,7 +352,6 @@ def bbox_from_extent(extent):
         bbox (ndarray): tl_x, tl_y, w, h
 
     Example:
-        >>> # ENABLE_DOCTEST
         >>> extent = [0, 10, 0, 10]
         >>> bbox = bbox_from_extent(extent)
         >>> print('bbox = {}'.format(ub.repr2(list(bbox), nl=0)))
@@ -387,10 +369,12 @@ def bbox_from_center_wh(center_xy, wh):
 
 
 def bbox_center(bbox):
-    (x, y, w, h) = bbox
-    centerx = x + (w / 2)
-    centery = y + (h / 2)
-    return centerx, centery
+    from graphid import util
+    return util.Boxes(bbox).center
+    # (x, y, w, h) = bbox
+    # centerx = x + (w / 2)
+    # centery = y + (h / 2)
+    # return centerx, centery
 
 
 def get_pointset_extents(pts):
@@ -502,16 +486,12 @@ def scaled_verts_from_bbox_gen(bbox_list, theta_list, sx=1, sy=1):
         new_verts - vertices of scaled bounding box for every input
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> # build test data
         >>> bbox_list = [(10, 10, 100, 100)]
         >>> theta_list = [0]
         >>> sx = .5
         >>> sy = .5
-        >>> # execute function
         >>> new_verts_list = list(scaled_verts_from_bbox_gen(bbox_list, theta_list, sx, sy))
         >>> result = str(new_verts_list)
-        >>> # verify results
         >>> print(result)
         [[[5, 5], [55, 5], [55, 55], [5, 55], [5, 5]]]
     """
@@ -528,10 +508,9 @@ def scaled_verts_from_bbox(bbox, theta, sx, sy):
     """
     if bbox is None:
         return None
-    from vtool import linalg
     # Transformation matrixes
-    R = linalg.rotation_around_bbox_mat3x3(theta, bbox)
-    S = linalg.scale_mat3x3(sx, sy)
+    R = rotation_around_bbox_mat3x3(theta, bbox)
+    S = scale_mat3x3(sx, sy)
     # Get verticies of the annotation polygon
     verts = verts_from_bbox(bbox, close=True)
     # Rotate and transform to thumbnail space
@@ -554,7 +533,6 @@ def point_inside_bbox(point, bbox):
         bool or ndarray: True if the point is in the bbox
 
     Example:
-        >>> # ENABLE_DOCTEST
         >>> point = np.array([
         >>>     [3, 2], [4, 1], [2, 3], [1, 1], [0, 0],
         >>>     [4, 9.5], [9, 9.5], [7, 2], [7, 8], [9, 3]
@@ -584,16 +562,10 @@ def point_inside_bbox(point, bbox):
 
 def add_homogenous_coordinate(_xys):
     """
-    CommandLine:
-        python -m vtool.linalg --test-add_homogenous_coordinate
-
     Example:
-        >>> # build test data
         >>> _xys = np.array([[ 2.,  0.,  0.,  2.],
         ...                  [ 2.,  2.,  0.,  0.]], dtype=np.float32)
-        >>> # execute function
         >>> _xyzs = add_homogenous_coordinate(_xys)
-        >>> # verify results
         >>> assert np.all(_xys == remove_homogenous_coordinate(_xyzs))
         >>> result = ub.repr2(_xyzs, with_dtype=True)
         >>> print(result)
@@ -617,24 +589,21 @@ def remove_homogenous_coordinate(_xyzs):
     Returns:
         ndarray: _xys of shape (2, N)
 
-    Example0:
+    Example:
         >>> _xyzs = np.array([[ 2.,   0.,  0.,  2.],
         ...                   [ 2.,   2.,  0.,  0.],
         ...                   [ 1.2,  1.,  1.,  2.]], dtype=np.float32)
         >>> _xys = remove_homogenous_coordinate(_xyzs)
-        >>> result = ub.repr2(_xys, precision=3, with_dtype=True)
-        >>> print(result)
+        >>> print(ub.repr2(_xys, precision=3, with_dtype=True))
         np.array([[ 1.667,  0.   ,  0.   ,  1.   ],
                   [ 1.667,  2.   ,  0.   ,  0.   ]], dtype=np.float32)
 
-    Example1:
-        >>> # ENABLE_DOCTEST
+    Example:
         >>> _xyzs = np.array([[ 140.,  167.,  185.,  185.,  194.],
         ...                   [ 121.,  139.,  156.,  155.,  163.],
         ...                   [  47.,   56.,   62.,   62.,   65.]])
         >>> _xys = remove_homogenous_coordinate(_xyzs)
-        >>> result = ub.repr2(_xys, precision=3)
-        >>> print(result)
+        >>> print(ub.repr2(_xys, precision=3, with_dtype=False))
         np.array([[ 2.979,  2.982,  2.984,  2.984,  2.985],
                   [ 2.574,  2.482,  2.516,  2.5  ,  2.508]])
     """
@@ -643,6 +612,37 @@ def remove_homogenous_coordinate(_xyzs):
         warnings.simplefilter("error")
         _xys = np.divide(_xyzs[0:2], _xyzs[None, 2])
     return _xys
+
+
+def rotation_around_bbox_mat3x3(theta, bbox):
+    x, y, w, h = bbox
+    centerx = x + (w / 2)
+    centery = y + (h / 2)
+    return rotation_around_mat3x3(theta, centerx, centery)
+
+
+def rotation_around_mat3x3(theta, x, y):
+    # rot = rotation_mat3x3(theta)
+    # return transform_around(rot, x, y)
+    tr1_ = translation_mat3x3(-x, -y)
+    rot_ = rotation_mat3x3(theta)
+    tr2_ = translation_mat3x3(x, y)
+    rot = tr2_.dot(rot_).dot(tr1_)
+    return rot
+
+
+def rotation_mat3x3(radians, sin=np.sin, cos=np.cos):
+    """
+    References:
+        https://en.wikipedia.org/wiki/Rotation_matrix
+    """
+    # TODO: handle array inputs
+    sin_ = sin(radians)
+    cos_ = cos(radians)
+    R = np.array(((cos_, -sin_,  0),
+                  (sin_,  cos_,  0),
+                  (   0,     0,  1),))
+    return R
 
 
 if __name__ == '__main__':
