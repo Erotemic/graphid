@@ -18,6 +18,7 @@ from graphid.core import mixin_priority
 from graphid.core import mixin_loops
 from graphid.core import mixin_callbacks
 from graphid.core import mixin_simulation
+from graphid.core import mixin_redundancy
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
 from graphid.core.state import UNINFERABLE
 from graphid.core.state import SAME, DIFF, NULL
@@ -42,6 +43,67 @@ def _rectify_decision(evidence_decision, meta_decision):
         elif decision == POSTV:
             raise ValueError('evidence=positive and meta=diff')
     return decision
+
+
+class Consistency(object):
+    def is_consistent(infr, cc):
+        """
+        Determines if a PCC contains inconsistencies
+
+        Args:
+            cc (set): nodes in a PCC
+
+        Returns:
+            flag: bool: returns True unless cc contains any negative edges
+
+        Example:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(num_pccs=1, p_incon=1)
+            >>> assert not infr.is_consistent(next(infr.positive_components()))
+            >>> infr = demo.demodata_infr(num_pccs=1, p_incon=0)
+            >>> assert infr.is_consistent(next(infr.positive_components()))
+        """
+        return len(cc) <= 2 or not any(util.edges_inside(infr.neg_graph, cc))
+
+    def positive_components(infr, graph=None):
+        """
+        Generates the positive connected compoments (PCCs) in the graph
+        These will contain both consistent and inconsinstent PCCs.
+
+        Yields:
+            cc: set: nodes within the PCC
+        """
+        pos_graph = infr.pos_graph
+        if graph is None or graph is infr.graph:
+            ccs = pos_graph.connected_components()
+        else:
+            unique_labels = {
+                pos_graph.node_label(node) for node in graph.nodes()}
+            ccs = (pos_graph.connected_to(node) for node in unique_labels)
+        for cc in ccs:
+            yield cc
+
+    def inconsistent_components(infr, graph=None):
+        """
+        Generates inconsistent PCCs.
+        These PCCs contain internal negative edges indicating an error exists.
+        """
+        for cc in infr.positive_components(graph):
+            if not infr.is_consistent(cc):
+                yield cc
+
+    def consistent_components(infr, graph=None):
+        """
+        Generates consistent PCCs.
+        These PCCs contain no internal negative edges.
+
+        Yields:
+            cc: set: nodes within the PCC
+        """
+        # Find PCCs without any negative edges
+        for cc in infr.positive_components(graph):
+            if infr.is_consistent(cc):
+                yield cc
 
 
 class Feedback(object):
@@ -904,12 +966,12 @@ class AnnotInference(ub.NiceRepr,
                      MiscHelpers,
                      Feedback,
                      NameRelabel,
+                     Consistency,
                      # New annot_inference algorithm stuffs
                      mixin_dynamic.NonDynamicUpdate,
                      mixin_dynamic.Recovery,
-                     mixin_dynamic.Consistency,
-                     mixin_dynamic.Redundancy,
                      mixin_dynamic.DynamicUpdate,
+                     mixin_redundancy.Redundancy,
                      mixin_priority.Priority,
                      # General helpers
                      mixin_helpers.AssertInvariants,

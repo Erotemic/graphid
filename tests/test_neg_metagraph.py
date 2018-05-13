@@ -7,6 +7,7 @@ accept the syntax of IBEIS doctests)
 """
 from graphid import demo
 from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)  # NOQA
+import networkx as nx
 
 
 def test_neg_metagraph_simple_add_remove():
@@ -16,7 +17,7 @@ def test_neg_metagraph_simple_add_remove():
     """
 
     # Create a graph with 5-sized CCs, with 3-pos-redun, and no negative edges
-    infr = demo.demodata_infr(num_pccs=2, pcc_size=5, pos_redun=3,
+    infr = demo.demodata_infr(num_pccs=4, pcc_size=5, pos_redun=3,
                               ignore_pair=True, infer=True)
     cc_a, cc_b, cc_c, cc_d = infr.positive_components()
     a1, a2, a3, a4, a5 = cc_a
@@ -70,6 +71,8 @@ def test_neg_metagraph_merge():
     """
     Test that the negative metagraph tracks the number of negative edges
     between PCCs through label-changing merge operations
+
+    python ~/code/graphid/tests/test_neg_metagraph.py test_neg_metagraph_merge
     """
     # Create a graph with 4 CCs, with 3-pos-redun, and no negative edges
     infr = demo.demodata_infr(num_pccs=4, pcc_size=5, pos_redun=3,
@@ -82,10 +85,17 @@ def test_neg_metagraph_merge():
 
     nmg = infr.neg_metagraph
 
-    # Add three negative edges between a and b
-    # one between (a, c), (b, d), (a, d), and (c, d)
+    # The initial negative metagraph has 4 nodes representing the PCCs
+    # and no edges becase we have not added any negative feedback
+    assert nmg.number_of_nodes() == 4
+    assert nmg.number_of_edges() == 0
+
+    # Remember the original PCC labels
+    # (pccs are the nodes in the negative metagraph)
     A, B, C, D = infr.node_labels(a1, b1, c1, d1)
 
+    # Add three negative edges between a and b
+    # one between (a, c), (b, d), (a, d), and (c, d)
     infr.add_feedback((a1, b1), NEGTV)
     infr.add_feedback((a2, b2), NEGTV)
     infr.add_feedback((a3, b3), NEGTV)
@@ -102,11 +112,11 @@ def test_neg_metagraph_merge():
     assert nmg.number_of_edges() == 5
     assert nmg.number_of_nodes() == 4
 
-    # Now merge A and B
+    # Now merge A and B into a single PCC
     infr.add_feedback((a1, b1), POSTV)
     AB = infr.node_label(a1)
 
-    # The old meta-nodes should not be combined into AB
+    # The original meta-nodes A and B should not be combined into AB
     assert infr.node_label(b1) == AB
     assert A != B
     assert A == AB or A not in nmg.nodes
@@ -120,7 +130,7 @@ def test_neg_metagraph_merge():
     # should not have a self-loop weight weight 2
     # (it decreased because we changed a previously neg edge to pos)
     assert nmg.edges[(AB, AB)]['weight'] == 2
-    assert len(list(nmg.selfloop_edges())) == 1
+    assert len(list(nx.selfloop_edges(nmg))) == 1
 
     # nothing should change between C and D
     assert nmg.edges[(C, D)]['weight'] == 1
@@ -146,7 +156,7 @@ def test_neg_metagraph_merge():
     # Yet another merge
     infr.add_feedback((a1, c1), POSTV)
     ABCD = infr.node_label(c1)
-    assert nmg.number_of_nodes() == 1
+    assert nmg.number_of_nodes() == 1, 'should only be one PCC now'
     assert nmg.number_of_edges() == 1
     nmg.edges[(ABCD, ABCD)]['weight'] = 6
     infr.assert_neg_metagraph()
@@ -248,3 +258,12 @@ def test_neg_metagraph_split_and_merge():
     assert nmg.number_of_nodes() == infr.neg_graph.number_of_nodes()
     assert nmg.number_of_edges() == infr.neg_graph.number_of_edges()
     infr.assert_neg_metagraph()
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        pytest ~/code/graphid/tests/test_neg_metagraph.py
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)

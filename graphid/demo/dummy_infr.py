@@ -33,7 +33,8 @@ def demodata_infr(**kwargs):
         p_pair_unrev (float): default = 0.0
 
     CommandLine:
-        python -m graphid.demo.dummy_infr demodata_infr --show
+        python -m graphid.demo.dummy_infr demodata_infr:0 --show
+        python -m graphid.demo.dummy_infr demodata_infr:1 --show
         python -m utool.util_inspect recursive_parse_kwargs:2 --mod graphid.demo.dummy_infr --func demodata_infr
 
 
@@ -51,6 +52,12 @@ def demodata_infr(**kwargs):
         >>> # xdoctest: +REQUIRES(--show)
         >>> infr.show(pickable=True, groupby='name_label')
         >>> util.show_if_requested()
+
+    Doctest:
+        >>> from graphid import demo
+        >>> import networkx as nx
+        >>> kwargs = dict(num_pccs=0)
+        >>> infr = demo.demodata_infr(**kwargs)
     """
     from graphid.core.annot_inference import AnnotInference
     from graphid.demo import dummy_algos
@@ -171,7 +178,11 @@ def demodata_infr(**kwargs):
         new_ccs.append(g)
         # (list(g.nodes()), new_edges))
 
-    pos_g = nx.union_all(new_ccs)
+    if len(new_ccs) == 0:
+        pos_g = nx.Graph()
+    else:
+        pos_g = nx.union_all(new_ccs)
+
     assert len(new_ccs) == len(list(nx.connected_components(pos_g)))
     assert num_pccs == len(new_ccs)
 

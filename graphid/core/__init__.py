@@ -16,20 +16,22 @@ else:
     from graphid.core import mixin_helpers
     from graphid.core import mixin_loops
     from graphid.core import mixin_priority
+    from graphid.core import mixin_redundancy
     from graphid.core import mixin_simulation
     from graphid.core import mixin_viz
     from graphid.core import refresh
     from graphid.core import state
     from graphid.core.annot_inference import (AltConstructors, AnnotInference,
-                                              Feedback, MiscHelpers, NameRelabel,)
+                                              Consistency, Feedback, MiscHelpers,
+                                              NameRelabel,)
     from graphid.core.mixin_callbacks import (InfrCallbacks, InfrCandidates,)
-    from graphid.core.mixin_dynamic import (Consistency, DECISION_LEVEL,
-                                            DynamicUpdate, NonDynamicUpdate,
-                                            Recovery, Redundancy,)
+    from graphid.core.mixin_dynamic import (DynamicUpdate, NonDynamicUpdate,
+                                            Recovery,)
     from graphid.core.mixin_helpers import (AssertInvariants, AttrAccess,
                                             Convenience, DEBUG_INCON, DummyEdges,)
     from graphid.core.mixin_loops import (InfrLoops, InfrReviewers,)
     from graphid.core.mixin_priority import (Priority,)
+    from graphid.core.mixin_redundancy import (Redundancy,)
     from graphid.core.mixin_simulation import (SimulationHelpers, UserOracle,)
     from graphid.core.mixin_viz import (GraphVisualization, color_nodes,
                                         nx_ensure_agraph_color, on_pick,)

@@ -674,13 +674,16 @@ class AssertInvariants(object):
         neg_weight = sum(nx.get_edge_attributes(
             infr.neg_metagraph, 'weight').values())
         n_neg_edges = infr.neg_graph.number_of_edges()
-        assert neg_weight == n_neg_edges
+        assert neg_weight == n_neg_edges, '{} should equal'.format(
+            neg_weight, n_neg_edges)
 
-        # Self loops should correspond to the number of inconsistent components
+        # Self loops in the negative metagraph should correspond to the number
+        # of inconsistent components
         neg_self_loop_nids = sorted([
-            ne[0] for ne in list(infr.neg_metagraph.selfloop_edges())])
+            ne[0] for ne in list(nx.selfloop_edges(infr.neg_metagraph))])
         incon_nids = sorted(infr.nid_to_errors.keys())
-        assert neg_self_loop_nids == incon_nids
+        assert neg_self_loop_nids == incon_nids, '{} should equal {}'.format(
+            neg_self_loop_nids, incon_nids)
 
     def assert_union_invariant(infr, msg=''):
         edge_sets = {

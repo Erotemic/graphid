@@ -53,11 +53,19 @@ class EVIDENCE_DECISION(object):
     UNKNOWN      = 3
 
     INT_TO_CODE = ub.odict([
-        (POSITIVE       , 'match'),
-        (NEGATIVE       , 'nomatch'),
-        (INCOMPARABLE   , 'notcomp'),
-        (UNKNOWN        , 'unknown'),
-        (UNREVIEWED     , 'unreviewed'),
+        # (POSITIVE       , 'match'),
+        # (NEGATIVE       , 'nomatch'),
+        # (INCOMPARABLE   , 'notcomp'),
+        # (POSITIVE       , 'positive'),
+        # (NEGATIVE       , 'negative'),
+        # (INCOMPARABLE   , 'incomparable'),
+        # (UNKNOWN        , 'unknown'),
+        # (UNREVIEWED     , 'unreviewed'),
+        (POSITIVE       , 'POSTV'),
+        (NEGATIVE       , 'NEGTV'),
+        (INCOMPARABLE   , 'INCMP'),
+        (UNKNOWN        , 'UNKWN'),
+        (UNREVIEWED     , 'UNREV'),
     ])
 
     INT_TO_NICE = ub.odict([
