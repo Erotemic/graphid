@@ -4,7 +4,7 @@ mkinit graphid.util
 # flake8: noqa
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__DYNAMIC__ = False
+__DYNAMIC__ = True
 if __DYNAMIC__:
     import mkinit
     exec(mkinit.dynamic_init(__name__))
@@ -37,10 +37,9 @@ else:
                                       make_heatmask, multi_plot, next_fnum,
                                       pan_factory, pandas_plot_matrix, qtensure,
                                       relative_text, render_figure_to_image,
-                                      reverse_colormap, save_parts,
-                                      scores_to_cmap, scores_to_color,
-                                      set_figtitle, show_if_requested,
-                                      zoom_factory,)
+                                      reverse_colormap, save_parts, scores_to_cmap,
+                                      scores_to_color, set_figtitle,
+                                      show_if_requested, zoom_factory,)
     from graphid.util.name_rectifier import (demodata_oldnames,
                                              find_consistent_labeling,
                                              simple_munkres,)
@@ -66,18 +65,14 @@ else:
     from graphid.util.util_boxes import (Boxes, box_ious_py,)
     from graphid.util.util_geometry import (TRANSFORM_DTYPE,
                                             add_homogenous_coordinate, bbox_center,
-                                            bbox_from_center_wh, bbox_from_extent,
-                                            bbox_from_verts, bbox_from_xywh,
+                                            bbox_from_extent, bbox_from_verts,
                                             bboxes_from_vert_list,
                                             closest_point_on_bbox,
                                             closest_point_on_line,
                                             closest_point_on_line_segment,
                                             closest_point_on_vert_segments,
-                                            cvt_bbox_xywh_to_pt1pt2,
-                                            distance_to_lineseg, draw_border,
-                                            draw_verts, extent_from_bbox,
-                                            extent_from_verts,
-                                            get_pointset_extent_wh,
+                                            cvt_bbox_xywh_to_pt1pt2, draw_border,
+                                            draw_verts, get_pointset_extent_wh,
                                             get_pointset_extents,
                                             point_inside_bbox,
                                             remove_homogenous_coordinate,
@@ -89,14 +84,13 @@ else:
                                             scaled_verts_from_bbox_gen,
                                             transform_around,
                                             transform_points_with_homography,
-                                            translation_mat3x3, union_extents,
-                                            verts_from_bbox,
+                                            translation_mat3x3, verts_from_bbox,
                                             verts_list_from_bboxes_list,)
     from graphid.util.util_grabdata import (TESTIMG_URL_DICT, grab_test_imgpath,)
     from graphid.util.util_graphviz import (GRAPHVIZ_KEYS, LARGE_GRAPH,
                                             apply_graph_layout_attrs,
                                             draw_network2, dump_nx_ondisk,
-                                            ensure_nonhex_color, format_anode_pos,
+                                            ensure_nonhex_color,
                                             get_explicit_graph,
                                             get_graph_bounding_box, get_nx_layout,
                                             make_agraph,
@@ -119,7 +113,7 @@ else:
                                          load_image_paths,
                                          make_channels_comparable,
                                          overlay_alpha_images, overlay_colorized,
-                                         run_length_encoding, wide_strides_1d,)
+                                         wide_strides_1d,)
     from graphid.util.util_kw import (KWSpec,)
     from graphid.util.util_misc import (all_dict_combinations, aslist,
                                         classproperty, cprint, delete_dict_keys,

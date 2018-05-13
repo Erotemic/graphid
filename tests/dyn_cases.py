@@ -1,32 +1,60 @@
-from graphid import demo
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
 from graphid.core.state import SAME, DIFF, NULL  # NOQA
 from graphid import util
+from graphid.core import AnnotInference
+import networkx as nx
+import ubelt as ub
+
+
+def explicit_demodata_infr(ccs, edges=[], nodes=[], infer=True):
+    """
+    Makes a simple graph with ccs connected via a path and then extra edges
+    """
+
+    G = AnnotInference._graph_cls()
+    G.add_nodes_from(nodes)
+    for cc in ccs:
+        if len(cc) == 1:
+            G.add_nodes_from(cc)
+        nx.add_path(G, cc, evidence_decision=POSTV, meta_decision=NULL)
+
+    G.add_edges_from(edges)
+    infr = AnnotInference.from_netx(G, infer=infer)
+    infr.verbose = 3
+
+    infr.relabel_using_reviews(rectify=False)
+
+    infr.graph.graph['dark_background'] = False
+    infr.graph.graph['ignore_labels'] = True
+    infr.set_node_attrs('width', 40)
+    infr.set_node_attrs('height', 40)
+    infr.set_node_attrs('fixed_size', True)
+    return infr
 
 
 def do_infr_test(ccs, edges, new_edges):
     """
     Creates a graph with `ccs` + `edges` and then adds `new_edges`
     """
-    # import networkx as nx
-    import plottool as pt
+    import matplotlib.pyplot as plt
 
-    infr = demo.demodata_infr(ccs, edges)
+    infr = explicit_demodata_infr(ccs=ccs, edges=edges)
 
-    if util.show_was_requested():
-        pt.qtensure()
+    if ub.argflag('--show'):
+        util.qtensure()
 
     # Preshow
     fnum = 1
-    if util.show_was_requested():
+    if ub.argflag('--show'):
+        ax = plt.gca()
         infr.set_node_attrs('shape', 'circle')
         infr.show(pnum=(2, 1, 1), fnum=fnum, show_unreviewed_edges=True,
                   show_reviewed_cuts=True,
                   splines='spline',
                   show_inferred_diff=True, groupby='name_label',
                   show_labels=True, pickable=True)
-        pt.set_title('pre-review')
-        pt.gca().set_aspect('equal')
+        ax.set_title('pre-review')
+        ax.set_aspect('equal')
         infr.set_node_attrs('pin', 'true')
         # fig1 = pt.gcf()
         # fig1.canvas.mpl_connect('pick_event', util.partial(on_pick, infr=infr))
@@ -41,11 +69,11 @@ def do_infr_test(ccs, edges, new_edges):
     infr2.apply_nondynamic_update()
 
     # Postshow
-    if util.show_was_requested():
+    if ub.argflag('--show'):
         infr2.show(pnum=(2, 1, 2), fnum=fnum, show_unreviewed_edges=True,
                    show_inferred_diff=True, show_labels=True)
-        pt.gca().set_aspect('equal')
-        pt.set_title('post-review')
+        ax.set_aspect('equal')
+        ax.set_title('post-review')
         # fig2 = pt.gcf()
         # if fig2 is not fig1:
         #     fig2.canvas.mpl_connect('pick_event', util.partial(on_pick, infr=infr2))
@@ -91,8 +119,8 @@ def do_infr_test(ccs, edges, new_edges):
                 for msg in errors:
                     print(msg)
                 util.cprint('HAD %d FAILURE' % (len(errors)), 'red')
-            if util.show_was_requested():
-                pt.all_figures_tile(percent_w=.5)
+            if ub.argflag('--show'):
+                # pt.all_figures_tile(percent_w=.5)
                 util.show_if_requested()
             if errors:
                 raise AssertionError('There were errors')
@@ -107,8 +135,6 @@ def case_negative_infr():
         python -m graphid.core.tests.dyn_cases case_negative_infr --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_negative_infr()
     """
     # Initial positive reviews
@@ -138,9 +164,6 @@ def case_match_infr():
         python -m graphid.core.tests.dyn_cases case_match_infr --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
-
         >>> case_match_infr()
     """
     # Initial positive reviews
@@ -173,8 +196,6 @@ def case_inconsistent():
         python -m graphid.core.tests.dyn_cases case_inconsistent --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_inconsistent()
     """
     ccs = [[1, 2], [3, 4, 5]]  # [6, 7]]
@@ -200,8 +221,6 @@ def case_redo_incon():
         python -m graphid.core.tests.dyn_cases case_redo_incon --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_redo_incon()
     """
     ccs = [[1, 2], [3, 4]]  # [6, 7]]
@@ -228,8 +247,6 @@ def case_override_inference():
         python -m graphid.core.tests.dyn_cases case_override_inference --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_override_inference()
     """
     ccs = [[1, 2, 3, 4, 5]]
@@ -264,8 +281,6 @@ def case_undo_match():
         python -m graphid.core.tests.dyn_cases case_undo_match --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_undo_match()
     """
     ccs = [[1, 2]]
@@ -283,8 +298,6 @@ def case_undo_negative():
         python -m graphid.core.tests.dyn_cases case_undo_negative --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_undo_negative()
     """
     ccs = [[1], [2]]
@@ -303,8 +316,6 @@ def case_incon_removes_inference():
         python -m graphid.core.tests.dyn_cases case_incon_removes_inference --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_incon_removes_inference()
     """
     ccs = [[1, 2, 3], [4, 5, 6]]
@@ -330,8 +341,6 @@ def case_inferable_notcomp1():
         python -m graphid.core.tests.dyn_cases case_inferable_notcomp1 --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_inferable_notcomp1()
     """
     ccs = [[1, 2], [3, 4]]
@@ -352,8 +361,6 @@ def case_inferable_update_notcomp():
         python -m graphid.core.tests.dyn_cases case_inferable_update_notcomp --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_inferable_update_notcomp()
     """
     ccs = [[1, 2], [3, 4]]
@@ -374,8 +381,6 @@ def case_notcomp_remove_infr():
         python -m graphid.core.tests.dyn_cases case_notcomp_remove_infr --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_notcomp_remove_infr()
     """
     ccs = [[1, 2, 3], [4, 5, 6]]
@@ -399,8 +404,6 @@ def case_notcomp_remove_cuts():
         python -m graphid.core.tests.dyn_cases case_notcomp_remove_cuts --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_notcomp_remove_cuts()
     """
     ccs = [[1, 2, 3], [4, 5, 6]]
@@ -427,8 +430,6 @@ def case_keep_in_cc_infr_post_negative():
         python -m graphid.core.tests.dyn_cases case_keep_in_cc_infr_post_negative --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_keep_in_cc_infr_post_negative()
     """
     ccs = [[1, 2, 3], [4]]
@@ -448,8 +449,6 @@ def case_keep_in_cc_infr_post_notcomp():
         python -m graphid.core.tests.dyn_cases case_keep_in_cc_infr_post_notcomp --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_keep_in_cc_infr_post_notcomp()
     """
     ccs = [[1, 2, 3], [4]]
@@ -469,8 +468,6 @@ def case_out_of_subgraph_modification():
         python -m graphid.core.tests.dyn_cases case_out_of_subgraph_modification --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_out_of_subgraph_modification()
     """
     # A case where a review between two ccs modifies state outside of
@@ -492,8 +489,6 @@ def case_flag_merge():
         python -m graphid.core.tests.dyn_cases case_flag_merge --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_flag_merge()
     """
     # A case where a review between two ccs modifies state outside of
@@ -524,8 +519,6 @@ def case_all_types():
         python -m graphid.core.tests.dyn_cases case_all_types --show
 
     Example:
-        >>> # ENABLE_DOCTEST
-        >>> from graphid.core.tests.dyn_cases import *  # NOQA
         >>> case_all_types()
     """
     # A case where a review between two ccs modifies state outside of

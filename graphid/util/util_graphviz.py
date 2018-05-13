@@ -23,12 +23,13 @@ Ignore:
 
 """
 from __future__ import absolute_import, division, print_function
-from six.moves import zip
 import six
+import re
 import numpy as np
 import ubelt as ub
-from six.moves import reduce
 import networkx as nx
+from six.moves import zip
+from six.moves import reduce
 from graphid.util import nx_utils
 from graphid.util import mplutil
 from graphid import util
@@ -203,8 +204,8 @@ def netx_draw_images_at_positions(img_list, pos_list, size_list, color_list,
                   for size, img in zip(size_list, img_list)]
 
     for pos, img, size in zip(pos_list, img_list_, size_list_):
-        bbox = util.bbox_from_center_wh(pos, size)
-        extent = util.extent_from_bbox(bbox)
+        tlbr = util.Boxes(list(pos) + list(size), 'cxywh').toformat('tlbr')
+        extent = tlbr.data[..., [0, 2, 1, 3]]
         plt.imshow(img, extent=extent)
 
 
@@ -543,7 +544,6 @@ def make_agraph(graph_):
             name = groupid
         agraph.add_subgraph(nodes, name, **subgraph_attrs)
 
-    import re
     for node in graph_.nodes():
         anode = pygraphviz.Node(agraph, node)
         # TODO: Generally fix node positions
@@ -975,11 +975,6 @@ def parse_aedge_layout_attrs(aedge, translation=None):
     return edge_attrs
 
 
-def format_anode_pos(xy, pin=True):
-    xx, yy = xy
-    return '%f,%f%s' % (xx, yy, '!' * pin)
-
-
 def _get_node_size(graph, node, node_size):
     if node_size is not None and node in node_size:
         return node_size[node]
@@ -1281,10 +1276,11 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
                 try:
                     # Compute arrow width using estimated graph size
                     if node_size is not None and node_pos is not None:
-                        xys = np.array(list(ub.take(node_pos, node_pos.keys()))).T
-                        whs = np.array(list(ub.take(node_size, node_pos.keys()))).T
-                        bboxes = util.bbox_from_xywh(xys, whs, [.5, .5])
-                        extents = util.extent_from_bbox(bboxes)
+                        xys = np.array(list(ub.take(node_pos, node_pos.keys()))).T.reshape(2, -1)
+                        whs = np.array(list(ub.take(node_size, node_pos.keys()))).T.reshape(2, -1)
+                        cxywh = np.vstack([xys, whs]).T
+                        tlbr = util.Boxes(cxywh, 'cxywh').toformat('tlbr').data
+                        extents = tlbr[..., [0, 2, 1, 3]]
                         tl_pts = np.array([extents[0], extents[2]]).T
                         br_pts = np.array([extents[1], extents[3]]).T
                         pts = np.vstack([tl_pts, br_pts])
@@ -1547,14 +1543,22 @@ def translate_graph_to_origin(graph):
 
 
 def get_graph_bounding_box(graph):
+    """
+    Example:
+        >>> graph = nx.path_graph([1, 2, 3, 4])
+        >>> nx_agraph_layout(graph, inplace=True)
+        >>> bbox = get_graph_bounding_box(graph)
+        >>> print(ub.repr2(bbox, nl=0))
+        [0.0, 0.0, 54.0, 252.0]
+    """
     nodes = list(graph.nodes())
-    shape_list = nx_utils.nx_gen_node_values(graph, 'size', nodes)
-    pos_list = nx_utils.nx_gen_node_values(graph, 'pos', nodes)
+    shape_list = list(nx_utils.nx_gen_node_values(graph, 'size', nodes))
+    pos_list = list(nx_utils.nx_gen_node_values(graph, 'pos', nodes))
 
-    node_extents = np.array([
-        util.extent_from_bbox(util.bbox_from_center_wh(xy, wh))
-        for xy, wh in zip(pos_list, shape_list)
-    ])
+    cxywh_boxes = np.array([(x, y, w, h)
+                            for (x, y), (w, h) in zip(pos_list, shape_list)])
+    tlbr_boxes = util.Boxes(cxywh_boxes, 'cxywh').toformat('tlbr').data
+    node_extents = tlbr_boxes[..., [0, 2, 1, 3]]
     tl_x, br_x, tl_y, br_y = node_extents.T
     extent = tl_x.min(), br_x.max(), tl_y.min(), br_y.max()
     bbox = util.bbox_from_extent(extent)

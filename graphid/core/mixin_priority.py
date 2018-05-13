@@ -72,19 +72,19 @@ class Priority(object):
         if infr.queue is not None:
             infr._remove_edge_priority(nxu.edges_inside(infr.graph, cc))
 
-    def remove_external_priority(infr, cc):
-        if infr.queue is not None:
-            infr._remove_edge_priority(nxu.edges_outgoing(infr.graph, cc))
+    # def remove_external_priority(infr, cc):
+    #     if infr.queue is not None:
+    #         infr._remove_edge_priority(nxu.edges_outgoing(infr.graph, cc))
 
-    def remove_between_priority(infr, cc1, cc2):
-        if infr.queue is not None:
-            infr._remove_edge_priority(nxu.edges_cross(infr.graph, cc1, cc2))
+    # def remove_between_priority(infr, cc1, cc2):
+    #     if infr.queue is not None:
+    #         infr._remove_edge_priority(nxu.edges_cross(infr.graph, cc1, cc2))
 
-    def reinstate_between_priority(infr, cc1, cc2):
-        if infr.queue is not None:
-            # Reinstate the appropriate edges into the queue
-            edges = nxu.edges_cross(infr.unreviewed_graph, cc1, cc2)
-            infr._reinstate_edge_priority(edges)
+    # def reinstate_between_priority(infr, cc1, cc2):
+    #     if infr.queue is not None:
+    #         # Reinstate the appropriate edges into the queue
+    #         edges = nxu.edges_cross(infr.unreviewed_graph, cc1, cc2)
+    #         infr._reinstate_edge_priority(edges)
 
     def reinstate_internal_priority(infr, cc):
         if infr.queue is not None:
@@ -92,11 +92,11 @@ class Priority(object):
             edges = nxu.edges_inside(infr.unreviewed_graph, cc)
             infr._reinstate_edge_priority(edges)
 
-    def reinstate_external_priority(infr, cc):
-        if infr.queue is not None:
-            # Reinstate the appropriate edges into the queue
-            edges = nxu.edges_outgoing(infr.unreviewed_graph, cc)
-            infr._reinstate_edge_priority(edges)
+    # def reinstate_external_priority(infr, cc):
+    #     if infr.queue is not None:
+    #         # Reinstate the appropriate edges into the queue
+    #         edges = nxu.edges_outgoing(infr.unreviewed_graph, cc)
+    #         infr._reinstate_edge_priority(edges)
 
     def prioritize(infr, metric=None, edges=None, scores=None,
                    force_inconsistent=True, reset=False):

@@ -222,13 +222,6 @@ def closest_point_on_line_segment(p, e1, e2):
     return pt_on_seg
 
 
-def distance_to_lineseg(p, e1, e2):
-    from graphid import util
-    close_pt = closest_point_on_line_segment(p, e1, e2)
-    dist_to_lineseg = util.L2(p, close_pt)
-    return dist_to_lineseg
-
-
 def closest_point_on_line(p, e1, e2):
     """
     e1 and e2 define two points on the line.
@@ -294,54 +287,6 @@ def closest_point_on_bbox(p, bbox):
     return new_pts
 
 
-def bbox_from_xywh(xy, wh, xy_rel_pos=[0, 0]):
-    """ need to specify xy_rel_pos if xy is not in tl already """
-    to_tlx = xy_rel_pos[0] * wh[0]
-    to_tly = xy_rel_pos[1] * wh[1]
-    tl_x = xy[0] - to_tlx
-    tl_y = xy[1] - to_tly
-    bbox = [tl_x, tl_y, wh[0], wh[1]]
-    return bbox
-
-
-def extent_from_verts(verts):
-    bbox = bbox_from_verts(verts)
-    extent = extent_from_bbox(bbox)
-    return extent
-
-
-def union_extents(extents):
-    extents = np.array(extents)
-    xmin = extents.T[0].min()
-    xmax = extents.T[1].max()
-    ymin = extents.T[2].min()
-    ymax = extents.T[3].max()
-    return (xmin, xmax, ymin, ymax)
-
-
-#def tlbr_from_bbox(bbox):
-def extent_from_bbox(bbox):
-    """
-    Args:
-        bbox (ndarray): tl_x, tl_y, w, h
-
-    Returns:
-        extent (ndarray): tl_x, br_x, tl_y, br_y
-
-    Example:
-        >>> bbox = [0, 0, 10, 10]
-        >>> extent = extent_from_bbox(bbox)
-        >>> result = ('extent = %s' % (ub.repr2(list(extent), nl=0),))
-        >>> print(result)
-        extent = [0, 10, 0, 10]
-    """
-    tl_x, tl_y, w, h = bbox
-    br_x = tl_x + w
-    br_y = tl_y + h
-    extent = [tl_x, br_x, tl_y, br_y]
-    return extent
-
-
 #def tlbr_from_bbox(bbox):
 def bbox_from_extent(extent):
     """
@@ -362,10 +307,6 @@ def bbox_from_extent(extent):
     h = br_y - tl_y
     bbox = [tl_x, tl_y, w, h]
     return bbox
-
-
-def bbox_from_center_wh(center_xy, wh):
-    return bbox_from_xywh(center_xy, wh, xy_rel_pos=[.5, .5])
 
 
 def bbox_center(bbox):

@@ -2,7 +2,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import glob
 from os.path import expanduser, exists, join, basename
-import ubelt as ub
 import warnings
 import numpy as np
 import cv2
@@ -493,7 +492,7 @@ def imread(fpath, **kw):
     reads image data in BGR format
 
     Example:
-        >>> from graphid.util.util_image import *
+        >>> import ubelt as ub
         >>> import tempfile
         >>> from os.path import splitext  # NOQA
         >>> fpath = ub.grabdata('https://i.imgur.com/oHGsmvF.png', fname='carl.png')
@@ -508,6 +507,7 @@ def imread(fpath, **kw):
 
     Example:
         >>> import tempfile
+        >>> import ubelt as ub
         >>> #img1 = (np.arange(0, 12 * 12 * 3).reshape(12, 12, 3) % 255).astype(np.uint8)
         >>> img1 = imread(ub.grabdata('http://i.imgur.com/iXNf4Me.png', fname='ada.png'))
         >>> tmp_tif = tempfile.NamedTemporaryFile(suffix='.tif')
@@ -521,6 +521,7 @@ def imread(fpath, **kw):
     Example:
         >>> from graphid.util.util_image import *
         >>> import tempfile
+        >>> import ubelt as ub
         >>> #img1 = (np.arange(0, 12 * 12 * 3).reshape(12, 12, 3) % 255).astype(np.uint8)
         >>> tif_fpath = ub.grabdata('https://ghostscript.com/doc/tiff/test/images/rgb-3c-16b.tiff')
         >>> img1 = imread(tif_fpath)
@@ -698,44 +699,6 @@ def image_slices(img_shape, target_shape, overlap=0, keepbound=False):
     for rslice in wide_strides_1d(ph, orig_h, sy, **kw):
         for cslice in wide_strides_1d(pw, orig_w, sx, **kw):
             yield rslice, cslice
-
-
-def run_length_encoding(img):
-    """
-    Run length encoding.
-
-    Parameters
-    ----------
-    img : 2D image
-
-    Example:
-        >>> from graphid.util.util_image import *
-        >>> lines = ub.codeblock(
-        >>>     '''
-        >>>     ..........
-        >>>     ......111.
-        >>>     ..2...111.
-        >>>     .222..111.
-        >>>     22222.....
-        >>>     .222......
-        >>>     ..2.......
-        >>>     ''').replace('.', '0').splitlines()
-        >>> img = np.array([list(map(int, line)) for line in lines])
-        >>> (w, h), runlen = run_length_encoding(img)
-        >>> target = np.array([0,16,1,3,0,3,2,1,0,3,1,3,0,2,2,3,0,2,1,3,0,1,2,5,0,6,2,3,0,8,2,1,0,7])
-        >>> assert np.all(target == runlen)
-    """
-    flat = img.ravel()
-    diff_idxs = np.flatnonzero(np.abs(np.diff(flat)) > 0)
-    pos = np.hstack([[0], diff_idxs + 1])
-
-    values = flat[pos]
-    lengths = np.hstack([np.diff(pos), [len(flat) - pos[-1]]])
-
-    runlen = np.hstack([values[:, None], lengths[:, None]]).ravel()
-
-    h, w = img.shape[0:2]
-    return (w, h), runlen
 
 
 if __name__ == '__main__':
