@@ -5,10 +5,19 @@
 
 # Graph Identification
 
+A graph algorithm to manage the identification of individuals in a population
+using automatic pairwise decision algorithms with a humans in the loop.  It is
+agnostic to the specific ranking and verification algorithms. In fact, it can
+work without a ranking or verification algorithm, but in that case all reviews
+will have to be manual, and it will be difficult to prioritize which pairs of
+annotations (typically images) to look at first.
+
 This is the graph identification described in Chapter 5 of [my thesis](https://github.com/Erotemic/crall-thesis-2017/blob/master/crall-thesis_2017-08-10_compressed.pdf). Viewing this PDF online can be slow, so I've linked there raw text [here](https://github.com/Erotemic/crall-thesis-2017/blob/master/chapter5-graphid.tex).
 
 
 # General Information
+
+This repo is currently a work in progress. 
 
 Helpful commands I'm currently using in development and debugging. Perhaps they
 will be someone illustrative of what this package is trying to do.
@@ -22,6 +31,12 @@ python -m graphid.demo.dummy_infr demodata_infr --num_pccs=100 --show
 This README is a mess. Why not look at [this Jupyter
 notebook](notebooks/core_example.ipynb) in the meantime.
 
+
+# Installation
+
+Once this package becomes stable you can install via `pip install graphid`.
+However, this will currently give you an older version of the project I
+uploaded to reserve the name.
 
 
 # Dependencies
