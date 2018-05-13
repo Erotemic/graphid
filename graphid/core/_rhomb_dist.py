@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+This is very ibeis-specific, and likely does not belong here.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import collections

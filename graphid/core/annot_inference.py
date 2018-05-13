@@ -18,6 +18,7 @@ from graphid.core import mixin_priority
 from graphid.core import mixin_loops
 from graphid.core import mixin_callbacks
 from graphid.core import mixin_simulation
+from graphid.core import mixin_invariants
 from graphid.core import mixin_redundancy
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
 from graphid.core.state import UNINFERABLE
@@ -974,7 +975,7 @@ class AnnotInference(ub.NiceRepr,
                      mixin_redundancy.Redundancy,
                      mixin_priority.Priority,
                      # General helpers
-                     mixin_helpers.AssertInvariants,
+                     mixin_invariants.AssertInvariants,
                      mixin_helpers.DummyEdges,
                      mixin_helpers.Convenience,
                      mixin_helpers.AttrAccess,
