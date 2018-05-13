@@ -5,6 +5,7 @@ import networkx as nx
 import operator
 import numpy as np
 import ubelt as ub
+import pandas as pd
 from graphid import util
 from graphid.core import state as const
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV, UNKWN
@@ -118,7 +119,6 @@ class AttrAccess(object):
         return data
 
     def get_edge_dataframe(infr, edges=None, all=False):
-        import pandas as pd
         if edges is None:
             edges = infr.edges()
         edge_datas = {e: infr.get_nonvisual_edge_data(e) for e in edges}
@@ -130,8 +130,10 @@ class AttrAccess(object):
         neworder = util.partial_order(edge_df.columns, part)
         edge_df = edge_df.reindex_axis(neworder, axis=1)
         if not all:
-            edge_df = edge_df.drop(['review_id', 'timestamp', 'timestamp_s1',
-                                    'timestamp_c2', 'timestamp_c1'], axis=1)
+            todrop = ['review_id', 'timestamp', 'timestamp_s1', 'timestamp_c2',
+                      'timestamp_c1']
+            todrop = [c for c in todrop if c in edge_df.columns]
+            edge_df = edge_df.drop(todrop, axis=1)
         # pd.DataFrame.from_dict(edge_datas, orient='list')
         return edge_df
 
@@ -211,33 +213,19 @@ class Convenience(object):
     def pair_connection_info(infr, aid1, aid2):
         """
         Helps debugging when ibs.nids has info that annotmatch/staging do not
+        Note: the relevant ibs parts were removed. Perhaps this is not useful
+        now or should be moved to the ibeis plugin?
 
-        Examples:
-            >>> # DISABLE_DOCTEST
-            >>> from graphid.core.mixin_helpers import *  # NOQA
-            >>> import ibeis
-            >>> ibs = ibeis.opendb(defaultdb='GZ_Master1')
-            >>> infr = ibeis.AnnotInference(ibs, 'all', autoinit=True)
-            >>> infr.reset_feedback('staging', apply=True)
-            >>> infr.relabel_using_reviews(rectify=False)
-            >>> aid1, aid2 = 1349, 3087
-            >>> aid1, aid2 = 1535, 2549
-            >>> infr.pair_connection_info(aid1, aid2)
-
-
-            >>> aid1, aid2 = 4055, 4286
-            >>> aid1, aid2 = 6555, 6882
-            >>> aid1, aid2 = 712, 803
-            >>> aid1, aid2 = 3883, 4220
-            >>> infr.pair_connection_info(aid1, aid2)
+        Example:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(num_pccs=3, size=4)
+            >>> aid1, aid2 = 1, 2
+            >>> print(infr.pair_connection_info(aid1, aid2))
         """
 
         nid1, nid2 = infr.pos_graph.node_labels(aid1, aid2)
         cc1 = infr.pos_graph.connected_to(aid1)
         cc2 = infr.pos_graph.connected_to(aid2)
-        raise NotImplementedError('need to remove ibs dependency')
-
-        ibs = infr.ibs
 
         # First check directly relationships
 
@@ -252,7 +240,9 @@ class Convenience(object):
                 part = ['nid1', 'nid2', 'evidence_decision', 'tags', 'user_id']
                 neworder = util.partial_order(df.columns, part)
                 df = df.reindex_axis(neworder, axis=1)
-                df = df.drop(['review_id', 'timestamp'], axis=1)
+                todrop = [c for c in ['review_id', 'timestamp']
+                          if c in df.columns]
+                df = df.drop(todrop, axis=1)
             return df
 
         def print_df(df, lbl):
@@ -272,43 +262,44 @@ class Convenience(object):
         print('Pair Connection Info')
         print('================')
 
-        nid1_, nid2_ = ibs.get_annot_nids([aid1, aid2])
+        # ibs = infr.ibs
+        # nid1_, nid2_ = ibs.get_annot_nids([aid1, aid2])
         print('AIDS        aid1, aid2 = %r, %r' % (aid1, aid2))
-        print('INFR NAMES: nid1, nid2 = %r, %r' % (nid1, nid2))
+        # print('INFR NAMES: nid1, nid2 = %r, %r' % (nid1, nid2))
         if nid1 == nid2:
             print('INFR cc = %r' % (sorted(cc1),))
         else:
             print('INFR cc1 = %r' % (sorted(cc1),))
             print('INFR cc2 = %r' % (sorted(cc2),))
 
-        if (nid1 == nid2) != (nid1_ == nid2_):
-            util.cprint('DISAGREEMENT IN GRAPH AND DB', 'red')
-        else:
-            util.cprint('GRAPH AND DB AGREE', 'green')
+        # if (nid1 == nid2) != (nid1_ == nid2_):
+        #     util.cprint('DISAGREEMENT IN GRAPH AND DB', 'red')
+        # else:
+        #     util.cprint('GRAPH AND DB AGREE', 'green')
 
-        print('IBS  NAMES: nid1, nid2 = %r, %r' % (nid1_, nid2_))
-        if nid1_ == nid2_:
-            print('IBS CC: %r' % (sorted(ibs.get_name_aids(nid1_)),))
-        else:
-            print('IBS CC1: %r' % (sorted(ibs.get_name_aids(nid1_)),))
-            print('IBS CC2: %r' % (sorted(ibs.get_name_aids(nid2_)),))
+        # print('IBS  NAMES: nid1, nid2 = %r, %r' % (nid1_, nid2_))
+        # if nid1_ == nid2_:
+        #     print('IBS CC: %r' % (sorted(ibs.get_name_aids(nid1_)),))
+        # else:
+        #     print('IBS CC1: %r' % (sorted(ibs.get_name_aids(nid1_)),))
+        #     print('IBS CC2: %r' % (sorted(ibs.get_name_aids(nid2_)),))
 
         # Does this exist in annotmatch?
-        in_am = ibs.get_annotmatch_rowid_from_undirected_superkey([aid1], [aid2])
-        print('in_am = %r' % (in_am,))
+        # in_am = ibs.get_annotmatch_rowid_from_undirected_superkey([aid1], [aid2])
+        # print('in_am = %r' % (in_am,))
 
         # Does this exist in staging?
-        staging_rowids = ibs.get_review_rowids_from_edges([(aid1, aid2)])[0]
-        print('staging_rowids = %r' % (staging_rowids,))
+        # staging_rowids = ibs.get_review_rowids_from_edges([(aid1, aid2)])[0]
+        # print('staging_rowids = %r' % (staging_rowids,))
 
-        if False:
-            # Make absolutely sure
-            stagedf = ibs.staging.get_table_as_pandas('reviews')
-            aid_cols = ['annot_1_rowid', 'annot_2_rowid']
-            has_aid1 = (stagedf[aid_cols] == aid1).any(axis=1)
-            from_aid1 = stagedf[has_aid1]
-            conn_aid2 = (from_aid1[aid_cols] == aid2).any(axis=1)
-            print('# connections = %r' % (conn_aid2.sum(),))
+        # if False:
+        #     # Make absolutely sure
+        #     stagedf = ibs.staging.get_table_as_pandas('reviews')
+        #     aid_cols = ['annot_1_rowid', 'annot_2_rowid']
+        #     has_aid1 = (stagedf[aid_cols] == aid1).any(axis=1)
+        #     from_aid1 = stagedf[has_aid1]
+        #     conn_aid2 = (from_aid1[aid_cols] == aid2).any(axis=1)
+        #     print('# connections = %r' % (conn_aid2.sum(),))
 
         # Next check indirect relationships
         graph = infr.graph
@@ -342,6 +333,63 @@ class Convenience(object):
         tag_hist = util.tag_hist(tags_list)
         return tag_hist
 
+    def match_state_df(infr, index):
+        """
+        Returns the current matching state of a list of edges.
+
+        PERHAPS WE SHOULD DEPRICATE THIS FUNCTION?
+
+        Note:
+            This does NOT use the IBEIS database state, where as the original
+            version of this function did.
+
+        CommandLine:
+            python -m graphid.core.mixin_helpers Convenience.match_state_df
+
+        Example:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(num_pccs=2, p_incomp=.8, size=4)
+            >>> index = list(infr.edges())
+            >>> print(infr.match_state_df(index))
+                       nomatch  match  notcomp
+            aid1 aid2
+            1    3       False  False     True
+                 4       False  False     True
+                 2       False   True    False
+            2    3       False  False     True
+                 4       False  False     True
+            3    4       False   True    False
+                 5       False  False     True
+            5    8       False  False     True
+                 7       False  False     True
+                 6       False  False     True
+            6    8       False  False     True
+                 7       False  False     True
+            7    8       False  False     True
+        """
+        index = util.ensure_multi_index(index, ('aid1', 'aid2'))
+        aid_pairs = np.asarray(index.tolist())
+        aid_pairs = aid_pairs.reshape(-1, 2)
+        # is_same = np.array(
+        #     [infr.pos_graph.are_nodes_connected(u, v) for u, v in aid_pairs])
+        u_nids = np.array(list(infr.gen_node_values('name_label', [
+            u for u, v in aid_pairs])))
+        v_nids = np.array(list(infr.gen_node_values('name_label', [
+            v for u, v in aid_pairs])))
+        is_same = np.equal(u_nids, v_nids)
+
+        edge_states = infr.gen_edge_values('evidence_decision', edges=aid_pairs,
+                                           default=UNREV, on_missing='default')
+        is_comp = np.array([s == INCMP for s in edge_states])
+
+        match_state_df = pd.DataFrame.from_items([
+            (NEGTV, ~is_same & is_comp),
+            (POSTV,  is_same & is_comp),
+            (INCMP, ~is_comp),
+        ])
+        match_state_df.index = index
+        return match_state_df
+
 
 class DummyEdges(object):
 
@@ -356,11 +404,7 @@ class DummyEdges(object):
                 explicitly added to the graph.  This makes feedback items with
                 user_id=algo:mst and with a confidence of guessing.
 
-        Ignore:
-            label = 'name_label'
-
-        Doctest:
-            >>> from graphid.core.mixin_dynamic import *  # NOQA
+        Example:
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=3, size=4)
             >>> assert infr.status()['nCCs'] == 3
@@ -368,22 +412,6 @@ class DummyEdges(object):
             >>> assert infr.status()['nCCs'] == 12
             >>> infr.ensure_mst()
             >>> assert infr.status()['nCCs'] == 3
-
-        Doctest:
-            >>> # DISABLE_DOCTEST
-            >>> from graphid.core.mixin_dynamic import *  # NOQA
-            >>> import ibeis
-            >>> infr = ibeis.AnnotInference('PZ_MTEST', 'all', autoinit=True)
-            >>> infr.reset_feedback('annotmatch', apply=True)
-            >>> assert infr.status()['nInconsistentCCs'] == 0
-            >>> assert infr.status()['nCCs'] == 41
-            >>> label = 'name_label'
-            >>> new_edges = infr.find_mst_edges(label=label)
-            >>> assert len(new_edges) == 0
-            >>> infr.clear_edges()
-            >>> assert infr.status()['nCCs'] == 119
-            >>> infr.ensure_mst()
-            >>> assert infr.status()['nCCs'] == 41
         """
         infr.print('ensure_mst', 1)
         new_edges = infr.find_mst_edges(label=label)
@@ -405,14 +433,14 @@ class DummyEdges(object):
                 explicitly added to the graph.
 
         Args:
-            infr (?):
-            label (str): (default = 'name_label')
-            decision (str): (default = 'unreviewed')
+            label (str): defaults to 'name_label'
+            meta_decision (str): if specified, the feedback edges added are
+                added this meta decision and with the `user_id=algo:clique`.
 
         CommandLine:
             python -m graphid.core.mixin_helpers ensure_cliques
 
-        Doctest:
+        Example:
             >>> from graphid import demo
             >>> label = 'name_label'
             >>> infr = demo.demodata_infr(num_pccs=3, size=5)
@@ -463,9 +491,6 @@ class DummyEdges(object):
             for edge in it.combinations(nodes, 2):
                 if infr.edge_decision(edge) == UNREV:
                     new_edges.append(edge)
-                # if infr.has_edge(edge):
-                # else:
-                #     new_edges.append(edge)
         return new_edges
 
     def find_mst_edges(infr, label='name_label'):

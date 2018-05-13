@@ -1,12 +1,24 @@
 # -*- coding: utf-8 -*-
+"""
+The main data structure for maintaining positive connected components and
+supporting dynamic addition and deletion of edges.
+
+This uses a union-find-like algorithm (extended to support CC lookup) in the
+background, but could be implemented with another algorithm like Euler Tour
+Trees. UnionFind is good if you are mostly adding edges, but if you expect to
+remove edges a lot, then using a forest of ETTs may be better.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 import networkx as nx
 import itertools as it
 import ubelt as ub
-from graphid.util.nx_utils import edges_inside, e_
+from graphid.util import nx_utils as nxu
 
 
 class GraphHelperMixin(ub.NiceRepr):
+    """
+    Ensures that we always return edges in a consistent order
+    """
     def __nice__(self):
         return 'nNodes={}, nEdges={}'.format(
             self.number_of_nodes(),
@@ -23,9 +35,9 @@ class GraphHelperMixin(ub.NiceRepr):
         # Force edges to always be returned in upper triangular form
         edges = super(GraphHelperMixin, self).edges(nbunch, data, default)
         if data:
-            return (e_(u, v) + (d,) for u, v, d in edges)
+            return (nxu.e_(u, v) + (d,) for u, v, d in edges)
         else:
-            return (e_(u, v) for u, v in edges)
+            return (nxu.e_(u, v) for u, v in edges)
 
 
 class NiceGraph(nx.Graph, GraphHelperMixin):
@@ -34,7 +46,7 @@ class NiceGraph(nx.Graph, GraphHelperMixin):
 
 class nx_UnionFind(object):
     """
-    Based of nx code
+    Based off code in networkx
     """
 
     def __init__(self, elements=None):
@@ -126,11 +138,13 @@ class DynConnGraph(nx.Graph, GraphHelperMixin):
 
     Data Structure     | Insertion | Deletion | CC Find |
     -----------------------------------------------------
-    * UnionFind        | lg(n)     |    n     |  No
-    * UnionFind2       |    n*     |    n     |  1
-    * EulerTourForest  | lg^2(n)   | lg^2(n)  |  lg(n) / lglg(n) - - Ammortized
+    UnionFind        | lg(n)     |    n     |  No
+    UnionFind2       |    n*     |    n     |  1
+    EulerTourForest  | lg^2(n)   | lg^2(n)  |  lg(n) / lglg(n) - - Ammortized
 
-    * it seems to be very quick
+    * O(n) is worst case, but it seems to be very quick in practice. The
+      average runtime should be close to lg(n), but I'm writing this doc
+      8 months after working on this algo, so I may not remember exactly.
 
     References:
         https://courses.csail.mit.edu/6.851/spring14/lectures/L20.pdf
@@ -161,9 +175,9 @@ class DynConnGraph(nx.Graph, GraphHelperMixin):
     # todo: check if nodes exist when adding
     """
     def __init__(self, *args, **kwargs):
-        # raise NotImplementedError('unfinished')
-        self._ccs = {}
         self._union_find = nx_UnionFind()
+        # Maintain a mapping from each node to the CC that it belongs to
+        self._ccs = {}
         super(DynConnGraph, self).__init__(*args, **kwargs)
 
     def clear(self):
@@ -235,7 +249,7 @@ class DynConnGraph(nx.Graph, GraphHelperMixin):
         del self._ccs[old_nid1]
         self._union_find.remove_entire_cc(old_cc)
         # Might be faster to just do DFS to find the CC
-        internal_edges = edges_inside(self, old_cc)
+        internal_edges = nxu.edges_inside(self, old_cc)
         # Add nodes in case there are no edges to it
         for n in old_cc:
             self._add_node(n)
@@ -357,7 +371,7 @@ class DynConnGraph(nx.Graph, GraphHelperMixin):
             H = nx.Graph()
             nbunch = set(nbunch)
             H.add_nodes_from(nbunch)
-            H.add_edges_from(edges_inside(self, nbunch))
+            H.add_edges_from(nxu.edges_inside(self, nbunch))
         else:
             H = super(DynConnGraph, self).subgraph(nbunch)
             for n in nbunch:
@@ -372,7 +386,7 @@ class DynConnGraph(nx.Graph, GraphHelperMixin):
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/graphid/graphid/util/nx_dynamic_graph.py all
+        python -m graphid.util.nx_dynamic_graph all
     """
     import xdoctest
     xdoctest.doctest_module(__file__)

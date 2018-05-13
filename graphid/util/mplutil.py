@@ -841,20 +841,6 @@ def render_figure_to_image(fig, **savekw):
     return im_bgra
 
 
-def savefig2(fig, fpath, **kwargs):
-    """
-    Does a tight layout and saves the figure with transparency
-    """
-    import matplotlib as mpl
-    if 'transparent' not in kwargs:
-        kwargs['transparent'] = True
-    if 'extent' not in kwargs:
-        axes_extents = extract_axes_extents(fig)
-        extent = mpl.transforms.Bbox.union(axes_extents)
-        kwargs['extent'] = extent
-    fig.savefig(fpath, **kwargs)
-
-
 def copy_figure_to_clipboard(fig):
     """
     References:
@@ -2631,6 +2617,77 @@ class PanEvents(object):
 
         ax.figure.canvas.draw()
         ax.figure.canvas.flush_events()
+
+
+def relative_text(pos, text, ax=None, offset=None, **kwargs):
+    """
+    Places text on axes in a relative position
+
+    Args:
+        pos (tuple): relative xy position
+        text (str): text
+        ax (None): (default = None)
+        offset (None): (default = None)
+        **kwargs: horizontalalignment, verticalalignment, roffset, ha, va,
+                  fontsize, fontproperties, fontproperties, clip_on
+
+    CommandLine:
+        python -m graphid.util.mplutil relative_text --show
+
+    Example:
+        >>> from graphid import util
+        >>> import matplotlib as mpl
+        >>> x = .5
+        >>> y = .5
+        >>> util.figure()
+        >>> txt = 'Hello World'
+        >>> family = 'monospace'
+        >>> family = 'CMU Typewriter Text'
+        >>> fontproperties = mpl.font_manager.FontProperties(family=family,
+        >>>                                                  size=42)
+        >>> relative_text((x, y), txt, halign='center',
+        >>>               fontproperties=fontproperties)
+        >>> util.show_if_requested()
+    """
+    from matplotlib import pyplot as plt
+    if pos == 'lowerleft':
+        pos = (.01, .99)
+        kwargs['halign'] = 'left'
+        kwargs['valign'] = 'bottom'
+    elif pos == 'upperleft':
+        pos = (.01, .01)
+        kwargs['halign'] = 'left'
+        kwargs['valign'] = 'top'
+    x, y = pos
+    if ax is None:
+        ax = plt.gca()
+    if 'halign' in kwargs:
+        kwargs['horizontalalignment'] = kwargs.pop('halign')
+    if 'valign' in kwargs:
+        kwargs['verticalalignment'] = kwargs.pop('valign')
+    if 'ha' in kwargs:
+        kwargs['horizontalalignment'] = kwargs.pop('ha')
+    if 'va' in kwargs:
+        kwargs['verticalalignment'] = kwargs.pop('va')
+    xy, width, height = get_axis_xy_width_height(ax)
+    x_, y_ = ((xy[0]) + x * width, (xy[1] + height) - y * height)
+    if offset is not None:
+        xoff, yoff = offset
+        x_ += xoff
+        y_ += yoff
+    ax.text(x_, y_, text, **kwargs)
+
+
+def get_axis_xy_width_height(ax=None, xaug=0, yaug=0, waug=0, haug=0):
+    """ gets geometry of a subplot """
+    from matplotlib import pyplot as plt
+    if ax is None:
+        ax = plt.gca()
+    autoAxis = ax.axis()
+    xy     = (autoAxis[0] + xaug, autoAxis[2] + yaug)
+    width  = (autoAxis[1] - autoAxis[0]) + waug
+    height = (autoAxis[3] - autoAxis[2]) + haug
+    return xy, width, height
 
 if __name__ == '__main__':
     import xdoctest

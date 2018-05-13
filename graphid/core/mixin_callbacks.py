@@ -78,11 +78,6 @@ class InfrCandidates(object):
     as candidates in the priority queue.
     """
 
-    def ensure_prioritized(infr, priority_edges):
-        priority_edges = list(priority_edges)
-        metric, priority = infr.ensure_priority_scores(priority_edges)
-        infr.prioritize(metric=metric, edges=priority_edges, scores=priority)
-
     def add_candidate_edges(infr, candidate_edges):
         candidate_edges = list(candidate_edges)
         new_edges = infr.ensure_edges_from(candidate_edges)
@@ -100,7 +95,9 @@ class InfrCandidates(object):
             priority_edges = candidate_edges
 
         if len(priority_edges) > 0:
-            infr.ensure_prioritized(priority_edges)
+            priority_edges = list(priority_edges)
+            metric, priority = infr.ensure_priority_scores(priority_edges)
+            infr.prioritize(metric=metric, edges=priority_edges, scores=priority)
             if hasattr(infr, 'on_new_candidate_edges'):
                 # hack callback for demo
                 infr.on_new_candidate_edges(infr, new_edges)

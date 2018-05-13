@@ -4,11 +4,11 @@ import ubelt as ub
 import numpy as np
 import pandas as pd
 from graphid import util
-from graphid.util.nx_utils import ensure_multi_index
 from graphid.core.state import POSTV, NEGTV, INCMP
 
 
 class Groundtruth(object):
+
     def is_comparable(infr, aid_pairs, allow_guess=True):
         """
         Guesses by default when real comparable information is not available.
@@ -45,9 +45,9 @@ class Groundtruth(object):
 
     def match_state_df(infr, index):
         """ Returns groundtruth state based on ibeis controller """
-        index = ensure_multi_index(index, ('aid1', 'aid2'))
+        index = util.ensure_multi_index(index, ('aid1', 'aid2'))
         aid_pairs = np.asarray(index.tolist())
-        aid_pairs = util.ensure_shape(aid_pairs, (None, 2))
+        aid_pairs = aid_pairs.reshape(-1, 2)
         is_same = infr.is_same(aid_pairs)
         is_comp = infr.is_comparable(aid_pairs)
         match_state_df = pd.DataFrame.from_items([

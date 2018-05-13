@@ -1,6 +1,7 @@
 import itertools as it
 import ubelt as ub
 from graphid import util
+from os.path import join
 
 
 def run_demo():
@@ -10,10 +11,7 @@ def run_demo():
         python -m graphid.demo.demo_script run_demo
 
     Example:
-        >>> # DISABLE_DOCTEST
-        >>> from graphid.demo import *  # NOQA
-        >>> result = run_demo()
-        >>> print(result)
+        >>> run_demo()
     """
     from graphid import demo
     import matplotlib as mpl
@@ -148,7 +146,6 @@ def run_demo():
         ax.set_aspect('equal')
 
         # ax.xaxis.label.set_color('red')
-        from os.path import join
         fpath = join(dpath, 'demo_{:04d}.png'.format(next(fig_counter)))
         fig.savefig(fpath, dpi=300,
                     # transparent=True,

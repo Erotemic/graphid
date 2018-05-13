@@ -16,8 +16,26 @@ def demodata_infr(**kwargs):
         num_pccs (list): implicit number of individuals
         ccs (list): explicit list of connected components
 
+        p_incon (float): probability a PCC is inconsistent
+        p_incomp (float): probability an edge is incomparable
+        n_incon (int): target number of inconsistent components (default 3)
+
+        pcc_size_mean (int): average number of annots per PCC
+        pcc_size_std (float): std dev of annots per PCC
+
+        pos_redun (int): desired level of positive redundancy
+
+        infer (bool): whether or not to run inference by default default True
+
+        ignore_pair (bool): if True ignores all pairwise dummy edge generation
+        p_pair_neg (float): default = .4
+        p_pair_incmp (float): default = .2
+        p_pair_unrev (float): default = 0.0
+
     CommandLine:
         python -m graphid.demo.dummy_infr demodata_infr --show
+        python -m utool.util_inspect recursive_parse_kwargs:2 --mod graphid.demo.dummy_infr --func demodata_infr
+
 
     Example:
         >>> from graphid import demo

@@ -14,20 +14,6 @@ class GraphID(ub.NiceRepr):
         >>>     self.add_feedback(feedback)
     """
 
-    @classmethod
-    def from_ibeis(IDGraph, ibs, aids):
-        """
-        Example:
-            >>> # DISABLE_DOCTEST
-            >>> import ibeis
-            >>> ibs = ibeis.opendb(defaultdb=defaultdb)
-            >>> aids = [1, 2, 3, 4, 5, 6]
-            >>> self = IDGraph.from_ibeis(ibs, aids)
-        """
-        self = IDGraph()
-        self.add_anots_from(self, aids)
-        self.add_anots_from(self, aids)
-
     def __init__(self):
         self.infr = None
         self.infr = annot_inference.AnnotInference()

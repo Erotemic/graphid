@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import ubelt as ub
 import pandas as pd
@@ -36,7 +35,7 @@ class InfrLoops(object):
         CommandLine:
             python -m graphid.core.mixin_loops InfrLoops.main_gen
 
-        Doctest:
+        Example:
             >>> from graphid.core.mixin_simulation import UserOracle
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=3, size=5)
@@ -45,7 +44,6 @@ class InfrLoops(object):
             >>> infr.oracle = UserOracle(.99, rng=0)
             >>> infr.simulation_mode = False
             >>> infr.reset()
-            >>> #infr.load_published()
             >>> gen = infr.main_gen()
             >>> while True:
             >>>     try:
@@ -83,14 +81,12 @@ class InfrLoops(object):
             infr.loop_phase = 'hardcase_init'
             # Check previously labeled edges that where the groundtruth and the
             # verifier disagree.
-            for _ in infr.hardcase_review_gen():
-                yield _
+            yield from infr.hardcase_review_gen()
 
         if infr.params['inference.enabled']:
             infr.loop_phase = 'incon_recover_init'
             # First, fix any inconsistencies
-            for _ in infr.incon_recovery_gen():
-                yield _
+            yield from infr.incon_recovery_gen()
 
         # Phase 0.2: Ensure positive redundancy (this is generally quick)
         # so the user starts seeing real work after one random review is made
@@ -98,8 +94,7 @@ class InfrLoops(object):
         if infr.params['redun.enabled'] and infr.params['redun.enforce_pos']:
             infr.loop_phase = 'pos_redun_init'
             # Fix positive redundancy of anything within the loop
-            for _ in infr.pos_redun_gen():
-                yield _
+            yield from infr.pos_redun_gen()
 
         if infr.params['ranking.enabled']:
             for count in it.count(0):
@@ -108,8 +103,7 @@ class InfrLoops(object):
 
                 # Phase 1: Try to merge PCCs by searching for LNBNN candidates
                 infr.loop_phase = 'ranking_{}'.format(count)
-                for _ in infr.ranked_list_gen(use_refresh):
-                    yield _
+                yield from infr.ranked_list_gen(use_refresh)
 
                 terminate = (infr.refresh.num_meaningful == 0)
                 if terminate:
@@ -119,8 +113,7 @@ class InfrLoops(object):
                 infr.loop_phase = 'posredun_{}'.format(count)
                 if all(ub.take(infr.params, ['redun.enabled', 'redun.enforce_pos'])):
                     # Fix positive redundancy of anything within the loop
-                    for _ in infr.pos_redun_gen():
-                        yield _
+                    yield from infr.pos_redun_gen()
 
                 print('prob_any_remain = %r' % (infr.refresh.prob_any_remain(),))
                 print('infr.refresh.num_meaningful = {!r}'.format(
@@ -139,8 +132,7 @@ class InfrLoops(object):
             # asking the user to do anything but resolve inconsistency.
             infr.print('Entering phase 3', 1, color='red')
             infr.loop_phase = 'negredun'
-            for _ in infr.neg_redun_gen():
-                yield _
+            yield from infr.neg_redun_gen()
 
         infr.print('Terminate', 1, color='red')
         infr.print('Exiting main loop')
@@ -203,8 +195,7 @@ class InfrLoops(object):
         infr.prioritize(metric='hardness', edges=edges,
                         scores=hardness)
         infr.set_edge_attrs('hardness', ub.dzip(edges, hardness))
-        for _ in infr._inner_priority_gen(use_refresh=False):
-            yield _
+        yield from infr._inner_priority_gen(use_refresh=False)
 
     def ranked_list_gen(infr, use_refresh=True):
         """
@@ -220,8 +211,7 @@ class InfrLoops(object):
             return
         if use_refresh:
             infr.refresh.clear()
-        for _ in infr._inner_priority_gen(use_refresh):
-            yield _
+        yield from infr._inner_priority_gen(use_refresh)
 
     def incon_recovery_gen(infr):
         """
@@ -242,8 +232,7 @@ class InfrLoops(object):
         infr.print('--- INCON RECOVER LOOP ---', color='white')
         infr.queue.clear()
         infr.add_candidate_edges(maybe_error_edges)
-        for _ in infr._inner_priority_gen(use_refresh=False):
-            yield _
+        yield from infr._inner_priority_gen(use_refresh=False)
 
     def pos_redun_gen(infr):
         """
@@ -254,12 +243,15 @@ class InfrLoops(object):
         CommandLine:
             python -m graphid.core.mixin_loops InfrLoops.pos_redun_gen
 
-        Doctest:
+        Example:
             >>> from graphid.core.mixin_loops import *
             >>> from graphid import demo
-            >>> infr = demo.demodata_infr(num_pccs=3, size=5)
+            >>> infr = demo.demodata_infr(num_pccs=3, size=5, pos_redun=1)
             >>> gen = infr.pos_redun_gen()
             >>> feedback = next(gen)
+            >>> edge_ = feedback[0][0]
+            >>> print(edge_)
+            (1, 5)
         """
         infr.print('===========================', color='white')
         infr.print('--- POSITIVE REDUN LOOP ---', color='white')

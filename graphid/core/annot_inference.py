@@ -411,21 +411,6 @@ class Feedback(object):
         infr.neg_redun_metagraph.clear()
         infr.nid_to_errors.clear()
 
-    def reset_feedback(infr, mode='annotmatch', apply=True):
-        """ Resets feedback edges to state of the SQL annotmatch table """
-        infr.print('reset_feedback mode={}'.format(mode), 1)
-        raise Exception('DEPRICATED IN STANDALONE VERSION')
-        infr.clear_feedback()
-        if mode == 'annotmatch':
-            infr.external_feedback = infr.read_ibeis_annotmatch_feedback()
-        elif mode == 'staging':
-            infr.external_feedback = infr.read_ibeis_staging_feedback()
-        else:
-            raise ValueError('no mode=%r' % (mode,))
-        infr.internal_feedback = ub.ddict(list)
-        if apply:
-            infr.apply_feedback_edges()
-
     def reset(infr, state='empty'):
         """
         Removes all edges from graph and resets name labels.
@@ -611,26 +596,6 @@ class NameRelabel(object):
         infr.print('done relabeling', 3)
         return num_names, num_inconsistent
 
-    def connected_component_status(infr):
-        """
-        Returns:
-            dict: num_inconsistent, num_names_max
-
-        CommandLine:
-            python -m graphid.core.annot_inference connected_component_status
-        """
-        infr.print('checking status', 3)
-
-        num_inconsistent = len(infr.recovery_ccs)
-        num_names_max = infr.pos_graph.number_of_components()
-
-        status = dict(
-            num_names_max=num_names_max,
-            num_inconsistent=num_inconsistent,
-        )
-        infr.print('done checking status', 3)
-        return status
-
 
 class MiscHelpers(object):
 
@@ -756,13 +721,16 @@ class MiscHelpers(object):
         if color is None:
             color = 'turquoise' if ub.WIN32 else 'blue'
 
-        if True:
+        RECORD_LOGS = True
+        INFER_CALLER = True
+
+        if INFER_CALLER:
             from xdoctest.dynamic_analysis import get_parent_frame
             # Record the name of the calling function
             parent_name = get_parent_frame().f_code.co_name
             msg = '[{}] '.format(parent_name) + msg
 
-        if True:
+        if RECORD_LOGS:
             # Append the message to an internal log deque
             infr.logs.append((msg, color))
             if len(infr.logs) == infr.logs.maxlen:
@@ -813,6 +781,9 @@ class AltConstructors(object):
 
     @classmethod
     def from_netx(AnnotInference, G, verbose=False, infer=True):
+        """
+        Creates an AnnotInference object from a networkx graph
+        """
         aids = list(G.nodes())
         nids = [-a for a in aids]
         infr = AnnotInference(aids, nids, autoinit=False,
@@ -828,8 +799,64 @@ class AltConstructors(object):
 
     def status(infr, extended=False):
         """
+        Returns information about the state of the graph.
+
+        Args:
+            extended (bool): if True, adds in extra information that requires
+                an O(|E|) amount of computation, otherwise only O(1) stats that
+                are dynamically tracked are returned.
+
         Returns:
-            dict: a dictionary containing status information
+            dict: a dictionary containing status information. Each of the keys
+                represents the following information:
+
+                    nNodes: number of nodes in the graph
+                    nEdges: number of edges in the graph
+                    nCCs: number of positive connected components
+                    nPostvEdges: number of edges labeled as positive
+                    nNegtvEdges: number of edges labeled as negative
+                    nIncmpEdges: number of edges labeled as incomparable
+                    nUnrevEdges: number of edges labeled as unreviewed
+                    nPosRedunCCs: the number of PCCs which are currently
+                        k-positive-redundant, i.e. we are confident those
+                        PCCs are the same individual.
+                    nNegRedunPairs: the number of PCCs pairs which are
+                        currently k-negative-redundant, i.e. we are confident
+                        those PCCs are different individuals.
+                    nInconsistentCCs: the number of inconsistent PCCs that need
+                        to be fixed, i.e. the number of PCCs with an internal
+                        negative edges.
+
+                If extended is True, then the following keys are also present
+                    nNegEdgesWithin: number of negatives edges inside PCCs
+                    nNegEdgesBetween: number of negative edges between PCCs
+                    nIncompEdgesWithin: number of incomparable edges inside PCCs
+                    nIncompEdgesBetween: number of incomparable edges between PCCs
+                    nUnrevEdgesWithin: number of unreviewed edges inside PCCs
+                    nUrevEdgesBetween: number of unreviewed edges between PCCs
+
+        Example:
+            >>> from graphid import demo
+            >>> infr = demo.demodata_infr(num_pccs=5, p_incon=0.5, pcc_size=10)
+            >>> print(ub.repr2(infr.status(extended=True)))
+            {
+                'nNodes': 50,
+                'nEdges': 93,
+                'nCCs': 5,
+                'nPostvEdges': 66,
+                'nNegtvEdges': 10,
+                'nIncmpEdges': 2,
+                'nUnrevEdges': 15,
+                'nPosRedunCCs': 1,
+                'nNegRedunPairs': 2,
+                'nInconsistentCCs': 3,
+                'nNegEdgesWithin': 4,
+                'nNegEdgesBetween': 6,
+                'nIncompEdgesWithin': 0,
+                'nIncompEdgesBetween': 2,
+                'nUnrevEdgesWithin': 15,
+                'nUrevEdgesBetween': 0,
+            }
         """
         status_dict = ub.odict([
             ('nNodes', len(infr.aids)),
@@ -869,20 +896,6 @@ class AltConstructors(object):
             status_dict['nUrevEdgesBetween'] = b
 
         return status_dict
-
-    def __nice__(infr):
-        if infr.graph is None:
-            return 'nAids=%r, G=None' % (len(infr.aids))
-        else:
-            fmt = 'nNodes={}, nEdges={}, nCCs={}'
-            msg = fmt.format(
-                len(infr.aids),
-                infr.graph.number_of_edges(),
-                infr.pos_graph.number_of_components(),
-                # infr.incomp_graph.number_of_edges(),
-                # infr.unreviewed_graph.number_of_edges(),
-            )
-            return msg
 
 
 class AnnotInference(ub.NiceRepr,
@@ -995,7 +1008,6 @@ class AnnotInference(ub.NiceRepr,
 
         # Dynamic Properties (requires bookkeeping)
         infr.nid_to_errors = {}
-        infr.recovery_ccs = []
 
         # Recover graph holds positive edges of inconsistent PCCs
         infr.recover_graph = util.DynConnGraph()
@@ -1022,8 +1034,9 @@ class AnnotInference(ub.NiceRepr,
         infr._gen = None
 
         # Computer vision algorithms
-        infr.ranker = None
-        infr.verifiers = None
+        infr.ranker = None  # the ranking algorithm (e.g. LNBNN)
+        infr.verifier = None  # the match_state classifier
+        infr.verifiers = None  # dictionary of tasks -> classifier
 
         # TODO: move to params
         infr.task_thresh = {
@@ -1128,7 +1141,21 @@ class AnnotInference(ub.NiceRepr,
             infr.initialize_graph()
             if isinstance(autoinit, six.string_types):
                 raise Exception('Cannot autoinit this way anymore')
-                infr.reset_feedback(autoinit)
+
+    def __nice__(infr):
+        """ for ub.NiceRepr """
+        if infr.graph is None:
+            return 'nAids=%r, G=None' % (len(infr.aids))
+        else:
+            fmt = 'nNodes={}, nEdges={}, nCCs={}'
+            msg = fmt.format(
+                len(infr.aids),
+                infr.graph.number_of_edges(),
+                infr.pos_graph.number_of_components(),
+                # infr.incomp_graph.number_of_edges(),
+                # infr.unreviewed_graph.number_of_edges(),
+            )
+            return msg
 
     def subparams(infr, prefix):
         """
@@ -1171,7 +1198,6 @@ class AnnotInference(ub.NiceRepr,
 
         infr2.review_graphs = copy.deepcopy(infr.review_graphs)
         infr2.nid_to_errors = copy.deepcopy(infr.nid_to_errors)
-        infr2.recovery_ccs = copy.deepcopy(infr.recovery_ccs)
 
         infr2.readonly = infr.readonly
         infr2.dirty = infr.dirty

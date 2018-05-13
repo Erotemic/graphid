@@ -101,9 +101,16 @@ class Priority(object):
     def prioritize(infr, metric=None, edges=None, scores=None,
                    force_inconsistent=True, reset=False):
         """
-        Adds edges to the priority queue
+        Adds edges to the priority queue.
 
-        Doctest:
+        Note that these edges must already exist in the `infr.unreviewed_graph`
+        as unreviewed edges. By default the `prob_match` edge attribute is used
+        to sort edges. If you have registered a verification algorithm, then
+        these scores are computed using `infr.ensure_priority_scores(edges)`.
+        However, you can have all this done for you by simply calling
+        `infr.add_candidate_edges(edges)` or `infr.refresh_candidate_edges()`.
+
+        Example:
             >>> from graphid.core.mixin_priority import *  # NOQA
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=7, size=5)
@@ -335,7 +342,7 @@ class Priority(object):
         """
         Checks if u and v are conneted by edges above a confidence threshold
 
-        Doctest:
+        Example:
             >>> from graphid.core.mixin_priority import *  # NOQA
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=[(1, 2), (3, 4), (5, 6), (7, 8)])
