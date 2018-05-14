@@ -214,9 +214,12 @@ def demo_refresh():
         >>> util.show_if_requested()
     """
     from graphid import demo
-    import utool as ut
-    demokw = ut.argparse_dict({'num_pccs': 50, 'size': 4})
-    refreshkw = ut.argparse_funckw(RefreshCriteria)
+    # import utool as ut
+    # demokw = ut.argparse_dict({'num_pccs': 50, 'size': 4})
+    # refreshkw = ut.argparse_funckw(RefreshCriteria)
+    demokw = {'num_pccs': 50, 'size': 4}
+    refreshkw = dict(window=20, patience=72, thresh=.1,
+                     method='binomial')
     # make an inference object
     infr = demo.demodata_infr(size_std=0, **demokw)
     edges = list(infr.ranker.predict_candidate_edges(infr.aids, K=100))
@@ -261,9 +264,9 @@ def demo_refresh():
                          demokw)
     thresh = refreshkw.pop('thresh')
     refreshkw['span'] = refreshkw.pop('window')
-    util.relative_text((.02, .58 + .0), ut.get_cfg_lbl(demokw, sep=' ')[1:],
+    util.relative_text((.02, .58 + .0), ub.repr2(demokw, sep=' ', nl=0)[1:],
                        valign='bottom')
-    util.relative_text((.02, .68 + .0), ut.get_cfg_lbl(refreshkw, sep=' ')[1:],
+    util.relative_text((.02, .68 + .0), ub.repr2(refreshkw, sep=' ', nl=0)[1:],
                        valign='bottom')
     legend = plt.gca().legend()
     legend.get_frame().set_alpha(1.0)

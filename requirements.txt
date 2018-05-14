@@ -6,3 +6,6 @@ scipy
 networkx
 pandas
 opencv-python
+matplotlib
+pygraphviz
+skimage

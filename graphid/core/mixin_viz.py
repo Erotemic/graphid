@@ -175,31 +175,32 @@ class GraphVisualization(object):
         util.nx_delete_node_attr(simple, infr.visual_node_attrs + ['pin'])
         return simple
 
-    @staticmethod
-    def make_viz_config(use_image, small_graph):
-        import dtool as dt
-        import utool as ut
-        class GraphVizConfig(dt.Config):
-            _param_info_list = [
-                # Appearance
-                ut.ParamInfo('show_image', default=use_image),
-                ut.ParamInfo('in_image', default=use_image, hideif=lambda cfg: not cfg['show_image']),
-                ut.ParamInfo('pin_positions', default=use_image),
+    # @staticmethod
+    # def make_viz_config(use_image, small_graph):
+    #     raise NotImplementedError('required utool, cant use')
+    #     # import dtool as dt
+    #     # import utool as ut
+    #     # class GraphVizConfig(dt.Config):
+    #     #     _param_info_list = [
+    #     #         # Appearance
+    #     #         ut.ParamInfo('show_image', default=use_image),
+    #     #         ut.ParamInfo('in_image', default=use_image, hideif=lambda cfg: not cfg['show_image']),
+    #     #         ut.ParamInfo('pin_positions', default=use_image),
 
-                # Visibility
-                ut.ParamInfo('show_reviewed_edges', small_graph),
-                ut.ParamInfo('show_unreviewed_edges', small_graph),
-                ut.ParamInfo('show_inferred_same', small_graph),
-                ut.ParamInfo('show_inferred_diff', small_graph),
-                ut.ParamInfo('highlight_reviews', True),
-                ut.ParamInfo('show_recent_review', False),
-                ut.ParamInfo('show_labels', small_graph),
-                ut.ParamInfo('splines', 'spline' if small_graph else 'line',
-                             valid_values=['line', 'spline', 'ortho']),
-                ut.ParamInfo('groupby', 'name_label',
-                             valid_values=['name_label', None]),
-            ]
-        return GraphVizConfig
+    #     #         # Visibility
+    #     #         ut.ParamInfo('show_reviewed_edges', small_graph),
+    #     #         ut.ParamInfo('show_unreviewed_edges', small_graph),
+    #     #         ut.ParamInfo('show_inferred_same', small_graph),
+    #     #         ut.ParamInfo('show_inferred_diff', small_graph),
+    #     #         ut.ParamInfo('highlight_reviews', True),
+    #     #         ut.ParamInfo('show_recent_review', False),
+    #     #         ut.ParamInfo('show_labels', small_graph),
+    #     #         ut.ParamInfo('splines', 'spline' if small_graph else 'line',
+    #     #                      valid_values=['line', 'spline', 'ortho']),
+    #     #         ut.ParamInfo('groupby', 'name_label',
+    #     #                      valid_values=['name_label', None]),
+    #     #     ]
+    #     # return GraphVizConfig
 
     def update_visual_attrs(infr, graph=None,
                             show_reviewed_edges=True,
