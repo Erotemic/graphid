@@ -204,8 +204,7 @@ def netx_draw_images_at_positions(img_list, pos_list, size_list, color_list,
                   for size, img in zip(size_list, img_list)]
 
     for pos, img, size in zip(pos_list, img_list_, size_list_):
-        tlbr = util.Boxes(list(pos) + list(size), 'cxywh').toformat('tlbr')
-        extent = tlbr.data[..., [0, 2, 1, 3]]
+        extent = util.Boxes(list(pos) + list(size), 'cxywh').toformat('extent').data
         plt.imshow(img, extent=extent)
 
 
@@ -1095,7 +1094,7 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
             else:
                 bbox = list(xy_bl) + [width, height]
                 if isdiag:
-                    center_xy  = util.bbox_center(bbox)
+                    center_xy  = util.Boxes(bbox).center
                     _xy =  np.array(center_xy)
                     newverts_ = [
                         _xy + [         0, -height / 2],
@@ -1279,13 +1278,12 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
                         xys = np.array(list(ub.take(node_pos, node_pos.keys()))).T.reshape(2, -1)
                         whs = np.array(list(ub.take(node_size, node_pos.keys()))).T.reshape(2, -1)
                         cxywh = np.vstack([xys, whs]).T
-                        tlbr = util.Boxes(cxywh, 'cxywh').toformat('tlbr').data
-                        extents = tlbr[..., [0, 2, 1, 3]]
+                        extents = util.Boxes(cxywh, 'cxywh').toformat('extent').data
                         tl_pts = np.array([extents[0], extents[2]]).T
                         br_pts = np.array([extents[1], extents[3]]).T
                         pts = np.vstack([tl_pts, br_pts])
                         extent = util.get_pointset_extents(pts)
-                        graph_w, graph_h = util.bbox_from_extent(extent)[2:4]
+                        graph_w, graph_h = bbox_from_extent(extent)[2:4]
                         graph_dim = np.sqrt(graph_w ** 2 + graph_h ** 2)
 
                         # width = graph_dim * .0005
@@ -1557,11 +1555,10 @@ def get_graph_bounding_box(graph):
 
     cxywh_boxes = np.array([(x, y, w, h)
                             for (x, y), (w, h) in zip(pos_list, shape_list)])
-    tlbr_boxes = util.Boxes(cxywh_boxes, 'cxywh').toformat('tlbr').data
-    node_extents = tlbr_boxes[..., [0, 2, 1, 3]]
+    node_extents = util.Boxes(cxywh_boxes, 'cxywh').toformat('extent').data
     tl_x, br_x, tl_y, br_y = node_extents.T
     extent = tl_x.min(), br_x.max(), tl_y.min(), br_y.max()
-    bbox = util.bbox_from_extent(extent)
+    bbox = bbox_from_extent(extent)
     return bbox
 
 
@@ -1596,6 +1593,34 @@ def nx_ensure_agraph_color(graph):
     for u, v, edge_data in graph.edges(data=True):
         data = edge_data
         _fix_agraph_color(data)
+
+
+def bbox_from_extent(extent):
+    """
+    Args:
+        extent (ndarray): tl_x, br_x, tl_y, br_y
+
+    Returns:
+        bbox (ndarray): tl_x, tl_y, w, h
+
+    Example:
+        >>> extent = [0, 10, 0, 10]
+        >>> bbox = bbox_from_extent(extent)
+        >>> print('bbox = {}'.format(ub.repr2(list(bbox), nl=0)))
+        bbox = [0, 0, 10, 10]
+    """
+    tl_x, br_x, tl_y, br_y = extent
+    w = br_x - tl_x
+    h = br_y - tl_y
+    bbox = [tl_x, tl_y, w, h]
+    return bbox
+
+
+def get_pointset_extents(pts):
+    minx, miny = pts.min(axis=0)
+    maxx, maxy = pts.max(axis=0)
+    bounds = minx, maxx, miny, maxy
+    return bounds
 
 
 if __name__ == '__main__':

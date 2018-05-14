@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function
-import cv2
 import pandas as pd
 import numpy as np
 import six
@@ -823,48 +822,6 @@ def adjust_subplots(left=None, right=None, bottom=None, top=None, wspace=None,
     del adjust_dict['validate']
     adjust_dict.update(kwargs)
     fig.subplots_adjust(**adjust_dict)
-
-
-def render_figure_to_image(fig, **savekw):
-    import io
-    import cv2
-    import matplotlib as mpl
-    axes_extents = extract_axes_extents(fig)
-    extent = mpl.transforms.Bbox.union(axes_extents)
-    with io.BytesIO() as stream:
-        # This call takes 23% - 15% of the time depending on settings
-        fig.savefig(stream, bbox_inches=extent, **savekw)
-        # fig.savefig(stream, **savekw)
-        stream.seek(0)
-        data = np.fromstring(stream.getvalue(), dtype=np.uint8)
-    im_bgra = cv2.imdecode(data, cv2.IMREAD_UNCHANGED)
-    return im_bgra
-
-
-def copy_figure_to_clipboard(fig):
-    """
-    References:
-        https://stackoverflow.com/questions/17676373/python-matplotlib-pyqt-copy-image-to-clipboard
-    """
-    print('Copying figure %d to the clipboard' % fig.number)
-    import matplotlib as mpl
-    app = mpl.backends.backend_qt5.qApp
-    QtGui = mpl.backends.backend_qt5.QtGui
-    im_bgra = render_figure_to_image(fig, transparent=True)
-    im_rgba = cv2.cvtColor(im_bgra, cv2.COLOR_BGRA2RGBA)
-    im = im_rgba
-    QImage = QtGui.QImage
-    qim = QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QImage.Format_RGBA8888)
-    clipboard = app.clipboard()
-    clipboard.setImage(qim)
-
-    # size = fig.canvas.size()
-    # width, height = size.width(), size.height()
-    # qim = QtGui.QImage(fig.canvas.buffer_rgba(), width, height, QtGui.QImage.Format_ARGB32)
-
-    # QtWidgets = mpl.backends.backend_qt5.QtWidgets
-    # pixmap = QtWidgets.QWidget.grab(fig.canvas)
-    # clipboard.setPixmap(pixmap)
 
 
 def dict_intersection(dict1, dict2):
@@ -2229,35 +2186,6 @@ def make_heatmask(probs, cmap='plasma', with_alpha=True):
         heatmask[:, :, 0:3] = heatmask[:, :, 0:3][:, :, ::-1]
         heatmask[:, :, 3] = probs
     return heatmask
-
-
-def colorbar_image(domain, cmap='plasma', dpi=96, shape=(200, 20), transparent=False):
-    """
-    Notes:
-        shape is approximate
-    """
-    import matplotlib as mpl
-    mpl.use('agg', force=False, warn=False)
-    from matplotlib import pyplot as plt
-
-    fig = plt.figure(dpi=dpi)
-
-    w, h = shape[1] / dpi, shape[0] / dpi
-    # w, h = 1, 10
-    fig.set_size_inches(w, h)
-
-    ax = fig.add_subplot('111')
-
-    sm = plt.cm.ScalarMappable(cmap=plt.get_cmap(cmap))
-    sm.set_array(domain)
-
-    plt.colorbar(sm, cax=ax)
-
-    cb_img = render_figure_to_image(fig, dpi=dpi, transparent=transparent)
-
-    plt.close(fig)
-
-    return cb_img
 
 
 class Color(ub.NiceRepr):

@@ -16,7 +16,6 @@ else:
     from graphid.util import nx_utils
     from graphid.util import priority_queue
     from graphid.util import util_boxes
-    from graphid.util import util_geometry
     from graphid.util import util_grabdata
     from graphid.util import util_graphviz
     from graphid.util import util_group
@@ -27,19 +26,18 @@ else:
     from graphid.util import util_random
     from graphid.util import util_tags
     from graphid.util.mplutil import (Color, PanEvents, PlotNums, adjust_subplots,
-                                      axes_extent, colorbar, colorbar_image,
-                                      copy_figure_to_clipboard,
-                                      deterministic_shuffle, dict_intersection,
-                                      distinct_colors, distinct_markers,
-                                      draw_border, draw_boxes, draw_line_segments,
-                                      ensure_fnum, extract_axes_extents, figure,
+                                      axes_extent, colorbar, deterministic_shuffle,
+                                      dict_intersection, distinct_colors,
+                                      distinct_markers, draw_border, draw_boxes,
+                                      draw_line_segments, ensure_fnum,
+                                      extract_axes_extents, figure,
                                       get_axis_xy_width_height, imshow, legend,
                                       make_heatmask, multi_plot, next_fnum,
                                       pan_factory, pandas_plot_matrix, qtensure,
-                                      relative_text, render_figure_to_image,
-                                      reverse_colormap, save_parts, scores_to_cmap,
-                                      scores_to_color, set_figtitle,
-                                      show_if_requested, zoom_factory,)
+                                      relative_text, reverse_colormap, save_parts,
+                                      scores_to_cmap, scores_to_color,
+                                      set_figtitle, show_if_requested,
+                                      zoom_factory,)
     from graphid.util.name_rectifier import (demodata_oldnames,
                                              find_consistent_labeling,
                                              simple_munkres,)
@@ -63,36 +61,14 @@ else:
                                        random_k_edge_connected_graph, take_column,)
     from graphid.util.priority_queue import (PriorityQueue,)
     from graphid.util.util_boxes import (Boxes, box_ious_py,)
-    from graphid.util.util_geometry import (TRANSFORM_DTYPE,
-                                            add_homogenous_coordinate, bbox_center,
-                                            bbox_from_extent, bbox_from_verts,
-                                            bboxes_from_vert_list,
-                                            closest_point_on_bbox,
-                                            closest_point_on_line,
-                                            closest_point_on_line_segment,
-                                            closest_point_on_vert_segments,
-                                            cvt_bbox_xywh_to_pt1pt2, draw_border,
-                                            draw_verts, get_pointset_extent_wh,
-                                            get_pointset_extents,
-                                            remove_homogenous_coordinate,
-                                            rotation_around_bbox_mat3x3,
-                                            rotation_around_mat3x3,
-                                            rotation_mat3x3, scale_around_mat3x3,
-                                            scale_bbox, scale_extents,
-                                            scale_mat3x3, scaled_verts_from_bbox,
-                                            scaled_verts_from_bbox_gen,
-                                            transform_around,
-                                            transform_points_with_homography,
-                                            translation_mat3x3, verts_from_bbox,
-                                            verts_list_from_bboxes_list,)
     from graphid.util.util_grabdata import (TESTIMG_URL_DICT, grab_test_imgpath,)
     from graphid.util.util_graphviz import (GRAPHVIZ_KEYS, LARGE_GRAPH,
                                             apply_graph_layout_attrs,
-                                            draw_network2, dump_nx_ondisk,
-                                            ensure_nonhex_color,
+                                            bbox_from_extent, draw_network2,
+                                            dump_nx_ondisk, ensure_nonhex_color,
                                             get_explicit_graph,
                                             get_graph_bounding_box, get_nx_layout,
-                                            make_agraph,
+                                            get_pointset_extents, make_agraph,
                                             netx_draw_images_at_positions,
                                             nx_agraph_layout,
                                             nx_ensure_agraph_color,
@@ -104,15 +80,8 @@ else:
                                             translate_graph_to_origin,)
     from graphid.util.util_group import (group_pairs, grouping_delta,
                                          order_dict_by, sort_dict, sortedby,)
-    from graphid.util.util_image import (CV2_INTERPOLATION_TYPES, adjust_gamma,
-                                         atleast_3channels, convert_colorspace,
-                                         ensure_alpha_channel, ensure_float01,
-                                         ensure_grayscale, get_num_channels,
-                                         image_slices, imread, imscale, imwrite,
-                                         load_image_paths,
-                                         make_channels_comparable,
-                                         overlay_alpha_images, overlay_colorized,
-                                         wide_strides_1d,)
+    from graphid.util.util_image import (convert_colorspace, ensure_float01,
+                                         get_num_channels, imread, imwrite,)
     from graphid.util.util_kw import (KWSpec,)
     from graphid.util.util_misc import (all_dict_combinations, aslist,
                                         classproperty, cprint, delete_dict_keys,

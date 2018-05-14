@@ -189,6 +189,10 @@ class Boxes(ub.NiceRepr):
         d = self.data[..., 3:4]
         return [a, b, c, d]
 
+    @classmethod
+    def _cat(cls, datas):
+        return np.concatenate(datas, axis=-1)
+
     def toformat(self, format, copy=True):
         if format == 'xywh':
             return self.to_xywh(copy=copy)
@@ -196,12 +200,20 @@ class Boxes(ub.NiceRepr):
             return self.to_tlbr(copy=copy)
         elif format == 'cxywh':
             return self.to_cxywh(copy=copy)
+        elif format == 'extent':
+            return self.to_extent(copy=copy)
         else:
-            raise KeyError(self.format)
+            raise KeyError('Cannot convert {} to {}'.format(self.format, format))
 
-    @classmethod
-    def _cat(cls, datas):
-        return np.concatenate(datas, axis=-1)
+    def to_extent(self, copy=True):
+        if self.format == 'extent':
+            return self.copy() if copy else self
+        else:
+            # Only difference between tlbr and extent is the column order
+            # extent is x1, x2, y1, y2
+            tlbr = self.to_tlbr().data
+            extent = tlbr[..., [0, 2, 1, 3]]
+        return Boxes(extent, 'extent')
 
     def to_xywh(self, copy=True):
         if self.format == 'xywh':
@@ -256,42 +268,6 @@ class Boxes(ub.NiceRepr):
             raise KeyError(self.format)
         tlbr = self._cat([x1, y1, x2, y2])
         return Boxes(tlbr, 'tlbr')
-
-    def to_imgaug(self, shape):
-        """
-        Args:
-            shape (tuple): shape of image that boxes belong to
-
-        Example:
-            >>> self = Boxes([[25, 30, 15, 10]], 'tlbr')
-            >>> bboi = self.to_imgaug((10, 10))
-        """
-        import imgaug
-        if len(self.data.shape) != 2:
-            raise ValueError('data must be 2d got {}d'.format(len(self.data.shape)))
-
-        tlbr = self.to_tlbr(copy=False).data
-        bboi = imgaug.BoundingBoxesOnImage(
-            [imgaug.BoundingBox(x1, y1, x2, y2)
-             for x1, y1, x2, y2 in tlbr], shape=shape)
-        return bboi
-
-    @classmethod
-    def from_imgaug(Boxes, bboi):
-        """
-        Args:
-            bboi (ia.BoundingBoxesOnImage):
-
-        Example:
-            >>> orig = Boxes.random(5, format='tlbr')
-            >>> bboi = orig.to_imgaug(shape=(500, 500))
-            >>> self = Boxes.from_imgaug(bboi)
-            >>> assert np.all(self.data == orig.data)
-        """
-        tlbr = np.array([[bb.x1, bb.y1, bb.x2, bb.y2]
-                         for bb in bboi.bounding_boxes])
-        tlbr = tlbr.reshape(-1, 4)
-        return Boxes(tlbr, format='tlbr')
 
     def clip(self, x_min, y_min, x_max, y_max, inplace=False):
         """
