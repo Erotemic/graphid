@@ -8,6 +8,10 @@ cache:
   - $HOME/download
 python:
   - "3.6"
+addons:
+  apt:
+    packages:
+      - graphviz
 before_install:
   - pip install pip -U
   - pip install pytest -U
