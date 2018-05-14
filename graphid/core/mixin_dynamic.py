@@ -305,6 +305,8 @@ class DynamicUpdate(object):
             cc2 = infr.pos_graph.component(nid2)
 
             if not all_consistent:
+                # We are merging PCCs that are not all consistent
+                # This will keep us in a dirty state.
                 print_('pos-between-dirty-merge')
                 if not incon1:
                     recover_edges = list(nxu.edges_inside(infr.pos_graph, cc1))
@@ -316,7 +318,15 @@ class DynamicUpdate(object):
                 infr._add_review_edge(edge, decision)
                 infr.recover_graph.add_edge(*edge)
                 new_nid = infr.pos_graph.node_label(edge[0])
+                # purge and re-add the inconsistency
+                # (Note: the following three lines were added to fix
+                #  a neg_meta_graph test, and may not be the best way to do it)
+                infr._purge_error_edges(nid1)
+                infr._purge_error_edges(nid2)
+                infr._new_inconsistency(new_nid)
             elif any(nxu.edges_cross(infr.neg_graph, cc1, cc2)):
+                # There are negative edges bridging these PCCS
+                # this will put the graph into a dirty (inconsistent) state.
                 print_('pos-between-clean-merge-dirty')
                 infr._purge_redun_flags(nid1)
                 infr._purge_redun_flags(nid2)
@@ -324,6 +334,7 @@ class DynamicUpdate(object):
                 new_nid = infr.pos_graph.node_label(edge[0])
                 infr._new_inconsistency(new_nid)
             else:
+                # We are merging two clean PCCs, everything is good
                 print_('pos-between-clean-merge-clean')
                 infr._purge_redun_flags(nid1)
                 infr._purge_redun_flags(nid2)

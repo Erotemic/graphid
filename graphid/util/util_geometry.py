@@ -461,46 +461,6 @@ def scaled_verts_from_bbox(bbox, theta, sx, sy):
     return new_verts
 
 
-def point_inside_bbox(point, bbox):
-    """
-    Flags points that are strictly inside a bounding box.
-    Points on the boundary are not considered inside.
-
-    Args:
-        point (ndarray): one or more points to test (2xN)
-        bbox (tuple): a bounding box in  (x, y, w, h) format
-
-    Returns:
-        bool or ndarray: True if the point is in the bbox
-
-    Example:
-        >>> point = np.array([
-        >>>     [3, 2], [4, 1], [2, 3], [1, 1], [0, 0],
-        >>>     [4, 9.5], [9, 9.5], [7, 2], [7, 8], [9, 3]
-        >>> ]).T
-        >>> bbox = (3, 2, 5, 7)
-        >>> flag = point_inside_bbox(point, bbox)
-        >>> flag = flag.astype(np.int)
-        >>> result = ('flag = %s' % (ub.repr2(flag),))
-        >>> print(result)
-        >>> # xdoc: +REQUIRES(--show)
-        >>> verts = np.array(verts_from_bbox(bbox, close=True))
-        >>> util.plot(verts.T[0], verts.T[1], 'b-')
-        >>> util.plot(point[0][flag], point[1][flag], 'go')
-        >>> util.plot(point[0][~flag], point[1][~flag], 'rx')
-        >>> plt.xlim(0, 10); plt.ylim(0, 10)
-        >>> from graphid import util
-        >>> util.show_if_requested()
-        flag = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
-    """
-    x, y = point
-    tl_x, br_x, tl_y, br_y = extent_from_bbox(bbox)
-    inside_x = np.logical_and(tl_x < x, x < br_x)
-    inside_y = np.logical_and(tl_y < y, y < br_y)
-    flag = np.logical_and(inside_x, inside_y)
-    return flag
-
-
 def add_homogenous_coordinate(_xys):
     """
     Example:

@@ -4,7 +4,7 @@ mkinit graphid.util
 # flake8: noqa
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__DYNAMIC__ = True
+__DYNAMIC__ = False
 if __DYNAMIC__:
     import mkinit
     exec(mkinit.dynamic_init(__name__))
@@ -74,7 +74,6 @@ else:
                                             cvt_bbox_xywh_to_pt1pt2, draw_border,
                                             draw_verts, get_pointset_extent_wh,
                                             get_pointset_extents,
-                                            point_inside_bbox,
                                             remove_homogenous_coordinate,
                                             rotation_around_bbox_mat3x3,
                                             rotation_around_mat3x3,

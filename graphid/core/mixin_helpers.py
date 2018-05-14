@@ -348,21 +348,21 @@ class Convenience(object):
             >>> infr = demo.demodata_infr(num_pccs=2, p_incomp=.8, size=4)
             >>> index = list(infr.edges())
             >>> print(infr.match_state_df(index))
-                       nomatch  match  notcomp
+                       NEGTV  POSTV  INCMP
             aid1 aid2
-            1    3       False  False     True
-                 4       False  False     True
-                 2       False   True    False
-            2    3       False  False     True
-                 4       False  False     True
-            3    4       False   True    False
-                 5       False  False     True
-            5    8       False  False     True
-                 7       False  False     True
-                 6       False  False     True
-            6    8       False  False     True
-                 7       False  False     True
-            7    8       False  False     True
+            1    3     False  False   True
+                 4     False  False   True
+                 2     False   True  False
+            2    3     False  False   True
+                 4     False  False   True
+            3    4     False   True  False
+                 5     False  False   True
+            5    8     False  False   True
+                 7     False  False   True
+                 6     False  False   True
+            6    8     False  False   True
+                 7     False  False   True
+            7    8     False  False   True
         """
         index = util.ensure_multi_index(index, ('aid1', 'aid2'))
         aid_pairs = np.asarray(index.tolist())

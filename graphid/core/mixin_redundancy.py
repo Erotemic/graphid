@@ -345,8 +345,8 @@ class _RedundancyAugmentation(object):
         Doctest:
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=[(1, 2, 3, 4, 5), (7, 8, 9, 10)], pos_redun=1)
-            >>> infr.add_feedback((2, 5), 'match')
-            >>> infr.add_feedback((1, 5), 'notcomp')
+            >>> infr.add_feedback((2, 5), POSTV)
+            >>> infr.add_feedback((1, 5), INCMP)
             >>> infr.params['redun.pos'] = 2
             >>> candidate_edges = list(infr.find_pos_redun_candidate_edges())
             >>> result = ('candidate_edges = ' + ub.repr2(candidate_edges, nl=0))

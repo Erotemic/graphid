@@ -993,6 +993,7 @@ class AnnotInference(ub.NiceRepr,
     class for maintaining state of an identification
 
     CommandLine:
+        python -m graphid.core.annot_inference AnnotInference
         python -m graphid.core.annot_inference AnnotInference --show
 
     Example:

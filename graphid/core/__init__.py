@@ -4,7 +4,7 @@ Regenerate Input Command
 mkinit ~/code/graphid/graphid/core
 """
 # flake8: noqa
-__DYNAMIC__ = True
+__DYNAMIC__ = False
 if __DYNAMIC__:
     from mkinit import dynamic_mkinit
     exec(dynamic_mkinit.dynamic_init(__name__))
@@ -14,6 +14,7 @@ else:
     from graphid.core import mixin_callbacks
     from graphid.core import mixin_dynamic
     from graphid.core import mixin_helpers
+    from graphid.core import mixin_invariants
     from graphid.core import mixin_loops
     from graphid.core import mixin_priority
     from graphid.core import mixin_redundancy
@@ -27,8 +28,8 @@ else:
     from graphid.core.mixin_callbacks import (InfrCallbacks, InfrCandidates,)
     from graphid.core.mixin_dynamic import (DynamicUpdate, NonDynamicUpdate,
                                             Recovery,)
-    from graphid.core.mixin_helpers import (AssertInvariants, AttrAccess,
-                                            Convenience, DEBUG_INCON, DummyEdges,)
+    from graphid.core.mixin_helpers import (AttrAccess, Convenience, DummyEdges,)
+    from graphid.core.mixin_invariants import (AssertInvariants, DEBUG_INCON,)
     from graphid.core.mixin_loops import (InfrLoops, InfrReviewers,)
     from graphid.core.mixin_priority import (Priority,)
     from graphid.core.mixin_redundancy import (Redundancy,)

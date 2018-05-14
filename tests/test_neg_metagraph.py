@@ -77,6 +77,7 @@ def test_neg_metagraph_merge():
     # Create a graph with 4 CCs, with 3-pos-redun, and no negative edges
     infr = demo.demodata_infr(num_pccs=4, pcc_size=5, pos_redun=3,
                               ignore_pair=True, infer=True)
+    infr.verbose = 1000
     cc_a, cc_b, cc_c, cc_d = infr.positive_components()
     a1, a2, a3, a4, a5 = cc_a
     b1, b2, b3, b4, b5 = cc_b
@@ -96,6 +97,7 @@ def test_neg_metagraph_merge():
 
     # Add three negative edges between a and b
     # one between (a, c), (b, d), (a, d), and (c, d)
+    print('\nSetting up negative edges, before the merge test')
     infr.add_feedback((a1, b1), NEGTV)
     infr.add_feedback((a2, b2), NEGTV)
     infr.add_feedback((a3, b3), NEGTV)
@@ -113,6 +115,7 @@ def test_neg_metagraph_merge():
     assert nmg.number_of_nodes() == 4
 
     # Now merge A and B into a single PCC
+    print('\nMerging A and B into a single PCC: AB')
     infr.add_feedback((a1, b1), POSTV)
     AB = infr.node_label(a1)
 
@@ -142,6 +145,7 @@ def test_neg_metagraph_merge():
     infr.assert_neg_metagraph()
 
     # Additional merge
+    print('\nMerging C and D into a single PCC: CD')
     infr.add_feedback((c2, d2), POSTV)
     CD = infr.node_label(c1)
     infr.assert_neg_metagraph()
@@ -154,6 +158,7 @@ def test_neg_metagraph_merge():
     assert nmg.edges[(AB, AB)]['weight'] == 2
 
     # Yet another merge
+    print('\nMerging AB and CD into a single PCC: ABCD')
     infr.add_feedback((a1, c1), POSTV)
     ABCD = infr.node_label(c1)
     assert nmg.number_of_nodes() == 1, 'should only be one PCC now'
