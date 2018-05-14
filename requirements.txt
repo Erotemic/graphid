@@ -2,6 +2,7 @@ ubelt
 xdoctest
 pytest
 numpy
+scipy
 networkx
 pandas
 opencv-python
