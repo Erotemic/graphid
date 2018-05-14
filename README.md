@@ -43,6 +43,9 @@ uploaded to reserve the name.
 
 This project is Python 3.6+, Python 2 is not supported.
 
+If you want to be able to draw the graphs, you must install graphviz, which is
+needed by pygraphviz.
+
 I'm currently having trouble getting this to work on windows due to pygraphviz.
 
 Conda can be used to install pygraphviz on windows?
