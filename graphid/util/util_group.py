@@ -34,7 +34,7 @@ def sortedby(item_list, key_list, reverse=False):
 
 
 def grouping_delta(old, new, pure=True):
-    r"""
+    """
     Finds what happened to the old groups to form the new groups.
 
     Args:
@@ -48,10 +48,9 @@ def grouping_delta(old, new, pure=True):
         dict: delta: dictionary of changes containing the merges, splits,
             unchanged, and hybrid cases. Except for unchanged, case a subdict
             with new and old keys.  For splits / merges, one of these contains
-            nested sequences to indicate what the split / merge is.
-
-    TODO:
-        incorporate addition / deletion of elements?
+            nested sequences to indicate what the split / merge is. Also
+            reports elements added and removed between old and new if the
+            flattened sets are not the same.
 
     Notes:
         merges - which old groups were merged into a single new group.
@@ -128,6 +127,14 @@ def grouping_delta(old, new, pure=True):
             },
         }
 
+    Example:
+        >>> delta = grouping_delta([[1, 2, 3]], [])
+        >>> assert len(delta['items']['removed']) == 3
+        >>> delta = grouping_delta([], [[1, 2, 3]])
+        >>> assert len(delta['items']['added']) == 3
+        >>> delta = grouping_delta([[1]], [[1, 2, 3]])
+        >>> assert len(delta['items']['added']) == 2
+        >>> assert len(delta['unchanged']) == 1
     """
     _old = {frozenset(_group) for _group in old}
     _new = {frozenset(_group) for _group in new}
