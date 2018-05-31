@@ -547,7 +547,7 @@ class NameRelabel(object):
         grouped_oldnames = [
             [n for n in oldgroup if n is not None]
             for oldgroup in grouped_oldnames_]
-        new_names = util.name_recitifer.find_consistent_labeling(
+        new_names = util.name_rectifier.find_consistent_labeling(
             grouped_oldnames, verbose=infr.verbose >= 3, extra_prefix=None)
 
         unknown_labels = list(ub.compress(unique_newlabels, still_unknown))
@@ -574,7 +574,7 @@ class NameRelabel(object):
         ]
         infr.print('begin rectification of %d grouped old names' % (
             len(grouped_oldnames)), 2)
-        new_labels = util.name_recitifer.find_consistent_labeling(
+        new_labels = util.name_rectifier.find_consistent_labeling(
             grouped_oldnames, verbose=infr.verbose >= 3)
         infr.print('done rectifying new names', 2)
         new_flags = [
@@ -595,9 +595,9 @@ class NameRelabel(object):
         """
         Relabels nodes in graph based on positive connected components
 
-        This will change all of the names on the nodes to be consistent while
+        This will change the 'name_label' of the nodes to be consistent while
         preserving any existing names as best as possible. If rectify=False,
-        this will be faster, but the old names will not be preserved and each
+        this will be faster, but the old names may not be preserved and each
         PCC will be assigned an arbitrary name.
 
         Note:
@@ -612,6 +612,18 @@ class NameRelabel(object):
             rectify (bool, optional): if True names attempt to remain
                 consistent otherwise there are no restrictions on name labels
                 other than that they are distinct.
+
+        Example:
+            >>> from graphid import demo, util
+            >>> infr = demo.demodata_infr(num_pccs=5, pos_redun=1)
+            >>> names0 = set(infr.get_node_attrs('name_label').values())
+            >>> infr.relabel_using_reviews(rectify=True)
+            >>> names1 = set(infr.get_node_attrs('name_label').values())
+            >>> assert names0 == names1
+            >>> # wont change because its the entire graph
+            >>> #infr.relabel_using_reviews(rectify=False)
+            >>> #names2 = set(infr.get_node_attrs('name_label').values())
+
         """
         infr.print('relabel_using_reviews', 2)
         if graph is None:
@@ -672,21 +684,74 @@ class MiscHelpers(object):
         return nids
 
     def remove_aids(infr, aids):
+        """
+        Remove annotations from the graph.
+
+        Note:
+            This may cause unintended splits!
+
+        Example:
+            >>> from graphid import demo, util
+            >>> infr = demo.demodata_infr(num_pccs=5, pos_redun=1)
+            >>> infr.refresh_candidate_edges()
+            >>> infr.pin_node_layout()
+            >>> before = infr.copy()
+            >>> aids = infr.aids[::5]
+            >>> splits = infr.remove_aids(aids)
+            >>> assert len(splits['old']) > 0
+            >>> infr.assert_invariants()
+            >>> # xdoc: +REQUIRES(--show)
+            >>> util.qtensure()
+            >>> after = infr
+            >>> before.show(fnum=1, pnum=(1, 2, 1), pickable=True)
+            >>> after.show(fnum=1, pnum=(1, 2, 2), pickable=True)
+        """
+        infr.print('remove_aids len(aids)={}'.format(len(aids)), level=3)
+
+        # Determine which edges are going to be removed
+        remove_edges = util.edges_outgoing(infr.graph, aids)
+
+        old_groups = list(infr.positive_components())
+
+        # Remove from tertiary bookkeeping structures
         remove_idxs = list(ub.take(util.make_index_lookup(infr.aids), aids))
         util.delete_items_by_index(infr.orig_name_labels, remove_idxs)
         util.delete_items_by_index(infr.aids, remove_idxs)
-        infr.graph.remove_nodes_from(aids)
         infr.aids_set = set(infr.aids)
-        remove_edges = [(u, v) for u, v in infr.external_feedback.keys()
-                        if u not in infr.aids_set or v not in infr.aids_set]
+
+        # Remove from secondary bookkeeping structures
         util.delete_dict_keys(infr.external_feedback, remove_edges)
-        remove_edges = [(u, v) for u, v in infr.internal_feedback.keys()
-                        if u not in infr.aids_set or v not in infr.aids_set]
         util.delete_dict_keys(infr.internal_feedback, remove_edges)
 
-        infr.pos_graph.remove_nodes_from(aids)
-        infr.neg_graph.remove_nodes_from(aids)
-        infr.incomp_graph.remove_nodes_from(aids)
+        # Remove from core bookkeeping structures
+        infr.graph.remove_nodes_from(aids)
+        for graph in infr.review_graphs.values():
+            graph.remove_nodes_from(aids)
+
+        infr.queue.delete_items(remove_edges)
+
+        # TODO: should refactor to preform a dyanmic step, but in this case is
+        # less work to use a bazooka to shoot a fly.
+        infr.apply_nondynamic_update()
+
+        # I'm unsure if relabeling is necessary
+        infr.relabel_using_reviews()
+
+        new_groups = list(infr.positive_components())
+
+        # print('old_groups = {!r}'.format(old_groups))
+        # print('new_groups = {!r}'.format(new_groups))
+        delta = util.grouping_delta(old_groups, new_groups)
+        splits = delta['splits']
+
+        n_old = len(splits['old'])
+        n_new = len(list(ub.flatten(splits['new'])))
+        infr.print(
+            'removing {} aids split {} old PCCs into {} new PCCs'.format(
+                len(aids), n_old, n_new))
+
+        return splits
+        # print(ub.repr2(delta, nl=2))
 
     def add_aids(infr, aids, nids=None):
         """
@@ -751,6 +816,7 @@ class MiscHelpers(object):
         infr.set_node_attrs('name_label', node_to_nid)
         infr.set_node_attrs('orig_name_label', node_to_nid)
         # TODO: depricate these, they will always be identity I think
+        # this is also taken care of by relabel_using_reviews
 
     def initialize_graph(infr, graph=None):
         """

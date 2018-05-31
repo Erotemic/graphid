@@ -204,7 +204,7 @@ def find_consistent_labeling(grouped_oldnames, extra_prefix='_extra_name',
         >>>     for timer in t:
         >>>         with timer:
         >>>             new_names = find_consistent_labeling(grouped_oldnames)
-        >>>     ydata.append(t.ave_secs)
+        >>>     ydata.append(t.min())
         >>> # xdoc: +REQUIRES(--show)
         >>> import plottool as pt
         >>> pt.qtensure()

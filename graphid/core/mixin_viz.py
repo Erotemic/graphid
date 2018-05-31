@@ -202,6 +202,17 @@ class GraphVisualization(object):
     #     #     ]
     #     # return GraphVizConfig
 
+    def pin_node_layout(infr):
+        """
+        Ensures a node layout exists and then sets the pin attribute
+        on each node, which tells graphviz not to change node positions.
+        Useful for making before and after pictures.
+        """
+        # Update the node positions if they have not been set
+        infr.update_visual_attrs(groupby='name_label')
+        # Set the pin attribute
+        infr.set_node_attrs('pin', 'true')
+
     def update_visual_attrs(infr, graph=None,
                             show_reviewed_edges=True,
                             show_unreviewed_edges=False,
@@ -538,8 +549,8 @@ class GraphVisualization(object):
                 infr.update_visual_attrs(graph=graph, **kwargs)
             verbose = kwargs.pop('verbose', infr.verbose)
             util.show_nx(graph, layout='custom', as_directed=False,
-                       modify_ax=False, use_image=use_image,
-                       pnum=pnum, verbose=verbose, **kwargs)
+                         modify_ax=False, use_image=use_image, pnum=pnum,
+                         verbose=verbose, **kwargs)
             if zoomable:
                 util.mplutil.zoom_factory()
                 util.mplutil.pan_factory(plt.gca())
@@ -666,7 +677,7 @@ class GraphVisualization(object):
 def on_pick(event, infr=None):
     print('ON PICK: %r' % (event,))
     artist = event.artist
-    plotdat = util.get_plotdat_dict(artist)
+    plotdat = util.mplutil._get_plotdat_dict(artist)
     if plotdat:
         if 'node' in plotdat:
             all_node_data = util.sort_dict(plotdat['node_data'].copy())

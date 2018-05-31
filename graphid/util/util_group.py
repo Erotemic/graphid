@@ -92,7 +92,10 @@ def grouping_delta(old, new, pure=True):
             splits: [{{10}}, {{11}, {5, 6}}, {{3}, {4}}, {{7}}, {{8}, {9}}],
             merges: [{{10}, {11}, {9}}, {{3}, {5, 6}}, {{4}}, {{7}, {8}}],
         },
-
+        items: {
+            added: {},
+            removed: {},
+        },
 
     Example:
         >>> old = [
@@ -119,14 +122,32 @@ def grouping_delta(old, new, pure=True):
                 [{3}, {4}],
                 [{10, 11, 12}, {8, 9}],
             ],
+            items: {
+                added: {},
+                removed: {},
+            },
         }
+
     """
     _old = {frozenset(_group) for _group in old}
     _new = {frozenset(_group) for _group in new}
 
     _new_items = set(ub.flatten(_new))
     _old_items = set(ub.flatten(_old))
-    assert _new_items == _old_items, 'new and old sets must be the same'
+
+    if _new_items != _old_items:
+        _added = _new_items - _old_items
+        _removed = _old_items - _new_items
+        # Make the sets items the same
+        _old = {frozenset(_group - _removed) for _group in _old}
+        _new = {frozenset(_group - _added) for _group in _new}
+        _old = {_group for _group in _old if _group}
+        _new = {_group for _group in _new if _group}
+    else:
+        _added = {}
+        _removed = {}
+
+    # assert _new_items == _old_items, 'new and old sets must be the same'
 
     # Find the groups that are exactly the same
     unchanged = _new.intersection(_old)
@@ -227,6 +248,11 @@ def grouping_delta(old, new, pure=True):
         delta['unchanged'] = unchanged
         delta['splits'] = splits
         delta['merges'] = merges
+
+    delta['items'] = ub.odict([
+        ('added', _added),
+        ('removed', _removed),
+    ])
     return delta
 
 
