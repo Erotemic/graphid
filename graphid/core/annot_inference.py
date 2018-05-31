@@ -687,6 +687,9 @@ class MiscHelpers(object):
         """
         Remove annotations from the graph.
 
+        Returns:
+            dict: split: indicates which PCCs were split by this action.
+
         Note:
             This may cause unintended splits!
 
