@@ -73,8 +73,13 @@ class SimulationHelpers(object):
         }
         infr.test_gt_pos_graph = nx_dynamic_graph.DynConnGraph()
         infr.test_gt_pos_graph.add_nodes_from(infr.aids)
-        infr.nid_to_gt_cc = ub.group_items(infr.aids, infr.orig_name_labels)
-        infr.node_truth = ub.dzip(infr.aids, infr.orig_name_labels)
+
+        infr.node_truth = infr.get_node_attrs('orig_name_label')
+        infr.nid_to_gt_cc = ub.group_items(infr.node_truth.keys(),
+                                           infr.node_truth.values())
+
+        # infr.nid_to_gt_cc = ub.group_items(infr.aids, infr.orig_name_labels)
+        # infr.node_truth = ub.dzip(infr.aids, infr.orig_name_labels)
 
         # infr.real_n_pcc_mst_edges = sum(
         #     len(cc) - 1 for cc in infr.nid_to_gt_cc.values())
@@ -82,7 +87,6 @@ class SimulationHelpers(object):
         #     infr.real_n_pcc_mst_edges,), 'red')
 
         infr.metrics_list = []
-        infr.nid_to_gt_cc = ub.group_items(infr.aids, infr.orig_name_labels)
         infr.real_n_pcc_mst_edges = sum(
             len(cc) - 1 for cc in infr.nid_to_gt_cc.values())
         infr.print('real_n_pcc_mst_edges = %r' % (

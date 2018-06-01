@@ -110,9 +110,9 @@ class Consistency(object):
 class Feedback(object):
     def _check_edge(infr, edge):
         aid1, aid2 = edge
-        if aid1 not in infr.aids_set:
+        if aid1 not in infr.graph.nodes:
             raise ValueError('aid1=%r is not part of the graph' % (aid1,))
-        if aid2 not in infr.aids_set:
+        if aid2 not in infr.graph.nodes:
             raise ValueError('aid2=%r is not part of the graph' % (aid2,))
 
     def add_feedback_from(infr, items, verbose=None, **kwargs):
@@ -623,6 +623,11 @@ class NameRelabel(object):
             >>> # wont change because its the entire graph
             >>> #infr.relabel_using_reviews(rectify=False)
             >>> #names2 = set(infr.get_node_attrs('name_label').values())
+            >>> # This will force a name change because we are operating on part of the graph
+            >>> graph = infr.graph.subgraph(list(ub.flatten(list(infr.positive_components())[::2])))
+            >>> infr.relabel_using_reviews(graph=graph, rectify=False)
+            >>> names2 = set(infr.get_node_attrs('name_label').values())
+            >>> assert names0 != names2
 
         """
         infr.print('relabel_using_reviews', 2)
@@ -654,8 +659,7 @@ class NameRelabel(object):
             if graph is infr.graph:
                 # Use union find labels
                 new_labels = {
-                    count:
-                    infr.node_label(next(iter(subgraph.nodes())))
+                    count: infr.node_label(next(iter(subgraph.nodes())))
                     for count, subgraph in enumerate(cc_subgraphs)
                 }
             else:
@@ -717,10 +721,9 @@ class MiscHelpers(object):
         old_groups = list(infr.positive_components())
 
         # Remove from tertiary bookkeeping structures
-        remove_idxs = list(ub.take(util.make_index_lookup(infr.aids), aids))
-        util.delete_items_by_index(infr.orig_name_labels, remove_idxs)
-        util.delete_items_by_index(infr.aids, remove_idxs)
-        infr.aids_set = set(infr.aids)
+        # remove_idxs = list(ub.take(util.make_index_lookup(infr.aids), aids))
+        # util.delete_items_by_index(infr.orig_name_labels, remove_idxs)
+        # util.delete_items_by_index(infr.aids, remove_idxs)
 
         # Remove from secondary bookkeeping structures
         util.delete_dict_keys(infr.external_feedback, remove_edges)
@@ -767,59 +770,81 @@ class MiscHelpers(object):
             >>> aids = [2, 22, 7, 9, 8]
             >>> nids = None
             >>> infr.add_aids(aids, nids)
-            >>> result = infr.aids
-            >>> print(result)
+            >>> print(sorted(infr.aids))
             >>> assert len(infr.graph) == len(infr.aids)
-            [1, 2, 3, 4, 5, 6, 7, 9, 22, 8]
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 22]
         """
         if aids is None:
             raise ValueError('aids cannot be None')
+
+        assert infr.graph is not None, 'graph not initialized'
+
         nids = infr._rectify_nids(aids, nids)
         assert len(aids) == len(nids), 'must correspond'
-        if infr.aids is None:
-            nids = infr._rectify_nids(aids, nids)
-            # Set object attributes
-            infr.aids = aids
-            infr.aids_set = set(infr.aids)
-            infr.orig_name_labels = nids
-        else:
-            aid_to_idx = util.make_index_lookup(infr.aids)
-            orig_idxs = list(ub.dict_take(aid_to_idx, aids, None))
-            new_flags = util.flag_None_items(orig_idxs)
-            new_aids = list(ub.compress(aids, new_flags))
-            new_nids = list(ub.compress(nids, new_flags))
-            # Extend object attributes
-            infr.aids.extend(new_aids)
-            infr.orig_name_labels.extend(new_nids)
-            infr.aids_set.update(new_aids)
-            infr.update_node_attributes(new_aids, new_nids)
 
-            if infr.graph is not None:
-                infr.graph.add_nodes_from(aids)
-                for subgraph in infr.review_graphs.values():
-                    subgraph.add_nodes_from(aids)
-            nids = set(infr.pos_graph.node_labels(*aids))
-            infr.neg_metagraph.add_nodes_from(nids)
+        # Determine which aids are actually new
+        new_flags = [aid not in infr.graph.nodes for aid in aids]
+        new_aids = list(ub.compress(aids, new_flags))
+        new_nids = list(ub.compress(nids, new_flags))
 
-    def update_node_attributes(infr, aids=None, nids=None):
-        if aids is None:
-            aids = infr.aids
-            nids = infr.orig_name_labels
-        assert aids is not None, 'must have aids'
-        assert nids is not None, 'must have nids'
-        node_to_aid = {aid: aid for aid in aids}
-        node_to_nid = {aid: nid for aid, nid in zip(aids, nids)}
-        assert len(node_to_nid) == len(node_to_aid)
-
-        infr.graph.add_nodes_from(aids)
+        # Add the new aids as nodes in the graph
+        infr.graph.add_nodes_from(new_aids)
         for subgraph in infr.review_graphs.values():
-            subgraph.add_nodes_from(aids)
+            subgraph.add_nodes_from(new_aids)
 
+        # Set basic attributes of those nodes
+        node_to_aid = {aid: aid for aid in new_aids}
+        node_to_nid = {aid: nid for aid, nid in zip(new_aids, new_nids)}
         infr.set_node_attrs('aid', node_to_aid)
         infr.set_node_attrs('name_label', node_to_nid)
         infr.set_node_attrs('orig_name_label', node_to_nid)
-        # TODO: depricate these, they will always be identity I think
-        # this is also taken care of by relabel_using_reviews
+
+        # Add new nodes in the name metagraph
+        _nids = set(infr.pos_graph.node_labels(*new_aids))
+        infr.neg_metagraph.add_nodes_from(_nids)
+
+        # if infr.aids is None:
+        #     nids = infr._rectify_nids(aids, nids)
+        #     # Set object attributes
+        #     infr.aids = aids
+        #     infr.orig_name_labels = nids
+        # else:
+        #     aid_to_idx = util.make_index_lookup(infr.aids)
+        #     orig_idxs = list(ub.dict_take(aid_to_idx, aids, None))
+        #     new_flags = util.flag_None_items(orig_idxs)
+        #     new_aids = list(ub.compress(aids, new_flags))
+        #     new_nids = list(ub.compress(nids, new_flags))
+        #     # Extend object attributes
+        #     infr.aids.extend(new_aids)
+        #     infr.orig_name_labels.extend(new_nids)
+        #     infr.update_node_attributes(new_aids, new_nids)
+
+        #     if infr.graph is not None:
+        #         infr.graph.add_nodes_from(aids)
+        #         for subgraph in infr.review_graphs.values():
+        #             subgraph.add_nodes_from(aids)
+        #     nids = set(infr.pos_graph.node_labels(*aids))
+        #     infr.neg_metagraph.add_nodes_from(nids)
+
+    # def update_node_attributes(infr, aids=None, nids=None):
+    #     if aids is None:
+    #         aids = infr.aids
+    #         nids = infr.orig_name_labels
+    #     assert aids is not None, 'must have aids'
+    #     assert nids is not None, 'must have nids'
+    #     node_to_aid = {aid: aid for aid in aids}
+    #     node_to_nid = {aid: nid for aid, nid in zip(aids, nids)}
+    #     assert len(node_to_nid) == len(node_to_aid)
+
+    #     infr.graph.add_nodes_from(aids)
+    #     for subgraph in infr.review_graphs.values():
+    #         subgraph.add_nodes_from(aids)
+
+    #     infr.set_node_attrs('aid', node_to_aid)
+    #     infr.set_node_attrs('name_label', node_to_nid)
+    #     infr.set_node_attrs('orig_name_label', node_to_nid)
+    #     # TODO: depricate these, they will always be identity I think
+    #     # this is also taken care of by relabel_using_reviews
 
     def initialize_graph(infr, graph=None):
         """
@@ -838,6 +863,11 @@ class MiscHelpers(object):
         infr.review_graphs[UNREV] = infr._graph_cls()
 
         if graph is not None:
+
+            # Ensure all review graphs have the same node structure
+            for key, review_graph in infr.review_graphs.items():
+                review_graph.add_nodes_from(graph.nodes)
+
             for u, v, d in graph.edges(data=True):
                 evidence_decision = d.get('evidence_decision', UNREV)
                 meta_decision = d.get('meta_decision', NULL)
@@ -846,8 +876,7 @@ class MiscHelpers(object):
                     infr.review_graphs[decision].add_edge(u, v)
                 else:
                     raise ValueError('Unknown decision=%r' % (decision,))
-
-        infr.update_node_attributes()
+        # infr.update_node_attributes()
 
     def print(infr, msg, level=1, color=None):
         if color is None:
@@ -917,14 +946,15 @@ class AltConstructors(object):
         Creates an AnnotInference object from a networkx graph
         """
         aids = list(G.nodes())
-        nids = [-a for a in aids]
-        infr = AnnotInference(aids, nids, autoinit=False,
-                              verbose=verbose)
+        # nids = [-a for a in aids]
+        infr = AnnotInference(autoinit=False, verbose=verbose)
         infr.initialize_graph(graph=G)
         # hack
         orig_name_labels = [infr.pos_graph.node_label(a) for a in aids]
-        infr.orig_name_labels = orig_name_labels
+        # infr.orig_name_labels = orig_name_labels
         infr.set_node_attrs('orig_name_label', ub.dzip(aids, orig_name_labels))
+        infr.set_node_attrs('aid', ub.dzip(aids, aids))
+        # infr.set_node_attrs('name_label', node_to_nid)
         if infer:
             infr.apply_nondynamic_update()
         return infr
@@ -991,7 +1021,7 @@ class AltConstructors(object):
             }
         """
         status_dict = ub.odict([
-            ('nNodes', len(infr.aids)),
+            ('nNodes', len(infr.graph.nodes)),
             ('nEdges', infr.graph.number_of_edges()),
             ('nCCs', infr.pos_graph.number_of_components()),
             ('nPostvEdges', infr.pos_graph.number_of_edges()),
@@ -1090,13 +1120,6 @@ class AnnotInference(ub.NiceRepr,
         >>> util.show_if_requested()
     """
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # Dont pickle generators
-        state['_gen'] = None
-        state['logger'] = None
-        return state
-
     def __init__(infr, aids=[], nids=None, autoinit=True, verbose=False):
         """
         Ignore:
@@ -1118,9 +1141,8 @@ class AnnotInference(ub.NiceRepr,
         infr.dirty = False
         infr.readonly = False
 
-        infr.aids = None
-        infr.aids_set = None
-        infr.orig_name_labels = None
+        # infr.aids = None
+        # infr.orig_name_labels = None
 
         # Underlying graph structure
         infr.graph = None
@@ -1269,20 +1291,35 @@ class AnnotInference(ub.NiceRepr,
         infr.manual_wgt = None
 
         infr.print('__init__', level=1)
-        infr.add_aids(aids, nids)
+        if autoinit and isinstance(autoinit, six.string_types):
+            raise Exception('Cannot autoinit this way anymore')
+
         if autoinit:
             infr.initialize_graph()
-            if isinstance(autoinit, six.string_types):
-                raise Exception('Cannot autoinit this way anymore')
+            infr.add_aids(aids, nids)
+        else:
+            assert not aids, 'must have autoinit=True if aids are given'
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Dont pickle generators
+        state['_gen'] = None
+        state['logger'] = None
+        return state
+
+    @property
+    def aids(infr):
+        """ backwards compatibility for a depricated attribute """
+        return sorted(infr.graph.nodes)
 
     def __nice__(infr):
         """ for ub.NiceRepr """
         if infr.graph is None:
-            return 'nAids=%r, G=None' % (len(infr.aids))
+            return 'nAids=%r, G=None' % (len(infr.graph.nodes))
         else:
             fmt = 'nNodes={}, nEdges={}, nCCs={}'
             msg = fmt.format(
-                len(infr.aids),
+                len(infr.graph.nodes),
                 infr.graph.number_of_edges(),
                 infr.pos_graph.number_of_components(),
                 # infr.incomp_graph.number_of_edges(),
@@ -1307,9 +1344,10 @@ class AnnotInference(ub.NiceRepr,
         return subparams
 
     def copy(infr):
+        # copy.deepcopy(infr.aids),
+        # copy.deepcopy(infr.orig_name_labels),
         infr2 = AnnotInference(
-            copy.deepcopy(infr.aids),
-            copy.deepcopy(infr.orig_name_labels), autoinit=False,
+            autoinit=False,
             verbose=infr.verbose)
 
         # shallow algorithm classes
