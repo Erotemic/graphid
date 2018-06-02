@@ -109,10 +109,29 @@ is greater than a threshold.
 
 ### Other data structures
 
-`infr.queue` - The priority queue which holds the next edges to be reviewed
+* `infr.queue` - The priority queue which holds the next edges to be reviewed
 
-`infr.refresh` - This custom object lets us estimate the probability that any
+* `infr.refresh` - This custom object lets us estimate the probability that any
 undiscovered positive reviews remain. 
+
+* `infr.task_probs` - Contains results of pairwise probability predictions from `infr.verifiers`. While this info is also stored on edges, it is faster to access it via a dedicated dict.
+
+* `infr._gen` - A generator that contains the current "loop" state.
+
+
+### Plugin data structures
+
+The data structures that allow a developer to plugin custom ranking and verification algorithms.
+
+* `infr.ranker`: the ranking algorithm (e.g. LNBNN), this suggests candidate edges to be put in `infr.unreviewed_graph`
+* `infr.verifier` the algorithm that predicts the probability a pair of annotations is positive, negative, or incomparable.
+* `infr.verifiers` - dict containing the previous object, but can also contain verifiers for other pairwise classification task (e.g. photobombs). The corresponding `infr.task_thresh` also maps decisions to threshold required for automatic decision making.
+
+
+### Data structure that might not be necessary:
+
+* `infr.internal_feedback`: a dictionary containing all decisions (edges) that have been made but have not been committed to the some backend database
+* `infr.external_feedback`: a dictionary containing all decisions (edges) that have been committed to the some backend database
 
 
 
