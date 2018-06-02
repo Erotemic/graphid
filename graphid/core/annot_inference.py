@@ -1147,11 +1147,11 @@ class AnnotInference(ub.NiceRepr,
         # Underlying graph structure
         infr.graph = None
         infr.review_graphs = {
-            POSTV: None,
-            NEGTV: None,
-            INCMP: None,
-            UNKWN: None,
-            UNREV: None,
+            POSTV: None,  # also referenced as infr.positive_graph
+            NEGTV: None,  # also referenced as infr.neg_graph
+            INCMP: None,  # also referenced as infr.incomp_graph
+            UNKWN: None,  # also referenced as infr.unknown_graph
+            UNREV: None,  # also referenced as infr.unreviewed_graph
         }
 
         # Criterion
@@ -1166,6 +1166,7 @@ class AnnotInference(ub.NiceRepr,
 
         # Recover graph holds positive edges of inconsistent PCCs
         infr.recover_graph = util.DynConnGraph()
+
         # Set of PCCs that are positive redundant
         infr.pos_redun_nids = set([])
         # Represents the metagraph of negative edges between PCCs
@@ -1190,7 +1191,7 @@ class AnnotInference(ub.NiceRepr,
 
         # Computer vision algorithms
         infr.ranker = None  # the ranking algorithm (e.g. LNBNN)
-        infr.verifier = None  # the match_state classifier
+        infr.verifier = None  # the match_state classifier (should be a member of the next dict)
         infr.verifiers = None  # dictionary of tasks -> classifier
 
         # TODO: move to params

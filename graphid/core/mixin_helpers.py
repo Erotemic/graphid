@@ -164,12 +164,12 @@ class Convenience(object):
         return infr.review_graphs[INCMP]
 
     @property
-    def unreviewed_graph(infr):
-        return infr.review_graphs[UNREV]
-
-    @property
     def unknown_graph(infr):
         return infr.review_graphs[UNKWN]
+
+    @property
+    def unreviewed_graph(infr):
+        return infr.review_graphs[UNREV]
 
     def print_graph_info(infr):
         print(ub.repr2(util.graph_info(infr.simplify_graph())))
