@@ -448,7 +448,7 @@ class InfrReviewers(object):
         try:
             decision_probs = infr.task_probs[primary_task][edge]
         except KeyError:
-            if infr.verifiers is None:
+            if not infr.verifiers:
                 return None
             if infr.verifiers.get(primary_task, None) is None:
                 return None

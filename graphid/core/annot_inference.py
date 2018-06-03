@@ -1192,7 +1192,7 @@ class AnnotInference(ub.NiceRepr,
         # Computer vision algorithms
         infr.ranker = None  # the ranking algorithm (e.g. LNBNN)
         infr.verifier = None  # the match_state classifier (should be a member of the next dict)
-        infr.verifiers = None  # dictionary of tasks -> classifier
+        infr.verifiers = {}  # dictionary of tasks -> classifier
 
         # TODO: move to params
         infr.task_thresh = {

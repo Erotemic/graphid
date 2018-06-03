@@ -8,11 +8,23 @@ from graphid.core.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
 from graphid.core.state import SAME, DIFF, NULL  # NOQA
 from graphid import util
 from numpy.core.umath_tests import matrix_multiply  # NOQA
+from graphid.core import abstract
 
 
-class DummyRanker(object):
+class DummyRanker(abstract.Ranker):
     """
     Generates dummy rankings
+
+    CommandLine:
+        python -m graphid.demo.dummy_algos DummyRanker
+
+    Example:
+        >>> from graphid import demo
+        >>> kwargs = dict(num_pccs=40, size=2)
+        >>> infr = demo.demodata_infr(**kwargs)
+        >>> edges = list(infr.ranker.predict_candidate_edges(infr.aids, K=100))
+        >>> scores = np.array(infr.verifier.predict_proba_df(edges))
+        >>> assert len(edges) > 0
     """
     def __init__(ranker, verif):
         ranker.verif = verif
@@ -46,7 +58,7 @@ class DummyRanker(object):
             vs_list.append(gf)
 
         u_edges = [infr.e_(u, v) for v in it.chain.from_iterable(vs_list)]
-        u_probs = np.array(verif.predict_edges(u_edges))
+        u_probs = np.array(verif.predict_proba_df(u_edges)[POSTV])
         # infr.set_edge_attrs('prob_match', ub.dzip(u_edges, u_probs))
 
         # Need to determenistically sort here
@@ -59,34 +71,8 @@ class DummyRanker(object):
         # assert len(ranked_edges) == K
         return ranked_nodes
 
-    def predict_rankings(ranker, nodes, K=10):
-        """
-        Yields a list ranked edges connected to each node.
-        """
-        for u in nodes:
-            yield ranker.predict_single_ranking(u, K=K)
 
-    def predict_candidate_edges(ranker, nodes, K=10):
-        """
-        CommandLine:
-            python -m graphid.demo.dummy_algos DummyRanker.predict_candidate_edges
-
-        Example:
-            >>> from graphid import demo
-            >>> kwargs = dict(num_pccs=40, size=2)
-            >>> infr = demo.demodata_infr(**kwargs)
-            >>> edges = list(infr.ranker.predict_candidate_edges(infr.aids, K=100))
-            >>> scores = np.array(infr.verifier.predict_edges(edges))
-            >>> assert len(edges) > 0
-        """
-        new_edges = []
-        for u, ranks in zip(nodes, ranker.predict_rankings(nodes, K=K)):
-            new_edges.extend([util.e_(u, v) for v in ranks])
-        new_edges = set(new_edges)
-        return new_edges
-
-
-class DummyVerif(object):
+class DummyVerif(abstract.Verifier):
     """
     Generates dummy scores between pairs of annotations.
     (not necesarilly existing edges in the graph)
@@ -99,8 +85,8 @@ class DummyVerif(object):
         >>> from graphid import demo
         >>> kwargs = dict(num_pccs=6, p_incon=.5, size_std=2)
         >>> infr = demo.demodata_infr(**kwargs)
-        >>> infr.dummy_verif.predict_edges([(1, 2)])
-        >>> infr.dummy_verif.predict_edges([(1, 21)])
+        >>> infr.dummy_verif.predict_proba_df([(1, 2)])
+        >>> infr.dummy_verif.predict_proba_df([(1, 21)])
         >>> assert len(infr.dummy_verif.infr.task_probs['match_state']) == 2
     """
     def __init__(verif, infr):
@@ -118,9 +104,6 @@ class DummyVerif(object):
 
     def predict_proba_df(verif, edges):
         """
-        CommandLine:
-            python -m graphid.demo DummyVerif.predict_edges
-
         Example:
             >>> from graphid import demo
             >>> kwargs = dict(num_pccs=40, size=2)
@@ -156,10 +139,6 @@ class DummyVerif(object):
             index=util.ensure_multi_index(edges, ('aid1', 'aid2'))
         )
         return probs
-
-    def predict_edges(verif, edges):
-        pos_scores = verif.predict_proba_df(edges)[POSTV]
-        return pos_scores
 
     def show_score_probs(verif):
         """

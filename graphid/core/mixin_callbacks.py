@@ -3,6 +3,7 @@ import ubelt as ub
 import pandas as pd
 from graphid.core.state import (POSTV, NEGTV, INCMP, NULL)  # NOQA
 from graphid import util
+from graphid.core import abstract
 
 
 class InfrCallbacks(object):
@@ -16,6 +17,11 @@ class InfrCallbacks(object):
         ranker should be a function that accepts a list of annotation ids and
         return a list of the top K ranked annotations.
         """
+        if not isinstance(ranker, abstract.Ranker):
+            for key in abstract.Ranker.__dict__:
+                if not key.startswith('_'):
+                    if not hasattr(ranker, key):
+                        raise ValueError('ranker must implement {}'.format(key))
         infr.ranker = ranker
 
     def set_verifier(infr, verifier, task='match_state'):
@@ -23,8 +29,11 @@ class InfrCallbacks(object):
         verifier should be a function that accepts a list of annotation pairs
         and produces the 3-state match_state probabilities.
         """
-        if infr.verifiers is None:
-            infr.verifiers = {}
+        if not isinstance(verifier, abstract.Verifier):
+            for key in abstract.Verifier.__dict__:
+                if not key.startswith('_'):
+                    if not hasattr(verifier, key):
+                        raise ValueError('verifier must implement {}'.format(key))
         infr.verifiers[task] = verifier
         infr.verifier = verifier
 
@@ -39,6 +48,10 @@ class InfrCallbacks(object):
 
     def refresh_candidate_edges(infr):
         """
+        Uses the registered ranking algorithm to produce new candidaate edges.
+        These are then scored by the verification algorithm and inserted into
+        the priority queue.
+
         CommandLine:
             python -m graphid.core.mixin_callbacks InfrCallbacks.refresh_candidate_edges
 

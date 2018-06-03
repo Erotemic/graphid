@@ -94,7 +94,7 @@ class RefreshCriteria(object):
             >>> infr = demo.demodata_infr(num_pccs=50, size=4, size_std=2)
             >>> edges = list(infr.ranker.predict_candidate_edges(infr.aids, K=100))
             >>> #edges = util.shuffle(sorted(edges), rng=321)
-            >>> scores = np.array(infr.verifier.predict_edges(edges))
+            >>> scores = np.array(infr.verifier.predict_proba_df(edges)[POSTV]))
             >>> sortx = scores.argsort()[::-1]
             >>> edges = list(ub.take(edges, sortx))
             >>> scores = scores[sortx]
@@ -157,7 +157,7 @@ class RefreshCriteria(object):
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=40, size=4, size_std=2, ignore_pair=True)
             >>> edges = list(infr.ranker.predict_candidate_edges(infr.aids, K=100))
-            >>> scores = np.array(infr.verifier.predict_edges(edges))
+            >>> scores = np.array(infr.verifier.predict_proba_df(edges)[POSTV])
             >>> #sortx = util.shuffle(np.arange(len(edges)), rng=321)
             >>> sortx = scores.argsort()[::-1]
             >>> edges = list(ub.take(edges, sortx))
@@ -202,7 +202,7 @@ class RefreshCriteria(object):
 
 
 def demo_refresh():
-    r"""
+    """
     CommandLine:
         python -m graphid.core.refresh demo_refresh \
                 --num_pccs=40 --size=2 --show
@@ -223,7 +223,7 @@ def demo_refresh():
     # make an inference object
     infr = demo.demodata_infr(size_std=0, **demokw)
     edges = list(infr.ranker.predict_candidate_edges(infr.aids, K=100))
-    scores = np.array(infr.verifier.predict_edges(edges))
+    scores = np.array(infr.verifier.predict_proba_df(edges)[POSTV])
     sortx = scores.argsort()[::-1]
     edges = list(ub.take(edges, sortx))
     scores = scores[sortx]
