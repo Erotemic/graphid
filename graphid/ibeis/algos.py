@@ -135,6 +135,36 @@ class VAMP_Verifier(abstract.Verifier):
         probs = verif.clf.predict_proba_df(edges)
         return probs
 
+    def learn_deploy_verifiers(verif):
+        """
+        Uses current knowledge to train verifiers for new unseen pairs.
+
+        Example:
+            >>> import ibeis
+            >>> ibs = ibeis.opendb('PZ_MTEST')
+            >>> infr = ibeis.AnnotInference(ibs, aids='all')
+            >>> infr.ensure_mst()
+            >>> publish = False
+            >>> infr.learn_deploy_verifiers()
+
+        Ignore:
+            publish = True
+        """
+        from ibeis.algo.verif import vsone
+        verif.infr.print('learn_deploy_verifiers')
+
+        aids = sorted(verif.infr.graph.nodes)
+        pblm = vsone.OneVsOneProblem.from_aids(verif.ibs, aids, verbose=5)
+
+        # pblm = vsone.OneVsOneProblem(infr, verbose=True)
+        pblm.primary_task_key = 'match_state'
+        pblm.default_clf_key = 'RF'
+        pblm.default_data_key = 'learn(sum,glob)'
+        pblm.setup()
+        dpath = '.'
+        task_key = 'match_state'
+        pblm.deploy(dpath, task_key=task_key)
+
     def learn_evaluation_verifiers(verif):
         """
 
@@ -175,3 +205,5 @@ class VAMP_Verifier(abstract.Verifier):
         if True:
             pblm.report_evaluation()
         clfs = pblm._make_evaluation_verifiers(pblm.eval_task_keys)
+        clf = clfs['match_state']
+        return clf
