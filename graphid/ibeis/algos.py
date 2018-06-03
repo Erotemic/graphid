@@ -103,6 +103,15 @@ class VAMP_Verifier(abstract.Verifier):
         >>> # Construct the ranking wrapper
         >>> verif = VAMP_Verifier(infr, ibs, clf)
         >>> edges = [(1, 2), (2, 3), (3, 4), (4, 5), (1, 4)]
+        >>> probs = verif.predict_proba_df(edges)
+        >>> print(probs)  # xdoctest: +IGNORE_WANT
+                   nomatch  match  notcomp
+        aid1 aid2
+        1    2      0.0305 0.9664   0.0031
+        2    3      0.2048 0.7640   0.0312
+        3    4      0.4773 0.5207   0.0020
+        4    5      0.9661 0.0000   0.0339
+        1    4      0.2998 0.6785   0.0217
     """
 
     def __init__(verif, infr, ibs, clf):
@@ -119,9 +128,14 @@ class VAMP_Verifier(abstract.Verifier):
         # conda install theano
         # IBEIS_CNN requires Lasagne 2.0
         # pip install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
-        verif.clf.predict_proba_df(edges)
+        try:
+            import ibeis_cnn  # NOQA
+        except ImportError:
+            raise ImportError('VAMP_Verifier usually requires ibeis_cnn')
+        probs = verif.clf.predict_proba_df(edges)
+        return probs
 
-    def learn_evaluation_verifiers(infr):
+    def learn_evaluation_verifiers(verif):
         """
 
         TODO: Use this to update the learned model given the current available
@@ -144,14 +158,20 @@ class VAMP_Verifier(abstract.Verifier):
         raise NotImplementedError(
             'The OneVsOneProblem will probably need an update to accept '
             'the new graphid API')
-        infr.print('learn_evaluataion_verifiers')
         from ibeis.algo.verif import vsone
-        pblm = vsone.OneVsOneProblem(infr, verbose=5)
+        verif.infr.print('learn_evaluataion_verifiers')
+        # pblm = vsone.OneVsOneProblem(verif.infr, verbose=5)
+        # pblm = vsone.OneVsOneProblem(verif, verbose=5)
+
+        # This might work but requires all changes to be commited to the ibeis
+        # backend database.
+
+        aids = sorted(verif.infr.graph.nodes)
+        pblm = vsone.OneVsOneProblem.from_aids(verif.ibs, aids, verbose=5)
         pblm.primary_task_key = 'match_state'
         pblm.eval_clf_keys = ['RF']
         pblm.eval_data_keys = ['learn(sum,glob)']
         pblm.setup_evaluation()
         if True:
             pblm.report_evaluation()
-        verifiers = pblm._make_evaluation_verifiers(pblm.eval_task_keys)
-        return verifiers
+        clfs = pblm._make_evaluation_verifiers(pblm.eval_task_keys)
