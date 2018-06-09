@@ -352,7 +352,7 @@ class DynamicUpdate(DynamicCallbacks):
 
             # Reprioritize candidate edges dynamic priority
             changed_edges.update(set(nxu.edges_between(
-                infr.unreviewed_graph, cc1, cc2, assume_dense=False)))
+                infr.unreviewed_graph, cc1, cc2, assume_dense=False)) - {edge})
 
             if not all_consistent:
                 # We are merging PCCs that are not all consistent
@@ -490,8 +490,6 @@ class DynamicUpdate(DynamicCallbacks):
 
         was_within = nid1 == nid2
         prev_decision = infr._get_current_decision(edge)
-        changed_edges = set()
-        changed_edges.update(nxu.edges_outgoing(infr.unreviewed_graph, edge))
 
         print_ = partial(infr.print, level=4)
 
@@ -502,6 +500,9 @@ class DynamicUpdate(DynamicCallbacks):
             raise KeyError('decision can only be UNREV, INCMP, or UNKWN')
 
         infr._add_review_edge(edge, decision)
+
+        changed_edges = set()
+        changed_edges.update(nxu.edges_outgoing(infr.unreviewed_graph, edge))
 
         if was_within:
             if prev_decision == POSTV:

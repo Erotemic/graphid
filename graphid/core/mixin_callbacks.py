@@ -222,9 +222,9 @@ class InfrCandidates(object):
                 aid1, aid2 = edge
                 score = 0
                 # Hack in a measure where we prefer edges with a lower degree.
-                d1 = infr.graph.degree[aid1] - infr.unreviewed_graph.degree[aid1]
-                d2 = infr.graph.degree[aid2] - infr.unreviewed_graph.degree[aid2]
-                score += (5 - min((d1 + d2) / 2, 5)) / 10.0
+                # d1 = infr.graph.degree[aid1] - infr.unreviewed_graph.degree[aid1]
+                # d2 = infr.graph.degree[aid2] - infr.unreviewed_graph.degree[aid2]
+                # score += (5 - min((d1 + d2) / 2, 5)) / 10.0
                 yield score
         else:
             # raise AssertionError(
@@ -247,17 +247,20 @@ class InfrCandidates(object):
                 score = match_probs[NEGTV] if nid1 == nid2 else match_probs[POSTV]
 
                 if prioritize_nonpos:
-                    if match_thresh[POSTV] > match_probs[POSTV]:
+                    if match_probs[POSTV] > match_thresh[POSTV]:
                         score = max(score, match_probs[POSTV]) + 1
-                    if match_thresh[NEGTV] > match_probs[NEGTV]:
+                    elif match_probs[NEGTV] > match_thresh[NEGTV]:
                         score = max(score, match_probs[NEGTV]) + 1
-                    if match_thresh[INCMP] > match_probs[INCMP]:
+                    elif match_probs[INCMP] > match_thresh[INCMP]:
                         score = max(score, match_probs[NEGTV]) + 1
 
                 # Hack in a measure where we prefer edges with a lower degree.
                 d1 = infr.graph.degree[aid1] - infr.unreviewed_graph.degree[aid1]
                 d2 = infr.graph.degree[aid2] - infr.unreviewed_graph.degree[aid2]
-                score += (5 - min((d1 + d2) / 2, 5)) / 10.0
+                edge_degree = min((d1 + d2), 5)
+                print('edge_degree = {!r}'.format(edge_degree))
+                score += (5 - edge_degree) / 50
+                print('score = {!r}'.format(score))
                 yield score
 
 
