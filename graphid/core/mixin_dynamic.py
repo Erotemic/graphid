@@ -761,7 +761,7 @@ class Recovery(object):
             neg_edges (EdgeList): A list of known negative edges in the PCC
 
         Yields:
-            Typle[Edge, Decision]:
+            Tuple[Edge, Decision]:
         """
         if not nx.is_connected(pos_subgraph):
             raise AssertionError('Not connected' + repr(pos_subgraph))
