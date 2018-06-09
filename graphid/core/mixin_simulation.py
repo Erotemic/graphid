@@ -23,7 +23,9 @@ class SimulationHelpers(object):
         infr.name = name
         infr.simulation_mode = True
 
-        infr.verifiers = classifiers
+        if classifiers:
+            infr.verifiers = classifiers
+
         infr.params['inference.enabled'] = enable_inference
         infr.params['autoreview.enabled'] = enable_autoreview
 

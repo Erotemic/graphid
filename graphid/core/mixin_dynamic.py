@@ -208,7 +208,7 @@ class DynamicCallbacks(object):
             nmg.add_edges_from(split_edges)
 
 
-class DynamicUpdate(object):
+class DynamicUpdate(DynamicCallbacks):
     """
     Logic to dynamically update the state of the graph new decisions
 
@@ -333,6 +333,9 @@ class DynamicUpdate(object):
         print_ = partial(infr.print, level=4)
         prev_decision = infr._get_current_decision(edge)
 
+        # Keep track of edges that need reprioritization after this review.
+        changed_edges = set()
+
         if was_within:
             infr._add_review_edge(edge, decision)
             if all_consistent:
@@ -346,6 +349,10 @@ class DynamicUpdate(object):
             # print_('Merge case')
             cc1 = infr.pos_graph.component(nid1)
             cc2 = infr.pos_graph.component(nid2)
+
+            # Reprioritize candidate edges dynamic priority
+            changed_edges.update(set(nxu.edges_between(
+                infr.unreviewed_graph, cc1, cc2, assume_dense=False)))
 
             if not all_consistent:
                 # We are merging PCCs that are not all consistent
@@ -385,14 +392,21 @@ class DynamicUpdate(object):
                 new_nid = infr.pos_graph.node_label(edge[0])
                 infr.update_extern_neg_redun(new_nid, may_remove=False)
                 infr.update_pos_redun(new_nid, may_remove=False)
+
+            changed_edges.update(nxu.edges_outgoing(infr.unreviewed_graph, edge))
+
             action = infr.on_between(edge, decision, prev_decision, nid1, nid2,
                                      merge_nid=new_nid)
+        infr.prioritize(edges=list(changed_edges))
         return action
 
     def _negative_decision(infr, edge):
         """
         Logic for a dynamic negative decision.  A negative decision is evidence
         that two annots should not be in the same PCC
+
+        TODO: can logic for uninferable and negative be merged into a
+            _nonpositive_decision function?
         """
         decision = NEGTV
         nid1, nid2 = infr.node_labels(*edge)
@@ -407,6 +421,9 @@ class DynamicUpdate(object):
         was_split = was_within and new_nid1 != new_nid2
 
         print_ = partial(infr.print, level=4)
+
+        changed_edges = set()
+        changed_edges.update(nxu.edges_outgoing(infr.unreviewed_graph, edge))
 
         if was_within:
             if was_split:
@@ -431,6 +448,12 @@ class DynamicUpdate(object):
                 # Signal that a split occurred
                 action = infr.on_within(edge, decision, prev_decision, nid1,
                                         split_nids=(new_nid1, new_nid2))
+
+                # Reprioritize candidate edges dynamic priority
+                cc1 = infr.pos_graph.component(new_nid1)
+                cc2 = infr.pos_graph.component(new_nid2)
+                changed_edges.update(set(nxu.edges_between(
+                    infr.unreviewed_graph, cc1, cc2, assume_dense=False)))
             else:
                 if all_consistent:
                     print_('neg-within-clean')
@@ -451,6 +474,7 @@ class DynamicUpdate(object):
                 pass
             action = infr.on_between(edge, decision, prev_decision, new_nid1,
                                      new_nid2)
+        infr.prioritize(edges=list(changed_edges))
         return action
 
     def _uninferable_decision(infr, edge, decision):
@@ -466,6 +490,8 @@ class DynamicUpdate(object):
 
         was_within = nid1 == nid2
         prev_decision = infr._get_current_decision(edge)
+        changed_edges = set()
+        changed_edges.update(nxu.edges_outgoing(infr.unreviewed_graph, edge))
 
         print_ = partial(infr.print, level=4)
 
@@ -509,6 +535,13 @@ class DynamicUpdate(object):
                     action = infr.on_within(edge, decision, prev_decision,
                                             nid1, split_nids=(new_nid1,
                                                               new_nid2))
+
+                    # Reprioritize candidate edges dynamic priority
+                    cc1 = infr.pos_graph.component(new_nid1)
+                    cc2 = infr.pos_graph.component(new_nid2)
+                    changed_edges.update(set(nxu.edges_between(
+                        infr.unreviewed_graph, cc1, cc2, assume_dense=False)))
+
                 else:
                     if all_consistent:
                         print_('%s-within-pos-clean' % prefix)
@@ -552,6 +585,7 @@ class DynamicUpdate(object):
                         #         'inferred_state', ub.dzip([edge], [INCMP])
                         #     )
             action = infr.on_between(edge, decision, prev_decision, nid1, nid2)
+        infr.prioritize(edges=list(changed_edges))
         return action
 
 

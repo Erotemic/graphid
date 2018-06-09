@@ -5,7 +5,7 @@ import ubelt as ub  # NOQA
 from graphid import util
 from graphid.core import state as const
 from graphid.util import nx_utils as nxu
-from graphid.core.state import (POSTV, NEGTV)
+from graphid.core.state import (POSTV, NEGTV, INCMP)  # NOQA
 from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
 
 
@@ -104,11 +104,30 @@ class Priority(object):
         Adds edges to the priority queue.
 
         Note that these edges must already exist in the `infr.unreviewed_graph`
-        as unreviewed edges. By default the `prob_match` edge attribute is used
-        to sort edges. If you have registered a verification algorithm, then
+        as unreviewed edges.
+
+        ~~By default the `prob_match` edge attribute is used to sort edges.~~
+
+        By default the `dynamic_priority` edge attribute is used to sort edges.
+        This is the positive probability when an edge is between two PCCs and
+        the negative proability when the edges is within the same PCC.
+
+        If you have registered a verification algorithm, then
         these scores are computed using `infr.ensure_priority_scores(edges)`.
         However, you can have all this done for you by simply calling
         `infr.add_candidate_edges(edges)` or `infr.refresh_candidate_edges()`.
+
+        Args:
+            metric (str): the edge attribute being used to organize the edges.
+                In most cases this should be the default `dynamic_priority`
+                attribute, which is the positive probability when an edge is
+                between two PCCs and the negative proability when the edges is
+                within the same PCC..
+            edges (list): list of edges to prioritize
+            scores (list): the numeric priority for each edge. (if not
+                specified it is loaded from the edge attributes)
+            force_inconsistent (bool): if True always prioritize error edges
+            reset (bool): if True, emptys the queue before prioritizing.
 
         Example:
             >>> from graphid.core.mixin_priority import *  # NOQA
@@ -140,7 +159,7 @@ class Priority(object):
             infr.queue = util.PriorityQueue()
         low = 1e-9
         if metric is None:
-            metric = 'prob_match'
+            metric = 'dynamic_priority'
 
         # If edges are not explicilty specified get unreviewed and error edges
         # that are not redundant
@@ -162,7 +181,11 @@ class Priority(object):
                 len(extra_edges)), 5)
 
             if scores is not None:
-                pgen = list(infr.gen_edge_values(metric, extra_edges, default=low))
+                if metric == 'dynamic_priority':
+                    # Dynamic priority is a fancier way of getting scores
+                    pgen = list(infr.gen_dynamic_priority(extra_edges))
+                else:
+                    pgen = list(infr.gen_edge_values(metric, extra_edges, default=low))
                 extra_scores = np.array(pgen)
                 extra_scores[np.isnan(extra_scores)] = low
 
@@ -174,8 +197,12 @@ class Priority(object):
 
         # Ensure given scores do not have nan values
         if scores is None:
-            pgen = infr.gen_edge_values(metric, edges, default=low)
-            priorities = np.array(list(pgen))
+            if metric == 'dynamic_priority':
+                # Dynamic priority is a fancier way of getting scores
+                pgen = list(infr.gen_dynamic_priority(edges))
+            else:
+                pgen = list(infr.gen_edge_values(metric, edges, default=low))
+            priorities = np.array(pgen)
             priorities[np.isnan(priorities)] = low
         else:
             priorities = np.asarray(scores)
@@ -185,7 +212,9 @@ class Priority(object):
         if infr.params['inference.enabled']:
             # Increase priority of any flagged maybe_error edges
             err_flags = [e in maybe_error_edges for e in edges]
-            priorities[err_flags] += 10
+            import utool
+            with utool.embed_on_exception_context:
+                priorities[err_flags] += 10
 
         # Push new items into the priority queue
         num_new = 0
@@ -218,6 +247,12 @@ class Priority(object):
         while True:
             try:
                 edge, priority = infr._pop()
+                # # The priority in the queue may be stale
+                # current_priority, = infr.gen_dynamic_priority([edge])
+                # if priority < 10 and priority != current_priority:
+                #     # requeue with the new priority and move to the next edge
+                #     infr.push(edge, current_priority)
+                #     continue
             except IndexError:
                 raise StopIteration('no more to review!')
             else:

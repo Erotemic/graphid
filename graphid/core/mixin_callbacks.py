@@ -1,8 +1,6 @@
 import numpy as np
 import ubelt as ub
-import pandas as pd
 from graphid.core.state import (POSTV, NEGTV, INCMP, NULL)  # NOQA
-from graphid import util
 from graphid.core import abstract
 
 
@@ -134,7 +132,7 @@ class InfrCandidates(object):
             >>>             for p in infr.task_probs['match_state'].values()])
         """
         if not infr.verifiers:
-            raise Exception('Verifiers are needed to predict probabilities')
+            raise AssertionError('Verifiers are needed to predict probabilities')
 
         # Construct pairwise features on edges in infr
         primary_task = 'match_state'
@@ -164,10 +162,13 @@ class InfrCandidates(object):
                 # Set edge task attribute as well
                 infr.set_edge_attrs(task, probs_dict)
 
-    def ensure_priority_scores(infr, priority_edges):
+    def ensure_priority_scores(infr, edges):
         """
         Ensures that priority attributes are assigned to the edges.
         This does not change the state of the queue.
+
+        Args:
+            edges (List[Tuple[int, int]]): edges to ensure have priority scores
 
         Doctest:
             >>> from graphid import demo
@@ -177,77 +178,87 @@ class InfrCandidates(object):
         """
         if infr.verifiers:
             infr.print('Prioritizing {} edges with one-vs-one probs'.format(
-                    len(priority_edges)), 1)
-
-            infr.ensure_task_probs(priority_edges)
-
-            primary_task = 'match_state'
-            match_probs = infr.task_probs[primary_task]
-            primary_thresh = infr.task_thresh[primary_task]
-
-            # Read match_probs into a DataFrame
-            primary_probs = pd.DataFrame(
-                list(ub.take(match_probs, priority_edges)),
-                index=util.ensure_multi_index(priority_edges, ('aid1', 'aid2'))
-            )
-
-            # Convert match-state probabilities into priorities
-            prob_match = primary_probs[POSTV]
-
-            # Initialize priorities to probability of matching
-            default_priority = prob_match.copy()
-
-            # If the edges are currently between the same individual, then
-            # prioritize by non-positive probability (because those edges might
-            # expose an inconsistency)
-            already_pos = [
-                infr.pos_graph.node_label(u) == infr.pos_graph.node_label(v)
-                for u, v in priority_edges
-            ]
-            default_priority[already_pos] = 1 - default_priority[already_pos]
-
-            if infr.params['autoreview.enabled']:
-                if infr.params['autoreview.prioritize_nonpos']:
-                    # Give positives that pass automatic thresholds high priority
-                    _probs = primary_probs[POSTV]
-                    flags = _probs > primary_thresh[POSTV]
-                    default_priority[flags] = np.maximum(default_priority[flags],
-                                                         _probs[flags]) + 1
-
-                    # Give negatives that pass automatic thresholds high priority
-                    _probs = primary_probs[NEGTV]
-                    flags = _probs > primary_thresh[NEGTV]
-                    default_priority[flags] = np.maximum(default_priority[flags],
-                                                         _probs[flags]) + 1
-
-                    # Give not-comps that pass automatic thresholds high priority
-                    _probs = primary_probs[INCMP]
-                    flags = _probs > primary_thresh[INCMP]
-                    default_priority[flags] = np.maximum(default_priority[flags],
-                                                         _probs[flags]) + 1
-
-            infr.set_edge_attrs('prob_match', prob_match.to_dict())
-            infr.set_edge_attrs('default_priority', default_priority.to_dict())
-
-            metric = 'default_priority'
-            priority = default_priority
+                    len(edges)), 1)
+            metric = 'dynamic_priority'
+            priority = list(infr.gen_dynamic_priority(edges))
         elif infr.cm_list is not None:
             infr.print(
                 'Prioritizing {} edges with one-vs-vsmany scores'.format(
-                    len(priority_edges), 1))
+                    len(edges), 1))
             # Not given any deploy classifier, this is the best we can do
-            scores = infr._make_lnbnn_scores(priority_edges)
+            scores = infr._make_lnbnn_scores(edges)
             metric = 'normscore'
             priority = scores
         else:
             infr.print(
                 'WARNING: No verifiers to prioritize {} edge(s)'.format(
-                    len(priority_edges)))
+                    len(edges)))
             metric = 'random'
-            priority = np.zeros(len(priority_edges)) + 1e-6
+            priority = np.zeros(len(edges)) + 1e-6
 
-        infr.set_edge_attrs(metric, ub.dzip(priority_edges, priority))
+        infr.set_edge_attrs(metric, ub.dzip(edges, priority))
         return metric, priority
+
+    def gen_dynamic_priority(infr, edges):
+        """
+        Generates the dynamic priority of each edge. This is the positive
+        probability if the edge is between two PCCs and the negative if it is
+        within the same PCC.
+
+        If verifiers are not set, this just returns random numbers.
+
+        Notes:
+            assumes a verifier exists to populate infr.task_probs['match_state']
+
+        Args:
+            edges (list): edges of interest
+
+        Yields:
+            float: priority score
+        """
+        if not infr.verifiers:
+            raise AssertionError('must have verifiers')
+            for edge in edges:
+                aid1, aid2 = edge
+                score = 0
+                # Hack in a measure where we prefer edges with a lower degree.
+                d1 = infr.graph.degree[aid1] - infr.unreviewed_graph.degree[aid1]
+                d2 = infr.graph.degree[aid2] - infr.unreviewed_graph.degree[aid2]
+                score += (5 - min((d1 + d2) / 2, 5)) / 10.0
+                yield score
+        else:
+            # raise AssertionError(
+            #     'need a match_state verifier to use dynamic priorities')
+            infr.ensure_task_probs(edges)
+
+            prioritize_nonpos = (infr.params['autoreview.enabled'] and
+                                 infr.params['autoreview.prioritize_nonpos'])
+
+            all_match_probs = infr.task_probs['match_state']
+            match_thresh = infr.task_thresh['match_state']
+
+            for edge in edges:
+                match_probs = all_match_probs[edge]
+                # If edges are between different PCCs, prioritize by POSTV probs
+                # If edges are within the same PCC, prioritize by NEGTV probs
+                # These edges are the most likely to cause splits and merges
+                aid1, aid2 = edge
+                nid1, nid2 = infr.pos_graph.node_labels(aid1, aid2)
+                score = match_probs[NEGTV] if nid1 == nid2 else match_probs[POSTV]
+
+                if prioritize_nonpos:
+                    if match_thresh[POSTV] > match_probs[POSTV]:
+                        score = max(score, match_probs[POSTV]) + 1
+                    if match_thresh[NEGTV] > match_probs[NEGTV]:
+                        score = max(score, match_probs[NEGTV]) + 1
+                    if match_thresh[INCMP] > match_probs[INCMP]:
+                        score = max(score, match_probs[NEGTV]) + 1
+
+                # Hack in a measure where we prefer edges with a lower degree.
+                d1 = infr.graph.degree[aid1] - infr.unreviewed_graph.degree[aid1]
+                d2 = infr.graph.degree[aid2] - infr.unreviewed_graph.degree[aid2]
+                score += (5 - min((d1 + d2) / 2, 5)) / 10.0
+                yield score
 
 
 if __name__ == '__main__':

@@ -236,6 +236,7 @@ def run_demo():
 
         if count == TARGET_REVIEW:
             infr.EMBEDME = QUIT_OR_EMEBED == 'embed'
+
         infr.add_feedback(edge, **feedback)
         infr.print('len(queue) = %r' % (len(infr.queue)))
         # infr.apply_nondynamic_update()
