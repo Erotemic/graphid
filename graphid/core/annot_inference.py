@@ -16,6 +16,7 @@ from graphid.core import mixin_helpers
 from graphid.core import mixin_dynamic
 from graphid.core import mixin_priority
 from graphid.core import mixin_loops
+from graphid.core import mixin_nondynamic
 from graphid.core import mixin_callbacks
 from graphid.core import mixin_simulation
 from graphid.core import mixin_invariants
@@ -1068,7 +1069,7 @@ class AnnotInference(ub.NiceRepr,
                      NameRelabel,
                      Consistency,
                      # New annot_inference algorithm stuffs
-                     mixin_dynamic.NonDynamicUpdate,
+                     mixin_nondynamic.NonDynamicUpdate,
                      mixin_dynamic.Recovery,
                      mixin_dynamic.DynamicUpdate,
                      mixin_redundancy.Redundancy,
