@@ -41,6 +41,12 @@ uploaded to reserve the name.
 
 # Dependencies
 
+```bash
+sudo apt-get install -y graphviz libgraphviz-dev
+pip install graphviz
+pip install -e . 
+```
+
 This project is Python 3.6+, Python 2 is not supported.
 
 If you want to be able to draw the graphs, you must install graphviz, which is
