@@ -116,6 +116,11 @@ class Feedback(object):
             raise ValueError('aid2=%r is not part of the graph' % (aid2,))
 
     def add_feedback_from(infr, items, verbose=None, **kwargs):
+        """
+        Args:
+            items (List[Edge]): each edge is a dictionary with
+                aid1, aid2, evidence_decision, meta_decision, etc..
+        """
         if verbose is None:
             verbose = infr.verbose > 5
         if isinstance(items, pd.DataFrame):

@@ -193,9 +193,15 @@ class _RedundancyComputers(object):
             if not infr.is_pos_redundant(cc, k=k, relax=relax):
                 yield cc
 
-    def find_non_neg_redun_pccs(infr, k=None):
+    def find_non_neg_redun_pccs(infr, k=None, cc=None):
         """
         Get pairs of PCCs that are not complete.
+
+        Args:
+            k (int): level of redunency to be considered complete
+            cc (set, optional): if specified only search for
+                other pccs that are not negative redundant to
+                this particular cc
 
         Example:
             >>> from graphid import demo
@@ -207,10 +213,17 @@ class _RedundancyComputers(object):
             k = infr.params['redun.neg']
         # need to ensure pccs is static in case new user input is added
         pccs = list(infr.positive_components())
-        # Loop through all pairs
-        for cc1, cc2 in it.combinations(pccs, 2):
-            if not infr.is_neg_redundant(cc1, cc2):
-                yield cc1, cc2
+        if cc is None:
+            # Loop through all pairs
+            for cc1, cc2 in it.combinations(pccs, 2):
+                if not infr.is_neg_redundant(cc1, cc2, k=k):
+                    yield cc1, cc2
+        else:
+            cc1 = cc
+            for cc2 in pccs:
+                if cc1 != cc2:
+                    if not infr.is_neg_redundant(cc1, cc2, k=k):
+                        yield cc1, cc2
 
     def find_pos_redun_nids(infr):
         """ recomputes infr.pos_redun_nids """

@@ -19,10 +19,13 @@ class GraphID(ub.NiceRepr):
         self.infr = annot_inference.AnnotInference()
 
     def add_annots_from(self, annots):
-        pass
+        self.infr.add_aids(annots)
 
     def add_edges_from(self, edges):
-        pass
+        self.infr.add_feedback_from(edges)
+
+    def add_edge(self, edge, evidence_decision=None):
+        self.infr.add_feedback(edge, evidence_decision=evidence_decision)
 
     def __iter__(self):
         """
