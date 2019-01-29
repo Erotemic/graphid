@@ -1,5 +1,5 @@
 # flake8: noqa
-__version__ = '0.0.2.dev0'
+__version__ = '0.0.3'
 """
 mkinit ~/code/graphid/graphid --noattrs
 """
