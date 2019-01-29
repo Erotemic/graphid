@@ -7,5 +7,13 @@ networkx
 pandas
 opencv-python
 matplotlib
-pygraphviz
 scikit-image
+
+# Note: requires
+# sudo apt-get install python-dev graphviz libgraphviz-dev pkg-config
+# pip install pygraphviz
+
+# OR
+# conda install -c marufr pygraphviz
+
+# pygraphviz

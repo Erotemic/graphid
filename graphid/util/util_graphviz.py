@@ -688,7 +688,10 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
         assert np.all(nx.get_node_attributes(graph2, 'pos')['1'] == nx.get_node_attributes(graph3, 'pos')['1'])
     """
     #import networkx as nx
-    import pygraphviz
+    try:
+        import pygraphviz
+    except ImportError as ex:
+        raise ImportError('graphid nx_agraph_layout requires pygraphviz, but unable to import due to: ' + repr(ex))
 
     # graph_ = get_explicit_graph(orig_graph).copy()
     graph_ = get_explicit_graph(orig_graph)
