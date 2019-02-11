@@ -130,6 +130,7 @@ if __name__ == '__main__':
         packages=[
             'graphid',
             'graphid.core',
+            'graphid.demo',
             'graphid.util',
             'graphid.ibeis',
         ],
