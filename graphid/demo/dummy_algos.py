@@ -137,8 +137,7 @@ class DummyVerif(object):
         if np.any(is_miss):
             miss_edges = list(ub.compress(edges, is_miss))
             miss_truths = [verif._get_truth(edge) for edge in miss_edges]
-            grouped_edges = ub.group_items(miss_edges, miss_truths,
-                                           sorted_=False)
+            grouped_edges = ub.group_items(miss_edges, miss_truths)
             # Need to make this determenistic too
             states = [POSTV, NEGTV, INCMP]
             for key in sorted(grouped_edges.keys()):

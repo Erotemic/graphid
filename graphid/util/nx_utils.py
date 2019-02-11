@@ -15,6 +15,18 @@ def _dz(a, b):
     return ub.dzip(a, b)
 
 
+def nx_source_nodes(graph):
+    for node in graph.nodes():
+        if graph.in_degree(node) == 0:
+            yield node
+
+
+def nx_sink_nodes(graph):
+    for node in graph.nodes():
+        if graph.out_degree(node) == 0:
+            yield node
+
+
 def take_column(list_, colx):
     r"""
     accepts a list of (indexables) and returns a list of indexables
