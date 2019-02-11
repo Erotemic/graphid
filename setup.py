@@ -127,7 +127,12 @@ if __name__ == '__main__':
         author_email='erotemic@gmail.com',
         url='https://github.com/Erotemic/graphid',
         license='Apache 2',
-        packages=['graphid'],
+        packages=[
+            'graphid',
+            'graphid.core',
+            'graphid.util',
+            'graphid.ibeis',
+        ],
         classifiers=[
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
