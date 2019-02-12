@@ -440,12 +440,20 @@ class Priority(object):
     def _generate_reviews(infr, data=False):
         if data:
             while True:
-                edge, priority = infr.pop()
-                yield edge, priority
+                try:
+                    edge, priority = infr.pop()
+                except StopIteration:
+                    return
+                else:
+                    yield edge, priority
         else:
             while True:
-                edge, priority = infr.pop()
-                yield edge
+                try:
+                    edge, priority = infr.pop()
+                except StopIteration:
+                    return
+                else:
+                    yield edge
 
 
 if __name__ == '__main__':

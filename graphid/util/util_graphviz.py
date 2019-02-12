@@ -1007,11 +1007,11 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
 
     fancy way to draw networkx graphs without directly using networkx
     """
-    import plottool as pt
     import matplotlib as mpl
     from matplotlib import patches
     from matplotlib import patheffects
     from graphid import util
+    from graphid.util import mpl_plottool as pt
 
     # figsize = ub.argval('--figsize', type_=list, default=None)
     figsize = None
@@ -1135,7 +1135,8 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
 
         show_center = 0
         if show_center:
-            pt.plot(xy[0], xy[1], 'xr')
+            from matplotlib import pyplot as plt
+            plt.plot(xy[0], xy[1], 'xr')
 
         zorder = nattrs.get('zorder', None)
         if True:

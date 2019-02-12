@@ -136,16 +136,6 @@ def imread(fpath, **kw):
         >>> tif_im = imread(tmp_tif.name)
         >>> png_im = imread(tmp_png.name)
         >>> assert np.all(tif_im == png_im)
-
-        import plottool as pt
-        pt.qtensure()
-        pt.imshow(tif_im / 2 ** 16, pnum=(1, 2, 1), fnum=1)
-        pt.imshow(png_im / 2 ** 16, pnum=(1, 2, 2), fnum=1)
-
-    Ignore:
-        from PIL import Image
-        pil_img = Image.open(tif_fpath)
-        assert int(Image.PILLOW_VERSION.split('.')[0]) > 4
     """
     try:
         if fpath.endswith(('.tif', '.tiff')):

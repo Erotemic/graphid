@@ -1903,7 +1903,7 @@ class PlotNums(object):
         Example:
             >>> import itertools as it
             >>> pnum_ = PlotNums(nSubplots=9)
-            >>> pnum_list = list( (pnum_() for _ in it.count()) )
+            >>> pnum_list = [pnum_() for _ in range(len(pnum_))]
             >>> result = ('pnum_list = %s' % (ub.repr2(pnum_list),))
             >>> print(result)
 
@@ -1912,7 +1912,7 @@ class PlotNums(object):
             >>> for nRows, nCols, nSubplots in it.product([None, 3], [None, 3], [None, 9]):
             >>>     start = 0
             >>>     pnum_ = PlotNums(nRows, nCols, nSubplots, start)
-            >>>     pnum_list = list( (pnum_() for _ in it.count()) )
+            >>>     pnum_list = [pnum_() for _ in range(len(pnum_))]
             >>>     print((nRows, nCols, nSubplots))
             >>>     result = ('pnum_list = %s' % (ub.repr2(pnum_list),))
             >>>     print(result)
