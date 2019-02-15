@@ -28,15 +28,20 @@ python -m graphid.demo.dummy_infr demodata_infr --num_pccs=25 --show
 python -m graphid.demo.dummy_infr demodata_infr --num_pccs=100 --show
 ```
 
+The first of these commands will generate an image that looks like this: 
+![alt text](https://i.imgur.com/CAUJVc5.png "ID-Graph")
+
+The "aid" is an annotation id, the "nid" is a name id. Blue edges mean two annotation match. Red edges mean two annotations don't match. Yellow edges means that two annotations are not comparable (i.e. not enough info to determine if they match or not). Edges that are highlighted are ones flagged by the program for the user to re-check because it inferred that there is an inconsistency in the graph. Edges that are dotted, are flagged by the program as actually between two distinct individuals. 
+
+
 This README is a mess. Why not look at [this Jupyter
 notebook](notebooks/core_example.ipynb) in the meantime.
 
 
 # Installation
 
-Once this package becomes stable you can install via `pip install graphid`.
-However, this will currently give you an older version of the project I
-uploaded to reserve the name.
+You should be able to simply `pip install graphid`.
+However, you might have an issue with pygraphviz. There also may be issues on Python 3.7 due to use of StopIteration.
 
 
 # Dependencies
