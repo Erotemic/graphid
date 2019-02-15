@@ -32,7 +32,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            apt-get update && sudo apt-get install -y libgraphviz-dev
+            sudo apt-get update && sudo apt-get install -y libgraphviz-dev
             pip install -r requirements.txt
             pip install pygraphviz
 
