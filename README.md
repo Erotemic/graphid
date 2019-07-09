@@ -34,8 +34,11 @@ The first of these commands will generate an image that looks like this:
 The "aid" is an annotation id, the "nid" is a name id. Blue edges mean two annotation match. Red edges mean two annotations don't match. Yellow edges means that two annotations are not comparable (i.e. not enough info to determine if they match or not). Edges that are highlighted are ones flagged by the program for the user to re-check because it inferred that there is an inconsistency in the graph. Edges that are dotted, are flagged by the program as actually between two distinct individuals. 
 
 
-This README is a mess. Why not look at [this Jupyter
-notebook](notebooks/core_example.ipynb) in the meantime.
+This README is a mess. 
+Why not look at [this Jupyter notebook](notebooks/core_example.ipynb) in the
+meantime. (Note as of 2019-June-09 the GitHub viewer seems broken, but 
+[this link](https://nbviewer.jupyter.org/github/Erotemic/graphid/blob/master/notebooks/core_example.ipynb)
+is working)
 
 
 # Installation
