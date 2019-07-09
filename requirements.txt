@@ -3,6 +3,7 @@ xdoctest
 pytest
 numpy
 scipy
+pygments
 networkx
 pandas
 opencv-python

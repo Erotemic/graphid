@@ -20,7 +20,7 @@ This is the graph identification described in Chapter 5 of [my thesis](https://g
 This repo is currently a work in progress. 
 
 Helpful commands I'm currently using in development and debugging. Perhaps they
-will be someone illustrative of what this package is trying to do.
+will be somewhat illustrative of what this package is trying to do.
 
 ```
 python -m graphid.demo.dummy_infr demodata_infr --show
