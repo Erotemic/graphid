@@ -129,7 +129,10 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
     if kwargs.get('modify_ax', True):
         ax.grid(False)
         plt.axis('equal')
-        ax.axesPatch.set_facecolor('white')
+        try:
+            ax.axesPatch.set_facecolor('white')
+        except AttributeError:
+            pass
         ax.autoscale()
         ax.autoscale_view(True, True, True)
     #axes.facecolor
@@ -494,7 +497,10 @@ def make_agraph(graph_):
     # Hack to make the w/h of the node take thae max instead of
     # dot which takes the minimum
     shaped_nodes = [n for n, d in graph_.nodes(data=True) if 'width' in d]
-    node_dict = graph_.node
+    try:
+        node_dict = graph_.node
+    except AttributeError:
+        node_dict = graph_.nodes
     node_attrs = list(ub.take(node_dict, shaped_nodes))
 
     width_px = np.array(util.take_column(node_attrs, 'width'))
