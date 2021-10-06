@@ -209,7 +209,9 @@ class GraphVisualization(object):
         Useful for making before and after pictures.
         """
         # Update the node positions if they have not been set
-        infr.update_visual_attrs(groupby='name_label')
+        # HACK: blindly set reposition to False on 2021-10-06, unsure if that
+        # is ok
+        infr.update_visual_attrs(groupby='name_label', reposition=False)
         # Set the pin attribute
         infr.set_node_attrs('pin', 'true')
 

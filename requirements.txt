@@ -1,20 +1,2 @@
-ubelt
-xdoctest
-pytest
-numpy
-scipy
-pygments
-networkx
-pandas
-opencv-python
-matplotlib
-scikit-image
-
-# Note: requires
-# sudo apt-get install python-dev graphviz libgraphviz-dev pkg-config
-# pip install pygraphviz
-
-# OR
-# conda install -c marufr pygraphviz
-
-# pygraphviz
+-r requirements/runtime.txt
+-r requirements/tests.txt

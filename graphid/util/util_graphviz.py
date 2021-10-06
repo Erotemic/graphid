@@ -86,7 +86,7 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
         python -m graphid.util.util_graphviz show_nx --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:pygraphviz)
         >>> from graphid.util.util_graphviz import *  # NOQA
         >>> graph = nx.DiGraph()
         >>> graph.add_nodes_from(['a', 'b', 'c', 'd'])
@@ -654,6 +654,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
         python -m graphid.util.util_graphviz nx_agraph_layout --show
 
     Doctest:
+        >>> # xdoctest: +REQUIRES(module:pygraphviz)
         >>> from graphid.util.util_graphviz import *  # NOQA
         >>> import networkx as nx
         >>> import itertools as it
@@ -780,7 +781,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
     #     warnings.filterwarnings('ignore')
     try:
         agraph.layout(prog=prog, args=args)
-    except Exception as ex:
+    except Exception:
         raise
 
     if is_large:
@@ -1553,6 +1554,7 @@ def translate_graph_to_origin(graph):
 def get_graph_bounding_box(graph):
     """
     Example:
+        >>> # xdoctest: +REQUIRES(module:pygraphviz)
         >>> graph = nx.path_graph([1, 2, 3, 4])
         >>> nx_agraph_layout(graph, inplace=True)
         >>> bbox = get_graph_bounding_box(graph)
@@ -1593,7 +1595,7 @@ def nx_ensure_agraph_color(graph):
                     data['color'] = '#%02x%02x%02x' % color
                 else:
                     data['color'] = '#%02x%02x%02x%02x' % color
-        except Exception as ex:
+        except Exception:
             raise
 
     for node, node_data in graph.nodes(data=True):
