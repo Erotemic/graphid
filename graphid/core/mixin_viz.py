@@ -761,7 +761,7 @@ def nx_ensure_agraph_color(graph):
                     data['color'] = '#%02x%02x%02x' % color
                 else:
                     data['color'] = '#%02x%02x%02x%02x' % color
-        except Exception as ex:
+        except Exception:
             raise
 
     for node, node_data in graph.nodes(data=True):

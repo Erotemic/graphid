@@ -550,7 +550,7 @@ class Recovery(object):
             >>> result = ub.repr2({
             >>>     'iccs': list(infr.inconsistent_components()),
             >>>     'pccs': sorted([cc for cc in infr.positive_components()], key=min),
-            >>> }, nobr=True, sorted=True, si=True, itemsep='', sep='', nl=1)
+            >>> }, nobr=1, sorted=True, si=True, itemsep='', sep='', nl=1)
             >>> print(result)
             iccs: [{1,2,3,4}],
             pccs: [{1,2,3,4},{5,6,7,8},{9,10,11,12},{13,14,15,16}],

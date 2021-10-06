@@ -573,7 +573,7 @@ def safe_max(arr, fill=np.nan, finite=False, nans=True):
         >>> results3 = [safe_max(arr, fill, finite=True, nans=False) for arr in arrs]
         >>> results4 = [safe_max(arr, fill, finite=False, nans=False) for arr in arrs]
         >>> results = [results1, results2, results3, results4]
-        >>> result = ('results = %s' % (ub.repr2(results, nl=1),))
+        >>> result = ('results = %s' % (ub.repr2(results, nl=1, sv=1),))
         >>> print(result)
         results = [
             [nan, nan, nan, inf, inf, 1],
@@ -596,7 +596,7 @@ def safe_min(arr, fill=np.nan, finite=False, nans=True):
         >>> results3 = [safe_min(arr, fill, finite=True, nans=False) for arr in arrs]
         >>> results4 = [safe_min(arr, fill, finite=False, nans=False) for arr in arrs]
         >>> results = [results1, results2, results3, results4]
-        >>> result = ('results = %s' % (ub.repr2(results, nl=1),))
+        >>> result = ('results = %s' % (ub.repr2(results, nl=1, sv=1),))
         >>> print(result)
         results = [
             [nan, nan, nan, inf, 1.0, 0],
