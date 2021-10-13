@@ -42,7 +42,7 @@ def dump_nx_ondisk(graph, fpath):
     agraph = make_agraph(graph.copy())
     # agraph = nx.nx_agraph.to_agraph(graph)
     agraph.layout(prog='dot')
-    agraph.draw(ub.truepath(fpath))
+    agraph.draw(ub.expandpath(fpath))
 
 
 def ensure_nonhex_color(orig_color):
@@ -788,7 +788,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
         print('Finished agraph layout.')
 
     if 0:
-        test_fpath = ub.truepath('~/test_graphviz_draw.png')
+        test_fpath = ub.expandpath('~/test_graphviz_draw.png')
         agraph.draw(test_fpath)
         ub.startfile(test_fpath)
     if verbose > 3:
@@ -859,7 +859,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
                       'large graph.')
 
             if False:
-                agraph.draw(ub.truepath('~/implicit_test_graphviz_draw.png'))
+                agraph.draw(ub.expandpath('~/implicit_test_graphviz_draw.png'))
             if verbose:
                 print('AFTER IMPLICIT LAYOUT\n' + str(agraph))
 
