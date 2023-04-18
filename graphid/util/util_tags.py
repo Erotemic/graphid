@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-import six
 import re
 import operator
 import numpy as np
@@ -94,9 +92,9 @@ def filterflags_general_tags(tags_list, has_any=None, has_all=None,
 
     def _fix_tags(tags):
         if ignore_case:
-            return set([]) if tags is None else {six.text_type(t.lower()) for t in tags}
+            return set([]) if tags is None else {str(t.lower()) for t in tags}
         else:
-            return set([]) if tags is None else {six.text_type() for t in tags}
+            return set([]) if tags is None else {str() for t in tags}
 
     if logic is None:
         logic = 'and'
@@ -112,7 +110,7 @@ def filterflags_general_tags(tags_list, has_any=None, has_all=None,
     }[logic]
 
     tags_list_ = [_fix_tags(tags_) for tags_ in tags_list]
-    flags = default_func(len(tags_list_), dtype=np.bool)
+    flags = default_func(len(tags_list_), dtype=bool)
 
     if min_num is not None:
         flags_ = [len(tags_) >= min_num for tags_ in tags_list_]
@@ -162,7 +160,7 @@ def filterflags_general_tags(tags_list, has_any=None, has_all=None,
 
     flags = _exec_filter(
         flags, tags_list, any_startswith,
-        operator.gt, six.text_type.startswith)
+        operator.gt, str.startswith)
 
     flags = _exec_filter(
         flags, tags_list, in_any,
@@ -170,7 +168,7 @@ def filterflags_general_tags(tags_list, has_any=None, has_all=None,
 
     flags = _exec_filter(
         flags, tags_list, any_endswith,
-        operator.gt, six.text_type.endswith)
+        operator.gt, str.endswith)
 
     flags = _exec_filter(
         flags, tags_list, any_match,

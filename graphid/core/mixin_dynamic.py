@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This file handles dynamically updating the graph state based on new feedback.
 This involves handling lots of different cases, which can get confusing (it
@@ -25,7 +24,6 @@ TODO:
     the neg redun graph, we just filter them out afterwords)
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import ubelt as ub
 import numpy as np
 import networkx as nx

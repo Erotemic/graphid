@@ -336,7 +336,7 @@ class IBEISIO(object):
             edge_delta_df_['new_meta_decision']))
         new_tags = ['' if tags is None else ';'.join(tags)
                     for tags in edge_delta_df_['new_tags']]
-        new_conf = list(ub.dict_take(ibs.const.CONFIDENCE.CODE_TO_INT,
+        new_conf = list(ub.take(ibs.const.CONFIDENCE.CODE_TO_INT,
                                      edge_delta_df_['new_confidence'], None))
         new_timestamp = edge_delta_df_['new_timestamp']
         new_reviewer = edge_delta_df_['new_user_id']

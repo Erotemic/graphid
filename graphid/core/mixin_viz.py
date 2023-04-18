@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import warnings
 import ubelt as ub
@@ -86,7 +84,7 @@ class GraphVisualization(object):
             graph = infr.graph
         if not hasattr(infr, '_viz_image_config_dirty'):
             infr.initialize_visual_node_attrs()
-        aid_list = list(graph.nodes())
+        # aid_list = list(graph.nodes())
 
         if graph is infr.graph:
             infr._viz_image_config_dirty = False
@@ -118,7 +116,7 @@ class GraphVisualization(object):
         else:
             edges = list(graph.edges())
             edge_to_weight = nx.get_edge_attributes(graph, 'normscore')
-            weights = np.array(list(ub.dict_take(edge_to_weight, edges, np.nan)))
+            weights = np.array(list(ub.take(edge_to_weight, edges, np.nan)))
             nan_idxs = []
             if len(weights) > 0:
                 # give nans threshold value

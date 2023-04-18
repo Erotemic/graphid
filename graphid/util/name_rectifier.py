@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import ubelt as ub
 import numpy as np
 import scipy.optimize
@@ -104,7 +102,7 @@ def simple_munkres(part_oldnames):
     # rows are new-names and cols are old-names.
     # Initially the profit of any assignment is effectively -inf
     # This effectively marks all assignments as invalid
-    profit_matrix = np.full(shape, -2 * total, dtype=np.int)
+    profit_matrix = np.full(shape, -2 * total, dtype=int)
     # Overwrite valid assignments with positive profits
     from graphid import util
     oldname2_idx = util.make_index_lookup(unique_old_names)
@@ -195,12 +193,14 @@ def find_consistent_labeling(grouped_oldnames, extra_prefix='_extra_name',
         >>> new_names = find_consistent_labeling(grouped_oldnames, verbose=1)
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:timerit)
+        >>> import timerit
         >>> ydata = []
         >>> xdata = list(range(10, 150, 50))
         >>> for x in xdata:
         >>>     print('x = %r' % (x,))
         >>>     grouped_oldnames = demodata_oldnames(x, 15,  5, n_per_incon=5)
-        >>>     t = ub.Timerit(3, verbose=1)
+        >>>     t = timerit.Timerit(3, verbose=1)
         >>>     for timer in t:
         >>>         with timer:
         >>>             new_names = find_consistent_labeling(grouped_oldnames)

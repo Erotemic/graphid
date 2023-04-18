@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The main data structure for maintaining positive connected components and
 supporting dynamic addition and deletion of edges.
@@ -8,7 +7,6 @@ background, but could be implemented with another algorithm like Euler Tour
 Trees. UnionFind is good if you are mostly adding edges, but if you expect to
 remove edges a lot, then using a forest of ETTs may be better.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import networkx as nx
 import itertools as it
 import ubelt as ub

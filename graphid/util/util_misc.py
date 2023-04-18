@@ -135,7 +135,7 @@ def make_index_lookup(list_, dict_factory=dict):
         >>> list_ = [5, 3, 8, 2]
         >>> idx2_item = make_index_lookup(list_)
         >>> result = ub.repr2(idx2_item, nl=False)
-        >>> assert list(ub.dict_take(idx2_item, list_)) == list(range(len(list_)))
+        >>> assert list(ub.take(idx2_item, list_)) == list(range(len(list_)))
         >>> print(result)
         {2: 3, 3: 1, 5: 0, 8: 2}
     """

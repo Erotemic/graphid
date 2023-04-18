@@ -1,7 +1,6 @@
 """
 Functionality related to the k-edge redundancy measures
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import ubelt as ub
 import numpy as np
 import networkx as nx
@@ -369,7 +368,12 @@ class _RedundancyAugmentation(object):
             ...
             >>> result = ('candidate_edges = ' + ub.repr2(candidate_edges, nl=0))
             >>> print(result)
-            candidate_edges = [(1, 4), (3, 5), (7, 10)]
+            candidate_edges = [(1, 4), ..., (7, 10)]
+
+        Ignore:
+            print(nx.write_network_text(infr.neg_graph))
+            print(nx.write_network_text(infr.pos_graph))
+            print(nx.write_network_text(infr.incomp_graph))
         """
         # Add random edges between exisiting non-redundant PCCs
         if k is None:

@@ -110,7 +110,7 @@ class Boxes(ub.NiceRepr):
         xywh = (rng.rand(num, 4) * scale / 2)
         as_integer = isinstance(scale, int)
         if as_integer:
-            xywh = xywh.astype(np.int)
+            xywh = xywh.astype(int)
         boxes = Boxes(xywh, format='xywh').toformat(format, copy=False)
         return boxes
 
@@ -134,7 +134,7 @@ class Boxes(ub.NiceRepr):
         boxes = self.data
         sx, sy = factor if ub.iterable(factor) else (factor, factor)
         if boxes.dtype.kind != 'f':
-            new_data = boxes.astype(np.float)
+            new_data = boxes.astype(float)
         else:
             new_data = boxes.copy()
         new_data[..., 0:4:2] *= sx
@@ -154,7 +154,7 @@ class Boxes(ub.NiceRepr):
         """
         boxes = self.data
         tx, ty = amount if ub.iterable(amount) else (amount, amount)
-        new_data = boxes.astype(np.float).copy()
+        new_data = boxes.astype(float).copy()
         if self.format in ['xywh', 'cxywh']:
             new_data[..., 0] += tx
             new_data[..., 1] += ty

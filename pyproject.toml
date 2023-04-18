@@ -15,11 +15,20 @@ min_python = 3.7
 version = "{mod_dpath}/__init__.py::__version__"
 author = "Jon Crall"
 author_email = "erotemic@gmail.com"
-description = "The graphid module"
+description = "The graph identification algorithm from Jon Crall's thesis"
 license = "Apache 2"
-dev_status = "planning"
+dev_status = "alpha"
 remote_host = "https://github.com"
 remote_group = "Erotemic"
+url = 'https://github.com/Erotemic/graphid'
+
+#packages=[
+#    'graphid',
+#    'graphid.core',
+#    'graphid.demo',
+#    'graphid.util',
+#    'graphid.ibeis',
+#],
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py --ignore-glob=dev --ignore-glob=docs"
