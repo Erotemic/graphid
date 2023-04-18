@@ -523,7 +523,6 @@ class GraphVisualization(object):
                       fontweight, fontname, fontfamilty, fontproperties
 
         Example:
-            >>> # ENABLE_DOCTEST
             >>> # xdoctest: +REQUIRES(module:pygraphviz)
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=util.estarmap(
