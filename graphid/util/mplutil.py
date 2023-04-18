@@ -2332,7 +2332,7 @@ class Color(ub.NiceRepr):
         return color01
 
     @classmethod
-    def named_colors():
+    def named_colors(cls):
         from matplotlib import colors as mcolors
         names = sorted(list(mcolors.BASE_COLORS.keys()) + list(mcolors.CSS4_COLORS.keys()))
         return names

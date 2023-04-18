@@ -797,7 +797,7 @@ class CandidateSearch(_RedundancyAugmentation):
         elif infr.cm_list is not None:
             infr.print(
                 'Prioritizing {} edges with one-vs-vsmany scores'.format(
-                    len(priority_edges), 1))
+                    len(priority_edges)))
             # Not given any deploy classifier, this is the best we can do
             scores = infr._make_lnbnn_scores(priority_edges)
             metric = 'normscore'

@@ -1,6 +1,10 @@
 import ubelt as ub
 
 
+class _Common:
+    ...
+
+
 class _ConstHelper(type):
     """
     Adds code and nice constants to an integer version of a class
@@ -10,10 +14,10 @@ class _ConstHelper(type):
         cls = META_DECISION
         code_cls = META_DECISION_CODE
         """
-        class CODE(object):
+        class CODE:
             pass
 
-        class NICE(object):
+        class NICE:
             pass
 
         for key in dct.keys():
@@ -31,7 +35,7 @@ class _ConstHelper(type):
         return super(_ConstHelper, cls).__new__(cls, name, parents, dct)
 
 
-class EVIDENCE_DECISION(object, metaclass=_ConstHelper):
+class EVIDENCE_DECISION(_Common, metaclass=_ConstHelper):
     """
     TODO: change to EVIDENCE_DECISION / VISUAL_DECISION
     Enumerated types of review codes and texts
@@ -81,7 +85,7 @@ class EVIDENCE_DECISION(object, metaclass=_ConstHelper):
     MATCH_CODE = CODE_TO_INT
 
 
-class META_DECISION(object, metaclass=_ConstHelper):
+class META_DECISION(_Common, metaclass=_ConstHelper):
     """
     Enumerated types of review codes and texts
 
@@ -119,7 +123,7 @@ class META_DECISION(object, metaclass=_ConstHelper):
     NICE_TO_INT  = ub.invert_dict(INT_TO_NICE)
 
 
-class CONFIDENCE(object, metaclass=_ConstHelper):
+class CONFIDENCE(_Common, metaclass=_ConstHelper):
     UNKNOWN         = None
     GUESSING        = 1
     NOT_SURE        = 2
@@ -148,7 +152,7 @@ class CONFIDENCE(object, metaclass=_ConstHelper):
     NICE_TO_INT  = ub.invert_dict(INT_TO_NICE)
 
 
-class QUAL(object, metaclass=_ConstHelper):
+class QUAL(_Common, metaclass=_ConstHelper):
     EXCELLENT = 5
     GOOD      = 4
     OK        = 3
@@ -180,7 +184,7 @@ class QUAL(object, metaclass=_ConstHelper):
     NICE_TO_INT  = ub.invert_dict(INT_TO_NICE)
 
 
-class VIEW(object, metaclass=_ConstHelper):
+class VIEW(_Common, metaclass=_ConstHelper):
     """
     categorical viewpoint using the faces of a Rhombicuboctahedron
 
