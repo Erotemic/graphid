@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import itertools as it
 import numpy as np
 import pandas as pd
@@ -7,7 +6,7 @@ import networkx as nx  # NOQA
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
 from graphid.core.state import SAME, DIFF, NULL  # NOQA
 from graphid import util
-from numpy.core.umath_tests import matrix_multiply  # NOQA
+# from numpy.core.umath_tests import matrix_multiply  # NOQA
 
 
 class DummyRanker(object):

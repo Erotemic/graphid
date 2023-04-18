@@ -524,6 +524,7 @@ class GraphVisualization(object):
 
         Example:
             >>> # ENABLE_DOCTEST
+            >>> # xdoctest: +REQUIRES(module:pygraphviz)
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=util.estarmap(
             >>>    range, [(1, 6), (6, 10), (10, 13), (13, 15), (15, 16),
