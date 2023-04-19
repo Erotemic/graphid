@@ -38,7 +38,11 @@ trying to do.
    python -m graphid.demo.dummy_infr demodata_infr --num_pccs=100 --show
 
 The first of these commands will generate an image that looks like this:
-|alt text|
+
+
+.. image:: https://i.imgur.com/CAUJVc5.png
+   :height: 300px
+   :align: left
 
 The “aid” is an annotation id, the “nid” is a name id. Blue edges mean
 two annotation match. Red edges mean two annotations don’t match. Yellow
