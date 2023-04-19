@@ -1,9 +1,7 @@
-from __future__ import absolute_import, division, print_function
 import pandas as pd
 import numpy as np
-import six
 import ubelt as ub
-from six.moves import zip_longest
+from itertools import zip_longest
 from os.path import join, dirname
 import warnings
 import colorsys
@@ -69,7 +67,7 @@ def multi_plot(xdata=None, ydata=[], **kwargs):
 
     if isinstance(ydata_list, dict):
         # Special case where ydata is a dictionary
-        if isinstance(xdata, six.string_types):
+        if isinstance(xdata, str):
             # Special-er case where xdata is specified in ydata
             xkey = xdata
             ykeys = set(ydata_list.keys()) - {xkey}
@@ -192,11 +190,11 @@ def multi_plot(xdata=None, ydata=[], **kwargs):
 
     # nest into a list of dicts for each line in the multiplot
     valid_keys = list(set(plot_list_kw.keys()) - set(extra_plot_kw_keys))
-    valid_vals = list(ub.dict_take(plot_list_kw, valid_keys))
+    valid_vals = list(ub.take(plot_list_kw, valid_keys))
     plot_kw_list = [dict(zip(valid_keys, vals)) for vals in zip(*valid_vals)]
 
     extra_kw_keys = [key for key in extra_plot_kw_keys if key in plot_list_kw]
-    extra_kw_vals = list(ub.dict_take(plot_list_kw, extra_kw_keys))
+    extra_kw_vals = list(ub.take(plot_list_kw, extra_kw_keys))
     extra_kw_list = [dict(zip(extra_kw_keys, vals)) for vals in zip(*extra_kw_vals)]
 
     # Get passed in axes or setup a new figure
@@ -414,7 +412,7 @@ def multi_plot(xdata=None, ydata=[], **kwargs):
     ymin = kwargs.get('ymin', ax.get_ylim()[0])
     ymax = kwargs.get('ymax', ax.get_ylim()[1])
 
-    text_type = six.text_type
+    text_type = str
 
     if text_type(xmax) == 'data':
         xmax = max([xd.max() for xd in xdata_list])
@@ -606,7 +604,7 @@ def figure(fnum=None, pnum=(1, 1, 1), title=None, figtitle=None, doclf=False,
         return pnum
 
     def _pnum_to_subspec(pnum):
-        if isinstance(pnum, six.string_types):
+        if isinstance(pnum, str):
             pnum = list(pnum)
         nrow, ncols, plotnum = pnum
         # if kwargs.get('use_gridspec', True):
@@ -1114,7 +1112,7 @@ def distinct_colors(N, brightness=.878, randomize=True, hue_range=(0.0, 1.0), cm
         hue_skip_ranges = [_[1] - _[0] for _ in hue_skips]
         total_skip = sum(hue_skip_ranges)
         hmax_ = hmax - total_skip
-        hue_list = np.linspace(hmin, hmax_, N, endpoint=False, dtype=np.float)
+        hue_list = np.linspace(hmin, hmax_, N, endpoint=False, dtype=float)
         # Remove colors (like hard to see yellows) in specified ranges
         for skip, range_ in zip(hue_skips, hue_skip_ranges):
             hue_list = [hue if hue <= skip[0] else hue + range_ for hue in hue_list]
@@ -1458,7 +1456,7 @@ def imshow(img, fnum=None, title=None, figtitle=None, pnum=None,
     if not redraw_image:
         return fig, ax
 
-    if isinstance(img, six.string_types):
+    if isinstance(img, str):
         # Allow for path to image to be specified
         from graphid import util
         img_fpath = img
@@ -1515,7 +1513,7 @@ def imshow(img, fnum=None, title=None, figtitle=None, pnum=None,
                 imgGRAY = img
             if cmap is None:
                 cmap = plt.get_cmap('gray')
-            if isinstance(cmap, six.string_types):
+            if isinstance(cmap, str):
                 cmap = plt.get_cmap(cmap)
             # for some reason gray floats aren't working right
             if imgGRAY.max() <= 1.01 and imgGRAY.min() >= -1E-9:
@@ -1875,7 +1873,7 @@ class PlotNums(object):
         >>> print(pnum_[0])
         (2, 2, 1)
         >>> # Iterable
-        >>> print(ub.repr2(list(pnum_), nl=0, nobr=True))
+        >>> print(ub.repr2(list(pnum_), nl=0, nobr=1))
         (2, 2, 1), (2, 2, 2), (2, 2, 3), (2, 2, 4)
         >>> # Callable (iterates through a default iterator)
         >>> print(pnum_())
@@ -1919,7 +1917,7 @@ class PlotNums(object):
         """
         if self._iter is None:
             self._iter = iter(self)
-        return six.next(self._iter)
+        return next(self._iter)
 
     def __iter__(self):
         r"""
@@ -1928,7 +1926,7 @@ class PlotNums(object):
 
         Example:
             >>> pnum_ = iter(PlotNums(nRows=3, nCols=2))
-            >>> result = ub.repr2(list(pnum_), nl=1, nobr=True)
+            >>> result = ub.repr2(list(pnum_), nl=1, nobr=1)
             >>> print(result)
             (3, 2, 1),
             (3, 2, 2),
@@ -1941,7 +1939,7 @@ class PlotNums(object):
             >>> nRows = 3
             >>> nCols = 2
             >>> pnum_ = iter(PlotNums(nRows, nCols, start=3))
-            >>> result = ub.repr2(list(pnum_), nl=1, nobr=True)
+            >>> result = ub.repr2(list(pnum_), nl=1, nobr=1)
             >>> print(result)
             (3, 2, 4),
             (3, 2, 5),
@@ -2276,7 +2274,7 @@ class Color(ub.NiceRepr):
                 'is_01': all([c >= 0.0 and c <= 1.0 for c in channels]),
             }
             return tests01
-        if isinstance(channels, six.string_types):
+        if isinstance(channels, str):
             return False
         return all(_test_base01(channels).values())
 
@@ -2303,7 +2301,7 @@ class Color(ub.NiceRepr):
 
     def _ensure_color01(Color, color):
         """ Infer what type color is and normalize to 01 """
-        if isinstance(color, six.string_types):
+        if isinstance(color, str):
             color = Color._string_to_01(color)
         elif Color._is_base255(color):
             color = Color._255_to_01(color)
@@ -2334,7 +2332,7 @@ class Color(ub.NiceRepr):
         return color01
 
     @classmethod
-    def named_colors():
+    def named_colors(cls):
         from matplotlib import colors as mcolors
         names = sorted(list(mcolors.BASE_COLORS.keys()) + list(mcolors.CSS4_COLORS.keys()))
         return names

@@ -1,0 +1,19 @@
+# .readthedocs.yml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+#
+# See Also:
+# https://readthedocs.org/dashboard/graphid/advanced/
+
+# Required
+version: 2
+sphinx:
+  configuration: docs/source/conf.py
+formats: all
+python:
+  version: 3.7
+  install:
+  - requirements: requirements/headless.txt
+  - requirements: requirements/docs.txt
+  - method: pip
+    path: .

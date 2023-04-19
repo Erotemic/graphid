@@ -35,7 +35,7 @@ class AssertInvariants(object):
         neg_weight = sum(nx.get_edge_attributes(
             infr.neg_metagraph, 'weight').values())
         n_neg_edges = infr.neg_graph.number_of_edges()
-        assert neg_weight == n_neg_edges, '{} should equal'.format(
+        assert neg_weight == n_neg_edges, '{} should equal {}'.format(
             neg_weight, n_neg_edges)
 
         # Self loops in the negative metagraph should correspond to the number

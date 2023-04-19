@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This file handles dynamically updating the graph state based on new feedback.
 This involves handling lots of different cases, which can get confusing (it
@@ -25,7 +24,6 @@ TODO:
     the neg redun graph, we just filter them out afterwords)
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import ubelt as ub
 import numpy as np
 import networkx as nx
@@ -550,7 +548,7 @@ class Recovery(object):
             >>> result = ub.repr2({
             >>>     'iccs': list(infr.inconsistent_components()),
             >>>     'pccs': sorted([cc for cc in infr.positive_components()], key=min),
-            >>> }, nobr=True, sorted=True, si=True, itemsep='', sep='', nl=1)
+            >>> }, nobr=1, sorted=True, si=True, itemsep='', sep='', nl=1)
             >>> print(result)
             iccs: [{1,2,3,4}],
             pccs: [{1,2,3,4},{5,6,7,8},{9,10,11,12},{13,14,15,16}],

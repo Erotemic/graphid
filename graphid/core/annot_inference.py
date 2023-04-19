@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import copy
-import six
 import logging
 import collections
 import ubelt as ub
@@ -431,9 +428,9 @@ class Feedback(object):
         return vals[-1]
 
     def all_feedback_items(infr):
-        for edge, vals in six.iteritems(infr.external_feedback):
+        for edge, vals in infr.external_feedback.items():
             yield edge, vals
-        for edge, vals in six.iteritems(infr.internal_feedback):
+        for edge, vals in infr.internal_feedback.items():
             yield edge, vals
 
     def all_feedback(infr):
@@ -698,6 +695,9 @@ class MiscHelpers(object):
         Note:
             This may cause unintended splits!
 
+        CommandLine:
+            xdoctest -m graphid.core.annot_inference MiscHelpers.remove_aids
+
         Example:
             >>> from graphid import demo, util
             >>> infr = demo.demodata_infr(num_pccs=5, pos_redun=1)
@@ -789,7 +789,7 @@ class MiscHelpers(object):
             infr.orig_name_labels = nids
         else:
             aid_to_idx = util.make_index_lookup(infr.aids)
-            orig_idxs = list(ub.dict_take(aid_to_idx, aids, None))
+            orig_idxs = list(ub.take(aid_to_idx, aids, None))
             new_flags = util.flag_None_items(orig_idxs)
             new_aids = list(ub.compress(aids, new_flags))
             new_nids = list(ub.compress(nids, new_flags))
@@ -895,7 +895,7 @@ class MiscHelpers(object):
         print('--- <LOG DUMP> ---')
         for msg, color in infr.logs:
             util.cprint('[infr] ' + msg, color)
-        print('--- <\LOG DUMP> ---')
+        print(r'--- </LOG DUMP> ---')
 
 
 class AltConstructors(object):
@@ -1277,7 +1277,7 @@ class AnnotInference(ub.NiceRepr,
         infr.add_aids(aids, nids)
         if autoinit:
             infr.initialize_graph()
-            if isinstance(autoinit, six.string_types):
+            if isinstance(autoinit, str):
                 raise Exception('Cannot autoinit this way anymore')
 
     def __nice__(infr):

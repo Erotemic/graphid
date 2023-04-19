@@ -1,0 +1,45 @@
+[build-system]
+requires = [ "setuptools>=41.0.1",]
+build-backend = "setuptools.build_meta"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.xcookie]
+tags = [ "purepy", "erotemic", "cv2", "github",]
+mod_name = "graphid"
+repo_name = "graphid"
+rel_mod_parent_dpath = "."
+os = [ "linux", "osx", "win",]
+min_python = 3.7
+version = "{mod_dpath}/__init__.py::__version__"
+author = "Jon Crall"
+author_email = "erotemic@gmail.com"
+description = "The graph identification algorithm from Jon Crall's thesis"
+ci_pypy_versions = []
+license = "Apache 2"
+dev_status = "alpha"
+remote_host = "https://github.com"
+remote_group = "Erotemic"
+url = 'https://github.com/Erotemic/graphid'
+linter = false
+
+#packages=[
+#    'graphid',
+#    'graphid.core',
+#    'graphid.demo',
+#    'graphid.util',
+#    'graphid.ibeis',
+#],
+
+[tool.pytest.ini_options]
+addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py --ignore-glob=dev --ignore-glob=docs"
+norecursedirs = ".git ignore build __pycache__ dev _skbuild docs"
+filterwarnings = [ "default", "ignore:.*No cfgstr given in Cacher constructor or call.*:Warning", "ignore:.*Define the __nice__ method for.*:Warning", "ignore:.*private pytest class or function.*:Warning",]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [ "pragma: no cover", ".*  # pragma: no cover", ".*  # nocover", "def __repr__", "raise AssertionError", "raise NotImplementedError", "if 0:", "if trace is not None", "verbose = .*", "^ *raise", "^ *pass *$", "if _debug:", "if __name__ == .__main__.:", ".*if six.PY2:",]
+omit = [ "graphid/__main__.py", "*/setup.py",]

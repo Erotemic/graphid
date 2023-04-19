@@ -135,7 +135,7 @@ def make_index_lookup(list_, dict_factory=dict):
         >>> list_ = [5, 3, 8, 2]
         >>> idx2_item = make_index_lookup(list_)
         >>> result = ub.repr2(idx2_item, nl=False)
-        >>> assert list(ub.dict_take(idx2_item, list_)) == list(range(len(list_)))
+        >>> assert list(ub.take(idx2_item, list_)) == list(range(len(list_)))
         >>> print(result)
         {2: 3, 3: 1, 5: 0, 8: 2}
     """
@@ -573,7 +573,7 @@ def safe_max(arr, fill=np.nan, finite=False, nans=True):
         >>> results3 = [safe_max(arr, fill, finite=True, nans=False) for arr in arrs]
         >>> results4 = [safe_max(arr, fill, finite=False, nans=False) for arr in arrs]
         >>> results = [results1, results2, results3, results4]
-        >>> result = ('results = %s' % (ub.repr2(results, nl=1),))
+        >>> result = ('results = %s' % (ub.repr2(results, nl=1, sv=1),))
         >>> print(result)
         results = [
             [nan, nan, nan, inf, inf, 1],
@@ -596,7 +596,7 @@ def safe_min(arr, fill=np.nan, finite=False, nans=True):
         >>> results3 = [safe_min(arr, fill, finite=True, nans=False) for arr in arrs]
         >>> results4 = [safe_min(arr, fill, finite=False, nans=False) for arr in arrs]
         >>> results = [results1, results2, results3, results4]
-        >>> result = ('results = %s' % (ub.repr2(results, nl=1),))
+        >>> result = ('results = %s' % (ub.repr2(results, nl=1, sv=1),))
         >>> print(result)
         results = [
             [nan, nan, nan, inf, 1.0, 0],

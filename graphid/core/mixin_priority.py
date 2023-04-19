@@ -1,4 +1,3 @@
-import six
 import numpy as np
 import networkx as nx
 import ubelt as ub  # NOQA
@@ -203,7 +202,7 @@ class Priority(object):
         """
         if priority is None:
             priority = 'prob_match'
-        if isinstance(priority, six.string_types):
+        if isinstance(priority, str):
             prob_match = infr.get_edge_attr(edge, priority, default=1e-9)
             priority = prob_match
         # Use edge-nids to break ties for determenistic behavior

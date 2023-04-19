@@ -65,7 +65,7 @@ def run_demo():
 
     infr.init_simulation(oracle_accuracy=oracle_accuracy, name='run_demo')
     # infr_gt = infr.copy()
-    dpath = ub.ensuredir(ub.truepath('~/Desktop/demo'))
+    dpath = ub.ensuredir(ub.Path('~/Desktop/demo').expand())
     if 0:
         ub.delete(dpath)
     ub.ensuredir(dpath)

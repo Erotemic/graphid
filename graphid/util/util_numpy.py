@@ -209,6 +209,7 @@ def group_indices(idx2_groupid, assume_sorted=False):
         >>> (keys, groupxs) = group_indices(idx2_groupid)
         >>> result = ub.repr2((keys, groupxs), nobr=True, with_dtype=True)
         >>> print(result)
+
         np.array([1, 2, 3], dtype=np.int64),
         [
             np.array([1, 3, 5], dtype=np.int64),
@@ -224,6 +225,7 @@ def group_indices(idx2_groupid, assume_sorted=False):
         >>> (keys, groupxs) = group_indices(idx2_groupid.T[0])
         >>> result = ub.repr2((keys, groupxs), nobr=True, with_dtype=True)
         >>> print(result)
+
         np.array([ 24, 129, 659, 822], dtype=np.int64),
         [
             np.array([ 0,  4, 10], dtype=np.int64),
@@ -237,7 +239,8 @@ def group_indices(idx2_groupid, assume_sorted=False):
         >>> (keys, groupxs) = group_indices(idx2_groupid)
         >>> result = ub.repr2((keys, groupxs), nobr=True, with_dtype=True)
         >>> print(result)
-        np.array([False,  True], dtype=np.bool),
+
+        np.array([False,  True], dtype=bool),
         [
             np.array([2, 4, 5], dtype=np.int64),
             np.array([0, 1, 3, 6], dtype=np.int64)...

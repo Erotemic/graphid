@@ -128,6 +128,10 @@ def parse_fontkw(**kwargs):
     r"""
     Kwargs:
         fontsize, fontfamilty, fontproperties
+
+    Example:
+        >>> # xdoctest: +REQUIRES(module:matplotlib)
+        >>> parse_fontkw()
     """
     from matplotlib.font_manager import FontProperties
     import matplotlib as mpl

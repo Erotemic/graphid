@@ -1,2 +1,2 @@
-#!/bin/bash
-xdoctest graphid --style=google all
+#!/usr/bin/env bash
+xdoctest graphid --style=google all "$@"

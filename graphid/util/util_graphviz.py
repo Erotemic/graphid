@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Helpers for graph plotting
 
@@ -22,14 +21,11 @@ Ignore:
     python3 -c "import pygraphviz; print(pygraphviz.__file__)"
 
 """
-from __future__ import absolute_import, division, print_function
-import six
 import re
 import numpy as np
 import ubelt as ub
 import networkx as nx
-from six.moves import zip
-from six.moves import reduce
+from functools import reduce
 from graphid.util import nx_utils
 from graphid.util import mplutil
 from graphid import util
@@ -42,12 +38,12 @@ def dump_nx_ondisk(graph, fpath):
     agraph = make_agraph(graph.copy())
     # agraph = nx.nx_agraph.to_agraph(graph)
     agraph.layout(prog='dot')
-    agraph.draw(ub.truepath(fpath))
+    agraph.draw(ub.expandpath(fpath))
 
 
 def ensure_nonhex_color(orig_color):
     # TODO: move to ensure color
-    if isinstance(orig_color, six.string_types) and orig_color.startswith('#'):
+    if isinstance(orig_color, str) and orig_color.startswith('#'):
         hex_color = orig_color
         import matplotlib.colors as colors
         color = colors.hex2color(hex_color[0:7])
@@ -86,7 +82,7 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
         python -m graphid.util.util_graphviz show_nx --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:pygraphviz)
         >>> from graphid.util.util_graphviz import *  # NOQA
         >>> graph = nx.DiGraph()
         >>> graph.add_nodes_from(['a', 'b', 'c', 'd'])
@@ -161,12 +157,12 @@ def show_nx(graph, with_labels=True, fnum=None, pnum=None, layout='agraph',
         if verbose:
             print('Drawing images')
         node_list = sorted(img_dict.keys())
-        pos_list = list(ub.dict_take(node_pos, node_list))
-        img_list = list(ub.dict_take(img_dict, node_list))
-        size_list = list(ub.dict_take(node_size, node_list))
-        #color_list = ub.dict_take(nx.get_node_attributes(graph, 'color'), node_list, None)
-        color_list = list(ub.dict_take(nx.get_node_attributes(graph, 'framecolor'), node_list, None))
-        framewidth_list = list(ub.dict_take(nx.get_node_attributes(graph, 'framewidth'),
+        pos_list = list(ub.take(node_pos, node_list))
+        img_list = list(ub.take(img_dict, node_list))
+        size_list = list(ub.take(node_size, node_list))
+        #color_list = ub.take(nx.get_node_attributes(graph, 'color'), node_list, None)
+        color_list = list(ub.take(nx.get_node_attributes(graph, 'framecolor'), node_list, None))
+        framewidth_list = list(ub.take(nx.get_node_attributes(graph, 'framewidth'),
                                             node_list, framewidth))
 
         netx_draw_images_at_positions(img_list, pos_list, size_list,
@@ -201,7 +197,7 @@ def netx_draw_images_at_positions(img_list, pos_list, size_list, color_list,
     from matplotlib import pyplot as plt
     # Ensure all images have been read
     img_list_ = [util.convert_colorspace(util.imread(img), 'RGB', src_space='BGR')
-                 if isinstance(img, six.string_types) else img
+                 if isinstance(img, str) else img
                  for img in img_list]
     size_list_ = [tuple(img.shape[0:2][::-1]) if size is None else size
                   for size, img in zip(size_list, img_list)]
@@ -407,7 +403,7 @@ def apply_graph_layout_attrs(graph, layout_info):
 
     def noneish(v):
         isNone = v is None
-        isNoneStr = isinstance(v, six.string_types) and v.lower() == 'none'
+        isNoneStr = isinstance(v, str) and v.lower() == 'none'
         return isNone or isNoneStr
     for key, vals in layout_info['node'].items():
         vals = {n: v for n, v in vals.items() if not noneish(n)}
@@ -654,6 +650,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
         python -m graphid.util.util_graphviz nx_agraph_layout --show
 
     Doctest:
+        >>> # xdoctest: +REQUIRES(module:pygraphviz)
         >>> from graphid.util.util_graphviz import *  # NOQA
         >>> import networkx as nx
         >>> import itertools as it
@@ -780,14 +777,14 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
     #     warnings.filterwarnings('ignore')
     try:
         agraph.layout(prog=prog, args=args)
-    except Exception as ex:
+    except Exception:
         raise
 
     if is_large:
         print('Finished agraph layout.')
 
     if 0:
-        test_fpath = ub.truepath('~/test_graphviz_draw.png')
+        test_fpath = ub.expandpath('~/test_graphviz_draw.png')
         agraph.draw(test_fpath)
         ub.startfile(test_fpath)
     if verbose > 3:
@@ -858,7 +855,7 @@ def nx_agraph_layout(orig_graph, inplace=False, verbose=None,
                       'large graph.')
 
             if False:
-                agraph.draw(ub.truepath('~/implicit_test_graphviz_draw.png'))
+                agraph.draw(ub.expandpath('~/implicit_test_graphviz_draw.png'))
             if verbose:
                 print('AFTER IMPLICIT LAYOUT\n' + str(agraph))
 
@@ -1419,11 +1416,11 @@ def draw_network2(graph, layout_info, ax, as_directed=None, hacknoedge=False,
             headlabel = layout_info['edge'].get('headlabel', {}).get(edge, None)
             label = layout_info['edge'].get('label', {}).get(edge, None)
             # hack
-            if isinstance(taillabel, six.string_types) and taillabel == 'None':
+            if isinstance(taillabel, str) and taillabel == 'None':
                 taillabel = None
-            if isinstance(headlabel, six.string_types) and headlabel == 'None':
+            if isinstance(headlabel, str) and headlabel == 'None':
                 headlabel = None
-            if isinstance(label, six.string_types) and label == 'None':
+            if isinstance(label, str) and label == 'None':
                 label = None
             #ha = 'left'
             #ha = 'right'
@@ -1553,6 +1550,7 @@ def translate_graph_to_origin(graph):
 def get_graph_bounding_box(graph):
     """
     Example:
+        >>> # xdoctest: +REQUIRES(module:pygraphviz)
         >>> graph = nx.path_graph([1, 2, 3, 4])
         >>> nx_agraph_layout(graph, inplace=True)
         >>> bbox = get_graph_bounding_box(graph)
@@ -1593,7 +1591,7 @@ def nx_ensure_agraph_color(graph):
                     data['color'] = '#%02x%02x%02x' % color
                 else:
                     data['color'] = '#%02x%02x%02x%02x' % color
-        except Exception as ex:
+        except Exception:
             raise
 
     for node, node_data in graph.nodes(data=True):

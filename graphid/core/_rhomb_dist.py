@@ -202,6 +202,7 @@ def RhombicuboctahedronDistanceDemo():
         python -m graphid.core._rhomb_dist RhombicuboctahedronDistanceDemo --show
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:pygraphviz)
         >>> from graphid import util
         >>> RhombicuboctahedronDistanceDemo()
         >>> util.show_if_requested()

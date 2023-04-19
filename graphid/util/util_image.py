@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import warnings
 import numpy as np
 import cv2
@@ -96,11 +94,12 @@ def imread(fpath, **kw):
     reads image data in BGR format
 
     Example:
+        >>> # xdoctest: +SKIP("use kwimage.imread")
         >>> import ubelt as ub
         >>> import tempfile
         >>> from os.path import splitext  # NOQA
         >>> fpath = ub.grabdata('https://i.imgur.com/oHGsmvF.png', fname='carl.png')
-        >>> fpath = ub.grabdata('http://www.topcoder.com/contest/problem/UrbanMapper3D/JAX_Tile_043_DTM.tif')
+        >>> #fpath = ub.grabdata('http://www.topcoder.com/contest/problem/UrbanMapper3D/JAX_Tile_043_DTM.tif')
         >>> ext = splitext(fpath)[1]
         >>> img1 = imread(fpath)
         >>> # Check that write + read preserves data
@@ -110,6 +109,7 @@ def imread(fpath, **kw):
         >>> assert np.all(img2 == img1)
 
     Example:
+        >>> # xdoctest: +SKIP("use kwimage.imread")
         >>> import tempfile
         >>> import ubelt as ub
         >>> #img1 = (np.arange(0, 12 * 12 * 3).reshape(12, 12, 3) % 255).astype(np.uint8)
@@ -123,6 +123,7 @@ def imread(fpath, **kw):
         >>> assert np.all(tif_im == png_im)
 
     Example:
+        >>> # xdoctest: +SKIP("use kwimage.imread")
         >>> from graphid.util.util_image import *
         >>> import tempfile
         >>> import ubelt as ub
@@ -152,7 +153,7 @@ def imread(fpath, **kw):
             if image is None:
                 raise IOError('OpenCV cannot read this image')
         return image
-    except Exception as ex:
+    except Exception:
         print('Error reading fpath = {!r}'.format(fpath))
         raise
 

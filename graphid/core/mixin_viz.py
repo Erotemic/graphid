@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import warnings
 import ubelt as ub
@@ -86,7 +84,7 @@ class GraphVisualization(object):
             graph = infr.graph
         if not hasattr(infr, '_viz_image_config_dirty'):
             infr.initialize_visual_node_attrs()
-        aid_list = list(graph.nodes())
+        # aid_list = list(graph.nodes())
 
         if graph is infr.graph:
             infr._viz_image_config_dirty = False
@@ -118,7 +116,7 @@ class GraphVisualization(object):
         else:
             edges = list(graph.edges())
             edge_to_weight = nx.get_edge_attributes(graph, 'normscore')
-            weights = np.array(list(ub.dict_take(edge_to_weight, edges, np.nan)))
+            weights = np.array(list(ub.take(edge_to_weight, edges, np.nan)))
             nan_idxs = []
             if len(weights) > 0:
                 # give nans threshold value
@@ -209,7 +207,9 @@ class GraphVisualization(object):
         Useful for making before and after pictures.
         """
         # Update the node positions if they have not been set
-        infr.update_visual_attrs(groupby='name_label')
+        # HACK: blindly set reposition to False on 2021-10-06, unsure if that
+        # is ok
+        infr.update_visual_attrs(groupby='name_label', reposition=False)
         # Set the pin attribute
         infr.set_node_attrs('pin', 'true')
 
@@ -523,7 +523,7 @@ class GraphVisualization(object):
                       fontweight, fontname, fontfamilty, fontproperties
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # xdoctest: +REQUIRES(module:pygraphviz)
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=util.estarmap(
             >>>    range, [(1, 6), (6, 10), (10, 13), (13, 15), (15, 16),
@@ -759,7 +759,7 @@ def nx_ensure_agraph_color(graph):
                     data['color'] = '#%02x%02x%02x' % color
                 else:
                     data['color'] = '#%02x%02x%02x%02x' % color
-        except Exception as ex:
+        except Exception:
             raise
 
     for node, node_data in graph.nodes(data=True):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
 import networkx as nx
@@ -125,7 +124,10 @@ class AttrAccess(object):
 
         part = ['evidence_decision', 'meta_decision', 'tags', 'user_id']
         neworder = util.partial_order(edge_df.columns, part)
-        edge_df = edge_df.reindex_axis(neworder, axis=1)
+        if hasattr(edge_df, 'reindex_axis'):
+            edge_df = edge_df.reindex_axis(neworder, axis=1)
+        else:
+            edge_df = edge_df.reindex(neworder, axis=1)
         if not all:
             todrop = ['review_id', 'timestamp', 'timestamp_s1', 'timestamp_c2',
                       'timestamp_c1']
@@ -236,7 +238,10 @@ class Convenience(object):
                 df = df.assign(nid1=nids.T[0], nid2=nids.T[1])
                 part = ['nid1', 'nid2', 'evidence_decision', 'tags', 'user_id']
                 neworder = util.partial_order(df.columns, part)
-                df = df.reindex_axis(neworder, axis=1)
+                if hasattr(df, 'reindex_axis'):
+                    df = df.reindex_axis(neworder, axis=1)
+                else:
+                    df = df.reindex(neworder, axis=1)
                 todrop = [c for c in ['review_id', 'timestamp']
                           if c in df.columns]
                 df = df.drop(todrop, axis=1)
@@ -379,11 +384,18 @@ class Convenience(object):
                                            default=UNREV, on_missing='default')
         is_comp = np.array([s == INCMP for s in edge_states])
 
-        match_state_df = pd.DataFrame.from_items([
-            (NEGTV, ~is_same & is_comp),
-            (POSTV,  is_same & is_comp),
-            (INCMP, ~is_comp),
-        ])
+        if hasattr(pd.DataFrame, 'from_items'):
+            match_state_df = pd.DataFrame.from_items([
+                (NEGTV, ~is_same & is_comp),
+                (POSTV,  is_same & is_comp),
+                (INCMP, ~is_comp),
+            ])
+        else:
+            match_state_df = pd.DataFrame(ub.odict([
+                (NEGTV, ~is_same & is_comp),
+                (POSTV,  is_same & is_comp),
+                (INCMP, ~is_comp),
+            ]))
         match_state_df.index = index
         return match_state_df
 

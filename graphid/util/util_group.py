@@ -72,7 +72,7 @@ def grouping_delta(old, new, pure=True):
         >>> assert set(old[0]) in delta['splits']['old']
         >>> assert set(new[3]) in delta['merges']['new']
         >>> assert set(old[1]) in delta['unchanged']
-        >>> result = ub.repr2(delta, nl=2, sort=True, nobr=True, sk=True)
+        >>> result = ub.repr2(delta, nl=2, sort=True, nobr=1, sk=True)
         >>> print(result)
         unchanged: {
             {1, 2},
