@@ -167,10 +167,6 @@ jobs:
           install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional,headless
-          os: windows-latest
-          arch: auto
         - python-version: '3.7'
           install-extras: tests,optional,headless
           os: windows-latest
@@ -191,10 +187,6 @@ jobs:
           install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional,headless
-          os: windows-latest
-          arch: auto
         - python-version: '3.7'
           install-extras: tests,optional,headless
           os: windows-latest
@@ -212,22 +204,6 @@ jobs:
           os: windows-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests,optional,headless
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional,headless
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional,headless
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional,headless
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
           install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
