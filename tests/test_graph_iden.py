@@ -42,7 +42,7 @@ def test_incomp_inference():
     infr.add_feedback((23, 21), INCMP)
     infr.add_feedback((12, 14), INCMP)
     print('Final state:')
-    print(ub.repr2(sorted(infr.gen_edge_attrs('decision'))))
+    print(ub.urepr(sorted(infr.gen_edge_attrs('decision'))))
 
 
 def test_unrev_inference():
@@ -84,7 +84,7 @@ def test_unrev_inference():
     infr.add_feedback((23, 21), UNREV)
     infr.add_feedback((12, 14), UNREV)
     print('Final state:')
-    print(ub.repr2(sorted(infr.gen_edge_attrs('decision'))))
+    print(ub.urepr(sorted(infr.gen_edge_attrs('decision'))))
 
 
 def test_pos_neg():
@@ -131,7 +131,7 @@ def test_pos_neg():
     infr.add_feedback((23, 21), POSTV)
     infr.add_feedback(( 1, 11), NEGTV)
     print('Final state:')
-    print(ub.repr2(sorted(infr.gen_edge_attrs('decision'))))
+    print(ub.urepr(sorted(infr.gen_edge_attrs('decision'))))
 
 
 if __name__ == '__main__':

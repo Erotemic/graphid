@@ -174,7 +174,7 @@ class Convenience(object):
         return infr.review_graphs[UNKWN]
 
     def print_graph_info(infr):
-        print(ub.repr2(util.graph_info(infr.simplify_graph())))
+        print(ub.urepr(util.graph_info(infr.simplify_graph())))
 
     def print_graph_connections(infr, label='orig_name_label'):
         """
@@ -453,10 +453,10 @@ class DummyEdges(object):
             >>> from graphid import demo
             >>> label = 'name_label'
             >>> infr = demo.demodata_infr(num_pccs=3, size=5)
-            >>> print(ub.repr2(infr.status()))
+            >>> print(ub.urepr(infr.status()))
             >>> assert infr.status()['nEdges'] < 33
             >>> infr.ensure_cliques()
-            >>> print(ub.repr2(infr.status()))
+            >>> print(ub.urepr(infr.status()))
             >>> assert infr.status()['nEdges'] == 31
             >>> assert infr.status()['nUnrevEdges'] == 12
             >>> assert len(list(infr.find_clique_edges(label))) > 0

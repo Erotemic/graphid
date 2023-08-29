@@ -53,7 +53,7 @@ class InfrCallbacks(object):
 
         if hasattr(infr, 'dummy_verif'):
             infr.print('Searching for dummy candidates')
-            infr.print('dummy vsone params =' + ub.repr2(
+            infr.print('dummy vsone params =' + ub.urepr(
                 infr.dummy_verif.dummy_params, nl=1, si=True))
 
         if infr.ranker is None:

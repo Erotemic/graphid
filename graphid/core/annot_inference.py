@@ -175,7 +175,7 @@ class Feedback(object):
             yield _rectify_decision(ed, md)
 
     def add_node_feedback(infr, aid, **attrs):
-        infr.print('Setting aid={} {}'.format(aid, ub.repr2(attrs)))
+        infr.print('Setting aid={} {}'.format(aid, ub.urepr(attrs)))
         for key, value in attrs.items():
             infr.set_node_attrs(key, {aid: value})
 
@@ -222,7 +222,7 @@ class Feedback(object):
             >>> infr.add_feedback((5, 6), POSTV)
             >>> infr.add_feedback((5, 6), NEGTV, tags=['photobomb'])
             >>> infr.add_feedback((1, 2), INCMP)
-            >>> print(ub.repr2(infr.internal_feedback, nl=3, sk=1))
+            >>> print(ub.urepr(infr.internal_feedback, nl=3, sk=1))
             >>> assert len(infr.external_feedback) == 0
             >>> assert len(infr.internal_feedback) == 2
             >>> assert len(infr.internal_feedback[(5, 6)]) == 2
@@ -645,8 +645,8 @@ class NameRelabel(object):
             pcc_size_hist = ub.dict_hist(cc_sizes)
             pcc_size_stats = util.stats_dict(cc_sizes)
             if len(pcc_size_hist) < 8:
-                infr.print('PCC size hist = %s' % (ub.repr2(pcc_size_hist),))
-            infr.print('PCC size stats = %s' % (ub.repr2(pcc_size_stats),))
+                infr.print('PCC size hist = %s' % (ub.urepr(pcc_size_hist),))
+            infr.print('PCC size stats = %s' % (ub.urepr(pcc_size_stats),))
 
         if rectify:
             # Rectified relabeling, preserves grouping and labeling if possible
@@ -759,7 +759,7 @@ class MiscHelpers(object):
                 len(aids), n_old, n_new))
 
         return splits
-        # print(ub.repr2(delta, nl=2))
+        # print(ub.urepr(delta, nl=2))
 
     def add_aids(infr, aids, nids=None):
         """
@@ -975,7 +975,7 @@ class AltConstructors(object):
         Example:
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=5, p_incon=0.5, pcc_size=10)
-            >>> print(ub.repr2(infr.status(extended=True)))
+            >>> print(ub.urepr(infr.status(extended=True)))
             {
                 'nNodes': 50,
                 'nEdges': 93,
@@ -1302,7 +1302,7 @@ class AnnotInference(ub.NiceRepr,
 
         Example:
             >>> infr = AnnotInference()
-            >>> result = ub.repr2(infr.subparams('refresh'), nl=0, precision=1)
+            >>> result = ub.urepr(infr.subparams('refresh'), nl=0, precision=1, sort=1)
             >>> print(result)
             {'method': 'binomial', 'patience': 72, 'thresh': 0.1, 'window': 20}
         """

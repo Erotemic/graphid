@@ -366,7 +366,7 @@ class _RedundancyAugmentation(object):
             >>> infr.params['redun.pos'] = 2
             >>> candidate_edges = sorted(infr.find_pos_redun_candidate_edges())
             ...
-            >>> result = ('candidate_edges = ' + ub.repr2(candidate_edges, nl=0))
+            >>> result = ('candidate_edges = ' + ub.urepr(candidate_edges, nl=0))
             >>> print(result)
             candidate_edges = [(1, 4), ..., (7, 10)]
 
@@ -472,7 +472,7 @@ class Redundancy(_RedundancyComputers, _RedundancyAugmentation):
             >>> infr.clear_edges()
             >>> infr.ensure_cliques()
             >>> infr.clear_feedback()
-            >>> print(ub.repr2(infr.status()))
+            >>> print(ub.urepr(infr.status()))
             >>> nonredun_edges = list(infr.filter_edges_flagged_as_redun(
             >>>     infr.unreviewed_graph.edges()))
             >>> assert len(nonredun_edges) == 6

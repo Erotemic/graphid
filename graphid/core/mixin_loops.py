@@ -55,7 +55,7 @@ class InfrLoops(object):
             >>>         break
         """
         infr.print('Starting main loop', 1)
-        infr.print('infr.params = {}'.format(ub.repr2(infr.params)))
+        infr.print('infr.params = {}'.format(ub.urepr(infr.params)))
         if max_loops is None:
             max_loops = infr.params['algo.max_outer_loops']
             if max_loops is None:
@@ -171,7 +171,7 @@ class InfrLoops(object):
             infr.print('hardness analysis')
             infr.print(str(df))
 
-            infr.print('infr status: ' + ub.repr2(infr.status()))
+            infr.print('infr status: ' + ub.urepr(infr.status()))
 
         # Don't re-review anything that was confidently reviewed
         # CONFIDENCE = const.CONFIDENCE

@@ -55,7 +55,7 @@ class AssertInvariants(object):
         all_edges = set(it.starmap(e_, infr.graph.edges()))
         if edge_union != all_edges:
             print('ERROR STATUS DUMP:')
-            print(ub.repr2(infr.status()))
+            print(ub.urepr(infr.status()))
             raise AssertionError(
                 'edge sets must have full union. Found union=%d vs all=%d' % (
                     len(edge_union), len(all_edges)

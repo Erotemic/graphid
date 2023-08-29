@@ -263,9 +263,9 @@ def demo_refresh():
                          demokw)
     thresh = refreshkw.pop('thresh')
     refreshkw['span'] = refreshkw.pop('window')
-    util.relative_text((.02, .58 + .0), ub.repr2(demokw, sep=' ', nl=0)[1:],
+    util.relative_text((.02, .58 + .0), ub.urepr(demokw, sep=' ', nl=0)[1:],
                        valign='bottom')
-    util.relative_text((.02, .68 + .0), ub.repr2(refreshkw, sep=' ', nl=0)[1:],
+    util.relative_text((.02, .68 + .0), ub.urepr(refreshkw, sep=' ', nl=0)[1:],
                        valign='bottom')
     legend = plt.gca().legend()
     legend.get_frame().set_alpha(1.0)

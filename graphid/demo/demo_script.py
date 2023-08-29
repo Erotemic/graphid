@@ -103,7 +103,7 @@ def run_demo():
         infr_.verbose = verbose
         infr_.show(pickable=True, verbose=0, **showkw)
         infr.verbose = verbose
-        # print('status ' + ub.repr2(infr_.status()))
+        # print('status ' + ub.urepr(infr_.status()))
         # infr.show(**showkw)
         ax = plt.gca()
         ax.set_title(title, fontsize=20)
@@ -158,18 +158,18 @@ def run_demo():
         infr.update_visual_attrs(groupby='name_label')
         infr.set_node_attrs('pin', 'true')
         node_dict = infr.graph.nodes
-        print(ub.repr2(node_dict[1]))
+        print(ub.urepr(node_dict[1]))
 
     if VISUALIZE:
         infr.latest_logs()
         # Pin Nodes into the target groundtruth position
         show_graph(infr, 'target-gt')
 
-    print(ub.repr2(infr.status()))
+    print(ub.urepr(infr.status()))
     infr.clear_feedback()
     infr.clear_name_labels()
     infr.clear_edges()
-    print(ub.repr2(infr.status()))
+    print(ub.urepr(infr.status()))
     infr.latest_logs()
 
     if VISUALIZE:
@@ -228,7 +228,7 @@ def run_demo():
 
         SHOW_CANDIATE_POP = True
         if SHOW_CANDIATE_POP and (VIZ_ALL or AT_TARGET):
-            infr.print(ub.repr2(infr.task_probs['match_state'][edge], precision=4, si=True))
+            infr.print(ub.urepr(infr.task_probs['match_state'][edge], precision=4, si=True))
             infr.print('len(queue) = %r' % (len(infr.queue)))
             # Show edge selection
             infr.print('Oracle will predict: ' + feedback['evidence_decision'])
@@ -248,7 +248,7 @@ def run_demo():
             break
         count += 1
 
-    infr.print('status = ' + ub.repr2(infr.status(extended=False)))
+    infr.print('status = ' + ub.urepr(infr.status(extended=False)))
     show_graph(infr, 'post-review (#reviews={})'.format(count), final=True)
 
     if VISUALIZE:

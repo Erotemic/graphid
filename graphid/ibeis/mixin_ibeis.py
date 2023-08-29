@@ -522,7 +522,7 @@ class IBEISIO(object):
             >>> ibs = ibeis.opendb('GZ_Master1')
             >>> infr = ibeis.AnnotInference(ibs=ibs, aids='all')
             >>> feedback = infr.read_ibeis_staging_feedback()
-            >>> result = ('feedback = %s' % (ub.repr2(feedback),))
+            >>> result = ('feedback = %s' % (ub.urepr(feedback),))
             >>> print(result)
         """
 
@@ -608,7 +608,7 @@ class IBEISIO(object):
             >>> infr = testdata_infr('testdb1')
             >>> feedback = infr.read_ibeis_annotmatch_feedback()
             >>> items = feedback[(2, 3)]
-            >>> result = ('feedback = %s' % (ub.repr2(feedback, nl=2),))
+            >>> result = ('feedback = %s' % (ub.urepr(feedback, nl=2),))
             >>> print(result)
             >>> assert len(feedback) >= 2, 'should contain at least 2 edges'
             >>> assert len(items) == 1, '2-3 should have one review'
@@ -1036,7 +1036,7 @@ def _update_staging_to_annotmatch(infr):
     df = infr.match_state_delta('staging', 'annotmatch')
     print('There are {}/{} annotmatch items that do not exist in staging'.format(
         sum(df['is_new']), len(df)))
-    print(ub.repr2(infr.ibeis_edge_delta_info(df)))
+    print(ub.urepr(infr.ibeis_edge_delta_info(df)))
 
     # Find places that exist in annotmatch but not in staging
     flags = pd.isnull(df['old_evidence_decision'])

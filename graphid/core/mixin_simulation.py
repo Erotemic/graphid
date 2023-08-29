@@ -173,19 +173,19 @@ class SimulationHelpers(object):
         testaction_hist = ub.dict_hist(util.take_column(history, 'test_action'))
         infr.print(
             'Test Action Histogram: {}'.format(
-                ub.repr2(testaction_hist, si=True)), color='yellow')
+                ub.urepr(testaction_hist, si=True)), color='yellow')
         if infr.params['inference.enabled']:
             action_hist = ub.dict_hist(
                 util.emap(frozenset, util.take_column(history, 'action')))
             infr.print(
                 'Inference Action Histogram: {}'.format(
-                    ub.repr2(action_hist, si=True)), color='yellow')
+                    ub.urepr(action_hist, si=True)), color='yellow')
         infr.print(
-            'Decision Histogram: {}'.format(ub.repr2(ub.dict_hist(
+            'Decision Histogram: {}'.format(ub.urepr(ub.dict_hist(
                 util.take_column(history, 'pred_decision')
             ), si=True)), color='yellow')
         infr.print(
-            'User Histogram: {}'.format(ub.repr2(ub.dict_hist(
+            'User Histogram: {}'.format(ub.urepr(ub.dict_hist(
                 util.take_column(history, 'user_id')
             ), si=True)), color='yellow')
 

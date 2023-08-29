@@ -491,7 +491,7 @@ class GraphVisualization(object):
                 nodesep=.1
             )
             layoutkw.update(kwargs)
-            # print(ub.repr2(graph.edges))
+            # print(ub.urepr(graph.edges))
             try:
                 util.nx_agraph_layout(graph, inplace=True, **layoutkw)
             except AttributeError:
@@ -605,8 +605,8 @@ class GraphVisualization(object):
         edge_data = util.delete_dict_keys(all_edge_data.copy(), infr.visual_edge_attrs)
         lines = []
         if visual:
-            lines += [('visual_edge_data: ' + ub.repr2(visual_edge_data, nl=1))]
-        lines += [('edge_data: ' + ub.repr2(edge_data, nl=1))]
+            lines += [('visual_edge_data: ' + ub.urepr(visual_edge_data, nl=1))]
+        lines += [('edge_data: ' + ub.urepr(edge_data, nl=1))]
         return '\n'.join(lines)
 
     def show_error_case(infr, aids, edge=None, error_edges=None, colorby=None,
@@ -686,18 +686,18 @@ def on_pick(event, infr=None):
             node = plotdat['node']
             node_data['degree'] = infr.graph.degree(node)
             node_label = infr.pos_graph.node_label(node)
-            print('visual_node_data: ' + ub.repr2(visual_node_data, nl=1))
-            print('node_data: ' + ub.repr2(node_data, nl=1))
-            util.cprint('node: ' + ub.repr2(plotdat['node']), 'blue')
+            print('visual_node_data: ' + ub.urepr(visual_node_data, nl=1))
+            print('node_data: ' + ub.urepr(node_data, nl=1))
+            util.cprint('node: ' + ub.urepr(plotdat['node']), 'blue')
             print('(pcc) node_label = %r' % (node_label,))
             print('artist = %r' % (artist,))
         elif 'edge' in plotdat:
             all_edge_data = util.sort_dict(plotdat['edge_data'].copy())
             print(infr.repr_edge_data(all_edge_data))
-            util.cprint('edge: ' + ub.repr2(plotdat['edge']), 'blue')
+            util.cprint('edge: ' + ub.urepr(plotdat['edge']), 'blue')
             print('artist = %r' % (artist,))
         else:
-            print('???: ' + ub.repr2(plotdat))
+            print('???: ' + ub.urepr(plotdat))
     print(ub.timestamp())
 
 

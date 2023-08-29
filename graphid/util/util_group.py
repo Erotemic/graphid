@@ -72,29 +72,30 @@ def grouping_delta(old, new, pure=True):
         >>> assert set(old[0]) in delta['splits']['old']
         >>> assert set(new[3]) in delta['merges']['new']
         >>> assert set(old[1]) in delta['unchanged']
-        >>> result = ub.repr2(delta, nl=2, sort=True, nobr=1, sk=True)
+        >>> result = ub.urepr(delta, nl=2, sort=True, nobr=1, sk=True)
         >>> print(result)
-        unchanged: {
-            {1, 2},
-        },
-        splits: {
-            old: [{20, 21, 22, 23}, {41, 42, 43, 44, 45}],
-            new: [{{20, 21}, {22, 23}}, {{41, 42, 43, 44}, {45}}],
-        },
-        merges: {
-            old: [{{12}, {13, 14}}, {{31, 32}, {33, 34, 35}}],
-            new: [{12, 13, 14}, {31, 32, 33, 34, 35}],
-        },
         hybrid: {
-            old: {{10}, {3, 4}, {5, 6, 11}, {7}, {8, 9}},
-            new: {{3, 5, 6}, {4}, {7, 8}, {9, 10, 11}},
-            splits: [{{10}}, {{11}, {5, 6}}, {{3}, {4}}, {{7}}, {{8}, {9}}],
             merges: [{{10}, {11}, {9}}, {{3}, {5, 6}}, {{4}}, {{7}, {8}}],
+            new: {{3, 5, 6}, {4}, {7, 8}, {9, 10, 11}},
+            old: {{10}, {3, 4}, {5, 6, 11}, {7}, {8, 9}},
+            splits: [{{10}}, {{11}, {5, 6}}, {{3}, {4}}, {{7}}, {{8}, {9}}],
         },
         items: {
             added: {},
             removed: {},
         },
+        merges: {
+            new: [{12, 13, 14}, {31, 32, 33, 34, 35}],
+            old: [{{12}, {13, 14}}, {{31, 32}, {33, 34, 35}}],
+        },
+        splits: {
+            new: [{{20, 21}, {22, 23}}, {{41, 42, 43, 44}, {45}}],
+            old: [{20, 21, 22, 23}, {41, 42, 43, 44, 45}],
+        },
+        unchanged: {
+            {1, 2},
+        },
+
 
     Example:
         >>> old = [
@@ -109,23 +110,24 @@ def grouping_delta(old, new, pure=True):
         >>> assert len(list(ub.flatten(pure_delta['splits'].values()))) == 0
         >>> delta = grouping_delta(old, new, pure=False)
         >>> delta = order_dict_by(delta, ['unchanged', 'splits', 'merges'])
-        >>> result = ub.repr2(delta, nl=2, sort=True, sk=True)
+        >>> result = ub.urepr(delta, nl=2, sort=True, sk=True)
         >>> print(result)
         {
-            unchanged: {},
-            splits: [
-                [{1}, {2}, {3}],
-                [{5, 6, 7}, {8, 9}],
-            ],
-            merges: [
-                [{3}, {4}],
-                [{10, 11, 12}, {8, 9}],
-            ],
             items: {
                 added: {},
                 removed: {},
             },
+            merges: [
+                [{3}, {4}],
+                [{10, 11, 12}, {8, 9}],
+            ],
+            splits: [
+                [{1}, {2}, {3}],
+                [{5, 6, 7}, {8, 9}],
+            ],
+            unchanged: {},
         }
+
 
     Example:
         >>> delta = grouping_delta([[1, 2, 3]], [])
@@ -278,7 +280,7 @@ def order_dict_by(dict_, key_order):
         >>> dict_ = {1: 1, 2: 2, 3: 3, 4: 4}
         >>> key_order = [4, 2, 3, 1]
         >>> sorted_dict = order_dict_by(dict_, key_order)
-        >>> result = ('sorted_dict = %s' % (ub.repr2(sorted_dict, nl=False),))
+        >>> result = ('sorted_dict = %s' % (ub.urepr(sorted_dict, nl=False),))
         >>> print(result)
         >>> assert result == 'sorted_dict = {4: 4, 2: 2, 3: 3, 1: 1}'
     """
@@ -332,7 +334,7 @@ def sort_dict(dict_, part='keys', key=None, reverse=False):
         >>> results.append(sort_dict(dict_, 'keys'))
         >>> results.append(sort_dict(dict_, 'vals'))
         >>> results.append(sort_dict(dict_, 'vals', lambda x: -x))
-        >>> result = ub.repr2(results)
+        >>> result = ub.urepr(results)
         >>> print(result)
         [
             {'a': 3, 'b': 1, 'c': 2},

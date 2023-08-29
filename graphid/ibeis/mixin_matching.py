@@ -551,7 +551,7 @@ class _RedundancyAugmentation(object):
             >>> infr.add_feedback((1, 5), 'notcomp')
             >>> infr.params['redun.pos'] = 2
             >>> candidate_edges = list(infr.find_pos_redun_candidate_edges())
-            >>> result = ('candidate_edges = ' + ub.repr2(candidate_edges))
+            >>> result = ('candidate_edges = ' + ub.urepr(candidate_edges))
             >>> print(result)
             candidate_edges = [(1, 3), (7, 10)]
         """
@@ -856,7 +856,7 @@ class CandidateSearch(_RedundancyAugmentation):
             candidate_edges = infr.find_lnbnn_candidate_edges()
         elif hasattr(infr, 'dummy_verif'):
             infr.print('Searching for dummy candidates')
-            infr.print('dummy vsone params =' + ub.repr2(
+            infr.print('dummy vsone params =' + ub.urepr(
                 infr.dummy_verif.dummy_params, nl=1, si=True))
             ranks_top = infr.params['ranking.ntop']
             candidate_edges = infr.dummy_verif.find_candidate_edges(K=ranks_top)

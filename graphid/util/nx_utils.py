@@ -41,7 +41,7 @@ def take_column(list_, colx):
         >>> list_ = [['a', 'b'], ['c', 'd']]
         >>> colx = 0
         >>> result = take_column(list_, colx)
-        >>> result = ub.repr2(result, nl=False)
+        >>> result = ub.urepr(result, nl=False)
         >>> print(result)
         ['a', 'c']
 
@@ -49,7 +49,7 @@ def take_column(list_, colx):
         >>> list_ = [['a', 'b'], ['c', 'd']]
         >>> colx = [1, 0]
         >>> result = take_column(list_, colx)
-        >>> result = ub.repr2(result, nl=False)
+        >>> result = ub.urepr(result, nl=False)
         >>> print(result)
         [['b', 'a'], ['d', 'c']]
 
@@ -58,7 +58,7 @@ def take_column(list_, colx):
         >>> # colx can be a key or list of keys as well
         >>> colx = ['spam']
         >>> result = take_column(list_, colx)
-        >>> result = ub.repr2(result, nl=False)
+        >>> result = ub.urepr(result, nl=False)
         >>> print(result)
         [['EGGS'], ['JAM']]
     """
@@ -791,7 +791,7 @@ def graph_info(graph, ignore=None, stats=False, verbose=False):
         ('graph_name', graph.name),
     ])
     if verbose:
-        print(ub.repr2(info_dict))
+        print(ub.urepr(info_dict))
     return info_dict
 
 

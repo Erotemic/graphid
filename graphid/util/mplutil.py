@@ -824,6 +824,8 @@ def adjust_subplots(left=None, right=None, bottom=None, top=None, wspace=None,
 
 def dict_intersection(dict1, dict2):
     r"""
+    Key AND Value based dictionary intersection
+
     Args:
         dict1 (dict):
         dict2 (dict):
@@ -835,7 +837,7 @@ def dict_intersection(dict1, dict2):
         >>> dict1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
         >>> dict2 = {'b': 2, 'c': 3, 'd': 5, 'e': 21, 'f': 42}
         >>> mergedict_ = dict_intersection(dict1, dict2)
-        >>> print(ub.repr2(mergedict_, nl=0))
+        >>> print(ub.urepr(mergedict_, nl=0, sort=1))
         {'b': 2, 'c': 3}
     """
     isect_keys = set(dict1.keys()).intersection(set(dict2.keys()))
@@ -1873,7 +1875,7 @@ class PlotNums(object):
         >>> print(pnum_[0])
         (2, 2, 1)
         >>> # Iterable
-        >>> print(ub.repr2(list(pnum_), nl=0, nobr=1))
+        >>> print(ub.urepr(list(pnum_), nl=0, nobr=1))
         (2, 2, 1), (2, 2, 2), (2, 2, 3), (2, 2, 4)
         >>> # Callable (iterates through a default iterator)
         >>> print(pnum_())
@@ -1902,7 +1904,7 @@ class PlotNums(object):
             >>> import itertools as it
             >>> pnum_ = PlotNums(nSubplots=9)
             >>> pnum_list = [pnum_() for _ in range(len(pnum_))]
-            >>> result = ('pnum_list = %s' % (ub.repr2(pnum_list),))
+            >>> result = ('pnum_list = %s' % (ub.urepr(pnum_list),))
             >>> print(result)
 
         Example:
@@ -1912,7 +1914,7 @@ class PlotNums(object):
             >>>     pnum_ = PlotNums(nRows, nCols, nSubplots, start)
             >>>     pnum_list = [pnum_() for _ in range(len(pnum_))]
             >>>     print((nRows, nCols, nSubplots))
-            >>>     result = ('pnum_list = %s' % (ub.repr2(pnum_list),))
+            >>>     result = ('pnum_list = %s' % (ub.urepr(pnum_list),))
             >>>     print(result)
         """
         if self._iter is None:
@@ -1926,7 +1928,7 @@ class PlotNums(object):
 
         Example:
             >>> pnum_ = iter(PlotNums(nRows=3, nCols=2))
-            >>> result = ub.repr2(list(pnum_), nl=1, nobr=1)
+            >>> result = ub.urepr(list(pnum_), nl=1, nobr=1)
             >>> print(result)
             (3, 2, 1),
             (3, 2, 2),
@@ -1939,7 +1941,7 @@ class PlotNums(object):
             >>> nRows = 3
             >>> nCols = 2
             >>> pnum_ = iter(PlotNums(nRows, nCols, start=3))
-            >>> result = ub.repr2(list(pnum_), nl=1, nobr=1)
+            >>> result = ub.urepr(list(pnum_), nl=1, nobr=1)
             >>> print(result)
             (3, 2, 4),
             (3, 2, 5),
@@ -1977,7 +1979,7 @@ class PlotNums(object):
             >>>     size = PlotNums._get_num_rc(**kw)
             >>>     if kw['nSubplots'] is not None:
             >>>         assert size[0] * size[1] >= kw['nSubplots']
-            >>>     print('**kw = %s' % (ub.repr2(kw),))
+            >>>     print('**kw = %s' % (ub.urepr(kw),))
             >>>     print('size = %r' % (size,))
         """
         if nSubplots is None:
@@ -2378,7 +2380,7 @@ class Color(ub.NiceRepr):
             >>> val_adjust = -0.1
             >>> # execute function
             >>> new_rgb_list = [Color(rgb).adjust_hsv(hue_adjust, sat_adjust, val_adjust) for rgb in rgb_list]
-            >>> print(ub.repr2(new_rgb_list, nl=1, sv=True))
+            >>> print(ub.urepr(new_rgb_list, nl=1, sv=True))
             [
                 <Color(rgb: 0.90, 0.23, 0.75)>,
                 <Color(rgb: 0.90, 0.36, 0.00)>,
