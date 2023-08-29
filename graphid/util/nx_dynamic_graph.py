@@ -166,7 +166,7 @@ class DynConnGraph(nx.Graph, GraphHelperMixin):
         >>> assert self.connected_to(u) != self.connected_to(v)
         >>> ccs = list(self.connected_components())
         >>> # xdoctest: +REQUIRES(--show)
-        >>> import plottool as pt
+        >>> import plottool_ibeis as pt
         >>> pt.qtensure()
         >>> pt.show_nx(self)
 

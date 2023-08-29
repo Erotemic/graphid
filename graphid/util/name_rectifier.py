@@ -206,7 +206,7 @@ def find_consistent_labeling(grouped_oldnames, extra_prefix='_extra_name',
         >>>             new_names = find_consistent_labeling(grouped_oldnames)
         >>>     ydata.append(t.min())
         >>> # xdoc: +REQUIRES(--show)
-        >>> import plottool as pt
+        >>> import plottool_ibeis as pt
         >>> pt.qtensure()
         >>> pt.multi_plot(xdata, [ydata])
         >>> util.show_if_requested()

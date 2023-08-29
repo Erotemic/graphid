@@ -253,7 +253,7 @@ def run_demo():
 
     if VISUALIZE:
         if not getattr(infr, 'EMBEDME', False):
-            # import plottool as pt
+            # import plottool_ibeis as pt
             # util.mplutil.all_figures_tile()
             util.mplutil.show_if_requested()
 

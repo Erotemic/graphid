@@ -114,7 +114,7 @@ class RefreshCriteria(object):
             >>>     n_pred_list.append(n_pred)
             >>>     xdata.append(count + 1)
             >>> # xdoctest: +REQUIRES(--show)
-            >>> import plottool as pt
+            >>> import plottool_ibeis as pt
             >>> pt.qtensure()
             >>> n_pred_list = n_pred_list[10:]
             >>> n_real_list = n_real_list[10:]
@@ -386,7 +386,7 @@ def _dev_iters_until_threshold():
 
     S, A = np.meshgrid(np.arange(1, 150, 1), np.arange(0, 150, 1))
 
-    import plottool as pt
+    import plottool_ibeis as pt
     from graphid import util
     import matplotlib as plt
     SA_coords = list(zip(S.ravel(), A.ravel()))
