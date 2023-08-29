@@ -1554,7 +1554,7 @@ def get_graph_bounding_box(graph):
         >>> graph = nx.path_graph([1, 2, 3, 4])
         >>> nx_agraph_layout(graph, inplace=True)
         >>> bbox = get_graph_bounding_box(graph)
-        >>> print(ub.repr2(bbox, nl=0))
+        >>> print(ub.urepr(bbox, nl=0))
         [0.0, 0.0, 54.0, 252.0]
     """
     nodes = list(graph.nodes())
@@ -1614,7 +1614,7 @@ def bbox_from_extent(extent):
     Example:
         >>> extent = [0, 10, 0, 10]
         >>> bbox = bbox_from_extent(extent)
-        >>> print('bbox = {}'.format(ub.repr2(list(bbox), nl=0)))
+        >>> print('bbox = {}'.format(ub.urepr(list(bbox), nl=0)))
         bbox = [0, 0, 10, 10]
     """
     tl_x, br_x, tl_y, br_y = extent

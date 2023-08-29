@@ -276,12 +276,12 @@ def RhombicuboctahedronDistanceDemo():
 
     # z = {'({}, {})'.format(k1, k2): d for (k1, k2), d in dist_lookup.items()}
     # for i in range(0, 5):
-    #     print(ut.repr2({k: v for k, v in z.items() if v == i}, si=True))
+    #     print(ut.urepr({k: v for k, v in z.items() if v == i}, si=True))
     # i = None
-    # print(ut.repr2({k: v for k, v in z.items() if v == i}, si=True))
+    # print(ut.urepr({k: v for k, v in z.items() if v == i}, si=True))
 
     # z = ut.sort_dict(z, 'vals')
-    # print(ut.repr2(z, nl=2, si=True))
+    # print(ut.urepr(z, nl=2, si=True))
 
     # if False:
     #     from ibeis import constants as const

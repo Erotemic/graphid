@@ -46,7 +46,7 @@ def demodata_infr(**kwargs):
         >>> nonfull_pccs = [cc for cc in pccs if len(cc) > 1 and nx.is_empty(nx.complement(infr.pos_graph.subgraph(cc)))]
         >>> expected_n_incon = len(nonfull_pccs) * kwargs['p_incon']
         >>> n_incon = len(list(infr.inconsistent_components()))
-        >>> print('status = ' + ub.repr2(infr.status(extended=True)))
+        >>> print('status = ' + ub.urepr(infr.status(extended=True)))
         >>> # xdoctest: +REQUIRES(--show)
         >>> infr.show(pickable=True, groupby='name_label')
         >>> util.show_if_requested()

@@ -104,7 +104,7 @@ def atleast_nd(arr, n, front=False):
         >>> n = 2
         >>> arr = np.array([1, 1, 1])
         >>> arr_ = atleast_nd(arr, n)
-        >>> result = ub.repr2(arr_.tolist(), nl=0)
+        >>> result = ub.urepr(arr_.tolist(), nl=0)
         >>> print(result)
         [[1], [1], [1]]
 
@@ -118,9 +118,9 @@ def atleast_nd(arr, n, front=False):
         >>> arr1_ = atleast_nd(arr1, n)
         >>> arr2_ = atleast_nd(arr2, n)
         >>> arr3_ = atleast_nd(arr3, n)
-        >>> result1 = ub.repr2(arr1_.tolist(), nl=0)
-        >>> result2 = ub.repr2(arr2_.tolist(), nl=0)
-        >>> result3 = ub.repr2(arr3_.tolist(), nl=0)
+        >>> result1 = ub.urepr(arr1_.tolist(), nl=0)
+        >>> result2 = ub.urepr(arr2_.tolist(), nl=0)
+        >>> result3 = ub.urepr(arr3_.tolist(), nl=0)
         >>> result = '\n'.join([result1, result2, result3])
         >>> print(result)
         [[[[1]]], [[[1]]], [[[1]]]]
@@ -207,7 +207,7 @@ def group_indices(idx2_groupid, assume_sorted=False):
         >>> # xdoctest: +IGNORE_WHITESPACE
         >>> idx2_groupid = np.array([2, 1, 2, 1, 2, 1, 2, 3, 3, 3, 3])
         >>> (keys, groupxs) = group_indices(idx2_groupid)
-        >>> result = ub.repr2((keys, groupxs), nobr=True, with_dtype=True)
+        >>> result = ub.urepr((keys, groupxs), nobr=True, with_dtype=True)
         >>> print(result)
 
         np.array([1, 2, 3], dtype=np.int64),
@@ -223,7 +223,7 @@ def group_indices(idx2_groupid, assume_sorted=False):
         >>> # 2d arrays must be flattened before coming into this function so
         >>> # information is on the last axis
         >>> (keys, groupxs) = group_indices(idx2_groupid.T[0])
-        >>> result = ub.repr2((keys, groupxs), nobr=True, with_dtype=True)
+        >>> result = ub.urepr((keys, groupxs), nobr=True, with_dtype=True)
         >>> print(result)
 
         np.array([ 24, 129, 659, 822], dtype=np.int64),
@@ -237,7 +237,7 @@ def group_indices(idx2_groupid, assume_sorted=False):
         >>> # xdoctest: +IGNORE_WHITESPACE
         >>> idx2_groupid = np.array([True, True, False, True, False, False, True])
         >>> (keys, groupxs) = group_indices(idx2_groupid)
-        >>> result = ub.repr2((keys, groupxs), nobr=True, with_dtype=True)
+        >>> result = ub.urepr((keys, groupxs), nobr=True, with_dtype=True)
         >>> print(result)
 
         np.array([False,  True], dtype=bool),

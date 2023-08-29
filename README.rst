@@ -71,8 +71,10 @@ Dependencies
 .. code:: bash
 
    sudo apt-get install -y graphviz libgraphviz-dev
-   pip install graphviz
-   pip install -e .
+   pip install pygraphviz
+
+See `pygraphviz install details <https://github.com/pygraphviz/pygraphviz/blob/main/INSTALL.txt>`_
+for more information and instructions for non-debian systems.
 
 This project is Python 3.6+, Python 2 is not supported.
 

@@ -85,7 +85,7 @@ def filterflags_general_tags(tags_list, has_any=None, has_all=None,
         >>> }
         >>> flags = filterflags_general_tags(tags_list, **kwargs)
         >>> filtered = list(ub.compress(tags_list, flags))
-        >>> result = ('result = %s' % (ub.repr2(filtered, nl=0),))
+        >>> result = ('result = %s' % (ub.urepr(filtered, nl=0),))
         >>> print(result)
         result = [['vn', 'no'], ['n', 'o'], ['n', 'N'], ['n'], ['n', 'nP']]
     """

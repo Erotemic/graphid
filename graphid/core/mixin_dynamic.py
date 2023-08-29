@@ -545,7 +545,7 @@ class Recovery(object):
             >>> assert infr.is_recovering((c[0], d[0])) is False
             >>> infr.add_feedback((b[2], c[0]), NEGTV)
             >>> assert infr.is_recovering((c[0], d[0])) is False
-            >>> result = ub.repr2({
+            >>> result = ub.urepr({
             >>>     'iccs': list(infr.inconsistent_components()),
             >>>     'pccs': sorted([cc for cc in infr.positive_components()], key=min),
             >>> }, nobr=1, sorted=True, si=True, itemsep='', sep='', nl=1)

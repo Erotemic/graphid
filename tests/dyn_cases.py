@@ -95,7 +95,7 @@ def do_infr_test(ccs, edges, new_edges):
             got = data.get(key)
             if got != val:
                 msg1 = 'key=%s %r!=%r, ' % (key, got, val)
-                errmsg = ''.join([msg1, msg, '\nedge=', ub.repr2((u, v)), '\n',
+                errmsg = ''.join([msg1, msg, '\nedge=', ub.urepr((u, v)), '\n',
                                  infr.repr_edge_data(data)])
                 self._errors.append(errmsg)
 

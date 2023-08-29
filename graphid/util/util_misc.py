@@ -74,7 +74,7 @@ def delete_dict_keys(dict_, key_list):
         >>> dict_ = {'bread': 1, 'churches': 1, 'cider': 2, 'very small rocks': 2}
         >>> key_list = ['duck', 'bread', 'cider']
         >>> delete_dict_keys(dict_, key_list)
-        >>> result = ub.repr2(dict_, nl=False)
+        >>> result = ub.urepr(dict_, nl=False)
         >>> print(result)
         {'churches': 1, 'very small rocks': 2}
 
@@ -134,7 +134,7 @@ def make_index_lookup(list_, dict_factory=dict):
     Example:
         >>> list_ = [5, 3, 8, 2]
         >>> idx2_item = make_index_lookup(list_)
-        >>> result = ub.repr2(idx2_item, nl=False)
+        >>> result = ub.urepr(idx2_item, nl=False, sort=1)
         >>> assert list(ub.take(idx2_item, list_)) == list(range(len(list_)))
         >>> print(result)
         {2: 3, 3: 1, 5: 0, 8: 2}
@@ -167,9 +167,9 @@ def cprint(text, color=None):
         >>> print('line1')
         >>> cprint('line2', 'red')
         >>> cprint('line3', 'blue')
-        >>> cprint('line4', 'fuchsia')
+        >>> cprint('line4', 'magenta')
         >>> cprint('line5', 'reset')
-        >>> cprint('line5', 'fuchsia')
+        >>> cprint('line5', 'magenta')
         >>> print('line6')
     """
     if False and ub.WIN32:
@@ -248,7 +248,7 @@ def setdiff(list1, list2):
         >>> list1 = ['featweight_rowid', 'feature_rowid', 'config_rowid', 'featweight_forground_weight']
         >>> list2 = [u'featweight_rowid']
         >>> new_list = setdiff(list1, list2)
-        >>> result = ub.repr2(new_list, nl=False)
+        >>> result = ub.urepr(new_list, nl=False)
         >>> print(result)
         ['feature_rowid', 'config_rowid', 'featweight_forground_weight']
     """
@@ -269,7 +269,7 @@ def all_dict_combinations(varied_dict):
     Example:
         >>> varied_dict = {'logdist_weight': [0.0, 1.0], 'pipeline_root': ['vsmany'], 'sv_on': [True, False, None]}
         >>> dict_list = all_dict_combinations(varied_dict)
-        >>> result = str(ub.repr2(dict_list))
+        >>> result = str(ub.urepr(dict_list))
         >>> print(result)
         [
             {'logdist_weight': 0.0, 'pipeline_root': 'vsmany', 'sv_on': True},
@@ -573,7 +573,7 @@ def safe_max(arr, fill=np.nan, finite=False, nans=True):
         >>> results3 = [safe_max(arr, fill, finite=True, nans=False) for arr in arrs]
         >>> results4 = [safe_max(arr, fill, finite=False, nans=False) for arr in arrs]
         >>> results = [results1, results2, results3, results4]
-        >>> result = ('results = %s' % (ub.repr2(results, nl=1, sv=1),))
+        >>> result = ('results = %s' % (ub.urepr(results, nl=1, sv=1),))
         >>> print(result)
         results = [
             [nan, nan, nan, inf, inf, 1],
@@ -596,7 +596,7 @@ def safe_min(arr, fill=np.nan, finite=False, nans=True):
         >>> results3 = [safe_min(arr, fill, finite=True, nans=False) for arr in arrs]
         >>> results4 = [safe_min(arr, fill, finite=False, nans=False) for arr in arrs]
         >>> results = [results1, results2, results3, results4]
-        >>> result = ('results = %s' % (ub.repr2(results, nl=1, sv=1),))
+        >>> result = ('results = %s' % (ub.urepr(results, nl=1, sv=1),))
         >>> print(result)
         results = [
             [nan, nan, nan, inf, 1.0, 0],
@@ -626,7 +626,7 @@ def stats_dict(list_, axis=None, use_nan=False, use_sum=False,
         >>> np.random.seed(0)
         >>> list_ = np.random.rand(10, 2).astype(np.float32)
         >>> stats = stats_dict(list_, axis, use_nan=False)
-        >>> result = str(ub.repr2(stats, nl=1, precision=4, with_dtype=True))
+        >>> result = str(ub.urepr(stats, nl=1, precision=4, with_dtype=True))
         >>> print(result)
         {
             'mean': np.array([0.5206, 0.6425], dtype=np.float32),
@@ -645,7 +645,7 @@ def stats_dict(list_, axis=None, use_nan=False, use_sum=False,
         >>> list_ = rng.randint(0, 42, size=100).astype(np.float32)
         >>> list_[4] = np.nan
         >>> stats = stats_dict(list_, axis, use_nan=True)
-        >>> result = str(ub.repr2(stats, precision=1, sk=True))
+        >>> result = str(ub.urepr(stats, precision=1, sk=True))
         >>> print(result)
         {mean: 20.0, std: 13.2, max: 41.0, min: 0.0, nMin: 7, nMax: 3, shape: (100,), num_nan: 1,}
     """

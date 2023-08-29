@@ -61,7 +61,7 @@ def simple_munkres(part_oldnames):
     Example:
         >>> part_oldnames = [['a', 'b'], ['b', 'c'], ['c', 'a', 'a']]
         >>> new_names = simple_munkres(part_oldnames)
-        >>> result = ub.repr2(new_names)
+        >>> result = ub.urepr(new_names)
         >>> print(new_names)
         ['b', 'c', 'a']
 
@@ -69,14 +69,14 @@ def simple_munkres(part_oldnames):
         >>> part_oldnames = [[], ['a', 'a'], [],
         >>>                  ['a', 'a', 'a', 'a', 'a', 'a', 'a', 'b'], ['a']]
         >>> new_names = simple_munkres(part_oldnames)
-        >>> result = ub.repr2(new_names)
+        >>> result = ub.urepr(new_names)
         >>> print(new_names)
         [None, 'a', None, 'b', None]
 
     Example:
         >>> part_oldnames = [[], ['b'], ['a', 'b', 'c'], ['b', 'c'], ['c', 'e', 'e']]
         >>> new_names = find_consistent_labeling(part_oldnames)
-        >>> result = ub.repr2(new_names)
+        >>> result = ub.urepr(new_names)
         >>> print(new_names)
         ['_extra_name0', 'b', 'a', 'c', 'e']
 
@@ -214,21 +214,21 @@ def find_consistent_labeling(grouped_oldnames, extra_prefix='_extra_name',
     Example:
         >>> grouped_oldnames = [['a', 'b', 'c'], ['b', 'c'], ['c', 'e', 'e']]
         >>> new_names = find_consistent_labeling(grouped_oldnames, verbose=1)
-        >>> result = ub.repr2(new_names)
+        >>> result = ub.urepr(new_names)
         >>> print(new_names)
         ['a', 'b', 'e']
 
     Example:
         >>> grouped_oldnames = [['a', 'b'], ['a', 'a', 'b'], ['a']]
         >>> new_names = find_consistent_labeling(grouped_oldnames)
-        >>> result = ub.repr2(new_names)
+        >>> result = ub.urepr(new_names)
         >>> print(new_names)
         ['b', 'a', '_extra_name0']
 
     Example:
         >>> grouped_oldnames = [['a', 'b'], ['e'], ['a', 'a', 'b'], [], ['a'], ['d']]
         >>> new_names = find_consistent_labeling(grouped_oldnames)
-        >>> result = ub.repr2(new_names)
+        >>> result = ub.urepr(new_names)
         >>> print(new_names)
         ['b', 'e', 'a', '_extra_name0', '_extra_name1', 'd']
 
@@ -236,7 +236,7 @@ def find_consistent_labeling(grouped_oldnames, extra_prefix='_extra_name',
         >>> grouped_oldnames = [[], ['a', 'a'], [],
         >>>                     ['a', 'a', 'a', 'a', 'a', 'a', 'a', 'b'], ['a']]
         >>> new_names = find_consistent_labeling(grouped_oldnames)
-        >>> result = ub.repr2(new_names)
+        >>> result = ub.urepr(new_names)
         >>> print(new_names)
         ['_extra_name0', 'a', '_extra_name1', 'b', '_extra_name2']
     """
@@ -321,7 +321,7 @@ def find_consistent_labeling(grouped_oldnames, extra_prefix='_extra_name',
               (len(nontrivial_partition)))
         from graphid import util
         part_size_stats = util.stats_dict(map(len, nontrivial_partition))
-        stats_str = ub.repr2(part_size_stats, precision=2, strkeys=True)
+        stats_str = ub.urepr(part_size_stats, precision=2, strkeys=True)
         print('  * partition size stats = %s'  % (stats_str,))
 
     # Rectify nontrivial cases

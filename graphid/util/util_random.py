@@ -50,7 +50,7 @@ def random_combinations(items, size, num=None, rng=None):
         >>> num = 5
         >>> rng = 0
         >>> combos = list(random_combinations(items, size, num, rng))
-        >>> result = ('combos = %s' % (ub.repr2(combos),))
+        >>> result = ('combos = %s' % (ub.urepr(combos),))
         >>> print(result)
 
     Example:
@@ -60,7 +60,7 @@ def random_combinations(items, size, num=None, rng=None):
         >>> num = 5
         >>> rng = 0
         >>> combos = list(random_combinations(items, size, num, rng))
-        >>> result = ('combos = %s' % (ub.repr2(combos),))
+        >>> result = ('combos = %s' % (ub.urepr(combos),))
         >>> print(result)
     """
     import scipy.special
