@@ -824,6 +824,8 @@ def adjust_subplots(left=None, right=None, bottom=None, top=None, wspace=None,
 
 def dict_intersection(dict1, dict2):
     r"""
+    Key AND Value based dictionary intersection
+
     Args:
         dict1 (dict):
         dict2 (dict):
@@ -835,7 +837,7 @@ def dict_intersection(dict1, dict2):
         >>> dict1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
         >>> dict2 = {'b': 2, 'c': 3, 'd': 5, 'e': 21, 'f': 42}
         >>> mergedict_ = dict_intersection(dict1, dict2)
-        >>> print(ub.urepr(mergedict_, nl=0))
+        >>> print(ub.urepr(mergedict_, nl=0, sort=1))
         {'b': 2, 'c': 3}
     """
     isect_keys = set(dict1.keys()).intersection(set(dict2.keys()))
