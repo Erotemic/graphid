@@ -26,9 +26,9 @@ will be difficult to prioritize which pairs of annotations (typically
 images) to look at first.
 
 This is the graph identification described in Chapter 5 of
-`my thesis <https://github.com/Erotemic/crall-thesis-2017/blob/master/crall-thesis_2017-08-10_compressed.pdf>`_.
+`my thesis <https://github.com/Erotemic/crall-thesis-2017/blob/main/crall-thesis_2017-08-10_compressed.pdf>`_.
 Viewing this PDF online can be slow, so I’ve linked there raw text
-`here <https://github.com/Erotemic/crall-thesis-2017/blob/master/chapter5-graphid.tex>`_.
+`here <https://github.com/Erotemic/crall-thesis-2017/blob/main/chapter5-graphid.tex>`_.
 
 General Information
 ===================
@@ -64,7 +64,7 @@ flagged by the program as actually between two distinct individuals.
 This README is a mess. Why not look at `this Jupyter
 notebook <notebooks/core_example.ipynb>`__ in the meantime. (Note as of
 2019-June-09 the GitHub viewer seems broken, but `this
-link <https://nbviewer.jupyter.org/github/Erotemic/graphid/blob/master/notebooks/core_example.ipynb>`_
+link <https://nbviewer.jupyter.org/github/Erotemic/graphid/blob/main/notebooks/core_example.ipynb>`_
 is working)
 
 Installation
