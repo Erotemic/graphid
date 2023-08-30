@@ -2,7 +2,7 @@ The graphid Module
 ==================
 
 
-|Pypi| |PypiDownloads| |GithubActions| |Codecov|
+|Pypi| |PypiDownloads| |GithubActions| |Codecov| |ReadTheDocs|
 
 
 +------------------+----------------------------------------------+
@@ -111,3 +111,6 @@ good use-case.
 
 .. |Codecov| image:: https://codecov.io/github/Erotemic/graphid/badge.svg?branch=main&service=github
     :target: https://codecov.io/github/Erotemic/graphid?branch=main
+
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/graphid/badge/?version=latest
+    :target: http://graphid.readthedocs.io/en/latest/
