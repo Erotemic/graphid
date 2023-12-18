@@ -708,8 +708,8 @@ class MiscHelpers(object):
             >>> splits = infr.remove_aids(aids)
             >>> assert len(splits['old']) > 0
             >>> infr.assert_invariants()
-            >>> # xdoc: +REQUIRES(--show)
-            >>> util.qtensure()
+            >>> # xdoctest: +REQUIRES(--show)
+            >>> util.autompl()
             >>> after = infr
             >>> before.show(fnum=1, pnum=(1, 2, 1), pickable=True)
             >>> after.show(fnum=1, pnum=(1, 2, 2), pickable=True)
@@ -1090,7 +1090,7 @@ class AnnotInference(ub.NiceRepr,
         >>>     infr.add_feedback((11, 12), NEGTV)
         >>> print('infr = {}'.format(infr))
         infr = <AnnotInference(nNodes=5, nEdges=3, nCCs=4)>
-        >>> # xdoc: +REQUIRES(--show)
+        >>> # xdoctest: +REQUIRES(--show)
         >>> infr.show_graph()
         >>> util.show_if_requested()
     """

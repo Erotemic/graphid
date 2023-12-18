@@ -33,10 +33,10 @@ else:
                                       get_axis_xy_width_height, imshow, legend,
                                       make_heatmask, multi_plot, next_fnum,
                                       pan_factory, pandas_plot_matrix, qtensure,
-                                      relative_text, reverse_colormap, save_parts,
-                                      scores_to_cmap, scores_to_color,
-                                      set_figtitle, show_if_requested,
-                                      zoom_factory,)
+                                      autompl, relative_text, reverse_colormap,
+                                      save_parts, scores_to_cmap,
+                                      scores_to_color, set_figtitle,
+                                      show_if_requested, zoom_factory,)
     from graphid.util.name_rectifier import (demodata_oldnames,
                                              find_consistent_labeling,
                                              simple_munkres,)
@@ -109,7 +109,7 @@ else:
                'draw_line_segments', 'ensure_fnum', 'extract_axes_extents',
                'figure', 'get_axis_xy_width_height', 'imshow', 'legend',
                'make_heatmask', 'multi_plot', 'next_fnum', 'pan_factory',
-               'pandas_plot_matrix', 'qtensure', 'relative_text',
+               'pandas_plot_matrix', 'qtensure', 'autompl', 'relative_text',
                'reverse_colormap', 'save_parts', 'scores_to_cmap',
                'scores_to_color', 'set_figtitle', 'show_if_requested',
                'zoom_factory', 'demodata_oldnames', 'find_consistent_labeling',
