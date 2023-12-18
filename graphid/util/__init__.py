@@ -1,5 +1,5 @@
 """
-mkinit graphid.util
+mkinit graphid.util --lazy_loader_typed
 """
 import lazy_loader
 
