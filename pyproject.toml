@@ -23,6 +23,7 @@ remote_host = "https://github.com"
 remote_group = "Erotemic"
 url = 'https://github.com/Erotemic/graphid'
 linter = false
+render_doc_images = true
 
 #packages=[
 #    'graphid',

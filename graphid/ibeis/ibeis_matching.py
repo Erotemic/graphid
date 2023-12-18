@@ -100,7 +100,7 @@ class AnnotInfrMatching(object):
             prog_hook (None): (default = None)
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> infr = testdata_infr('testdb1')
             >>> infr.ensure_full()
             >>> edges = [(1, 2), (2, 3)]
@@ -201,7 +201,7 @@ class AnnotInfrMatching(object):
         Constructs training data for a pairwise classifier
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> infr = testdata_infr('PZ_MTEST')
             >>> infr.exec_matching(cfgdict={
             >>>     'can_match_samename': True,
@@ -304,7 +304,7 @@ class AnnotInfrMatching(object):
         this.
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> infr = testdata_infr('PZ_MTEST')
             >>> infr.exec_matching()
             >>> infr.apply_match_edges()
@@ -349,6 +349,7 @@ class InfrLearning(object):
         Uses current knowledge to train verifiers for new unseen pairs.
 
         Example:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> import ibeis
             >>> ibs = ibeis.opendb('PZ_MTEST')
             >>> infr = ibeis.AnnotInference(ibs, aids='all')
@@ -381,6 +382,7 @@ class InfrLearning(object):
         verifier error cases and groundtruth errors.
 
         Doctest:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> import ibeis
             >>> infr = ibeis.AnnotInference(
             >>>     'PZ_MTEST', aids='all', autoinit='annotmatch',
@@ -547,13 +549,15 @@ class _RedundancyAugmentation(object):
         Doctest:
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(ccs=[(1, 2, 3, 4, 5), (7, 8, 9, 10)])
-            >>> infr.add_feedback((2, 5), 'match')
-            >>> infr.add_feedback((1, 5), 'notcomp')
+            >>> infr.add_feedback((2, 7), POSTV)
+            >>> infr.add_feedback((1, 5), INCMP)
             >>> infr.params['redun.pos'] = 2
             >>> candidate_edges = list(infr.find_pos_redun_candidate_edges())
             >>> result = ('candidate_edges = ' + ub.urepr(candidate_edges))
             >>> print(result)
-            candidate_edges = [(1, 3), (7, 10)]
+            candidate_edges = [
+                (1, 7),
+            ]
         """
         # Add random edges between exisiting non-redundant PCCs
         if k is None:
@@ -621,7 +625,7 @@ class CandidateSearch(_RedundancyAugmentation):
         """
 
         Example:
-            >>> # ENABLE_DOCTEST
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> from graphid import demo
             >>> infr = demo.demodata_mtest_infr()
             >>> cand_edges = infr.find_lnbnn_candidate_edges()
@@ -663,6 +667,7 @@ class CandidateSearch(_RedundancyAugmentation):
         (Currently only the primary task is actually ensured)
 
         Doctest:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids='all',
             >>>                             autoinit='staging')
@@ -716,6 +721,7 @@ class CandidateSearch(_RedundancyAugmentation):
         This does not change the state of the queue.
 
         Doctest:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> import ibeis
             >>> ibs = ibeis.opendb('PZ_MTEST')
             >>> infr = ibeis.AnnotInference(ibs, aids='all')
@@ -724,6 +730,7 @@ class CandidateSearch(_RedundancyAugmentation):
             >>> infr.ensure_priority_scores(priority_edges)
 
         Doctest:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> import ibeis
             >>> ibs = ibeis.opendb('PZ_MTEST')
             >>> infr = ibeis.AnnotInference(ibs, aids='all')
