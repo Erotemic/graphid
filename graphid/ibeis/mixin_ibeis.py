@@ -1032,12 +1032,14 @@ def _update_staging_to_annotmatch(infr):
     """
     BE VERY CAREFUL WITH THIS FUNCTION
 
-    >>> import ibeis
-    >>> ibs = ibeis.opendb('PZ_Master1')
-    >>> infr = ibeis.AnnotInference(ibs, aids=ibs.get_valid_aids())
+    Example:
+        >>> # xdoctest: +SKIP
+        >>> import ibeis
+        >>> ibs = ibeis.opendb('PZ_Master1')
+        >>> infr = ibeis.AnnotInference(ibs, aids=ibs.get_valid_aids())
 
-    infr.reset_feedback('annotmatch', apply=True)
-    infr.status()
+        infr.reset_feedback('annotmatch', apply=True)
+        infr.status()
     """
     print('Finding entries in annotmatch that are missing in staging')
     reverse_df = infr.match_state_delta('annotmatch', 'staging')
