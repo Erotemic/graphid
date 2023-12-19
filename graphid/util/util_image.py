@@ -48,6 +48,7 @@ def convert_colorspace(img, dst_space, src_space='BGR', copy=False, dst=None):
         ndarray[uint8_t, ndim=2]: img -  image data
 
     Example:
+        >>> # xdoctest: +REQUIRES(module:cv2)
         >>> convert_colorspace(np.array([[[0, 0, 1]]], dtype=np.float32), 'LAB', src_space='RGB')
         >>> convert_colorspace(np.array([[[0, 1, 0]]], dtype=np.float32), 'LAB', src_space='RGB')
         >>> convert_colorspace(np.array([[[1, 0, 0]]], dtype=np.float32), 'LAB', src_space='RGB')

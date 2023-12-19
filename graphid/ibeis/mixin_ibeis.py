@@ -143,6 +143,9 @@ class IBEISIO(object):
 
     def find_unjustified_splits(infr):
         """
+        Example
+            >>> # xdoctest: +REQUIRES(module:ibeis)
+            >>> # xdoctest: +REQUIRES(--realdata)
             >>> from graphid.core.mixin_helpers import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb(defaultdb='GZ_Master1')
@@ -397,6 +400,7 @@ class IBEISIO(object):
             python -m graphid.core.mixin_ibeis get_ibeis_name_delta
 
         Doctest:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> from graphid.core.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
@@ -425,6 +429,7 @@ class IBEISIO(object):
             6     07_061         06_410
 
         Doctest:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> from graphid.core.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
@@ -441,6 +446,7 @@ class IBEISIO(object):
             4     06_410   07_061
 
         Doctest:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> from graphid.core.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
@@ -517,6 +523,7 @@ class IBEISIO(object):
 
         Example:
             >>> # DISABLE_DOCTEST
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> from graphid.core.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb('GZ_Master1')
@@ -604,6 +611,7 @@ class IBEISIO(object):
             python -m graphid.core.annot_inference read_ibeis_annotmatch_feedback
 
         Example:
+            >>> # xdoctest: +SKIP(testdata_infr not implemented)
             >>> from graphid.core.annot_inference import *  # NOQA
             >>> infr = testdata_infr('testdb1')
             >>> feedback = infr.read_ibeis_annotmatch_feedback()
@@ -700,6 +708,7 @@ class IBEISIO(object):
     def _feedback_df(infr, key):
         """
         Example:
+            >>> # xdoctest: +SKIP(testdata_infr not implemented)
             >>> from graphid.core.annot_inference import *  # NOQA
             >>> import pandas as pd
             >>> infr = testdata_infr('testdb1')
@@ -754,6 +763,7 @@ class IBEISIO(object):
             python -m graphid.core.annot_inference match_state_delta
 
         Doctest:
+            >>> # xdoctest: +REQUIRES(module:ibeis)
             >>> from graphid.core.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
@@ -786,21 +796,21 @@ class IBEISIO(object):
     def _make_state_delta(AnnotInference, old_feedback, new_feedback):
         r"""
         CommandLine:
-            python -m graphid.core.mixin_ibeis IBEISIO._make_state_delta
-            python -m graphid.core.mixin_ibeis IBEISIO._make_state_delta:0
+            python -m graphid.core.ibeis.mixin_ibeis IBEISIO._make_state_delta
+            python -m graphid.core.ibeis.mixin_ibeis IBEISIO._make_state_delta:0
 
         Example:
             >>> from graphid.core.annot_inference import *  # NOQA
             >>> columns = ['evidence_decision', 'aid1', 'aid2', 'am_rowid', 'tags']
             >>> new_feedback = old_feedback = pd.DataFrame([
             >>> ], columns=columns).set_index(['aid1', 'aid2'], drop=True)
-            >>> edge_delta_df = AnnotInference._make_state_delta(old_feedback,
+            >>> edge_delta_df = IBEISIO._make_state_delta(old_feedback,
             >>>                                                  new_feedback)
             >>> result = ('edge_delta_df =\n%s' % (edge_delta_df,))
             >>> print(result)
             edge_delta_df =
             Empty DataFrame
-            Columns: [am_rowid, old_evidence_decision, new_evidence_decision, old_tags, new_tags, is_new]
+            Columns: [am_rowid, old_evidence_decision, new_evidence_decision, old_tags, new_tags, old_meta_decision, new_meta_decision, is_new]
             Index: []
 
         Example:
@@ -820,19 +830,22 @@ class IBEISIO(object):
             >>>     [NEGTV, 'null', 100, 103, None, []],
             >>>     [INCMP, 'same', 107, 109, None, []],
             >>> ], columns=columns).set_index(['aid1', 'aid2'], drop=True)
-            >>> edge_delta_df = AnnotInference._make_state_delta(old_feedback,
+            >>> edge_delta_df = IBEISIO._make_state_delta(old_feedback,
             >>>                                                  new_feedback)
-            >>> result = ('edge_delta_df =\n%s' % (edge_delta_df,))
+            >>> result = ('edge_delta_df =\n%s' % (edge_delta_df.to_string(),))
             >>> print(result)
-                       am_rowid old_decision new_decision old_tags new_tags is_new
+            edge_delta_df =
+                       am_rowid old_evidence_decision new_evidence_decision old_tags new_tags old_meta_decision new_meta_decision  is_new
             aid1 aid2
-            101  104     1004.0      nomatch        match       []       []  False
-            103  104     1002.0        match      nomatch       []       []  False
-            100  103        NaN          NaN      nomatch      NaN       []   True
-            102  103        NaN          NaN      nomatch      NaN       []   True
-            107  109        NaN          NaN      notcomp      NaN       []   True
+            101  102     1001.0                 POSTV                 POSTV       []       []              same              null   False
+            103  104     1002.0                 POSTV                 NEGTV       []       []              null              null   False
+            101  104     1004.0                 NEGTV                 POSTV       []       []              null              null   False
+            100  103        NaN                   NaN                 NEGTV      NaN       []               NaN              null    True
+            102  103        NaN                   NaN                 NEGTV      NaN       []               NaN              null    True
+            107  109        NaN                   NaN                 INCMP      NaN       []               NaN              same    True
+
         """
-        import ibeis
+        from graphid.core.annot_inference import AnnotInference
         import pandas as pd
         from six.moves import reduce
         import operator as op
@@ -849,9 +862,9 @@ class IBEISIO(object):
         isect_old = old_feedback.loc[isect_edges]
 
         # If any important column is different we mark the row as changed
-        data_columns = ibeis.AnnotInference.feedback_data_keys
+        data_columns = AnnotInference.feedback_data_keys
         important_columns = ['meta_decision', 'evidence_decision', 'tags']
-        other_columns = ub.setdiff(data_columns, important_columns)
+        other_columns = set(data_columns) - set(important_columns)
         if len(isect_edges) > 0:
             changed_gen = [isect_new[c] != isect_old[c]
                            for c in important_columns]
@@ -884,8 +897,8 @@ class IBEISIO(object):
         col_order = ['old_evidence_decision', 'new_evidence_decision',
                      'old_tags', 'new_tags', 'old_meta_decision',
                      'new_meta_decision']
-        edge_delta_df = merged_df.reindex(columns=(
-            ub.setdiff(merged_df.columns.values, col_order) + col_order))
+        _tmp = list(set(merged_df.columns.values) - set(col_order))
+        edge_delta_df = merged_df.reindex(columns=(_tmp + col_order))
         edge_delta_df.set_index(['aid1', 'aid2'], inplace=True, drop=True)
         edge_delta_df = edge_delta_df.assign(is_new=False)
         if len(add_edges):
@@ -1019,12 +1032,14 @@ def _update_staging_to_annotmatch(infr):
     """
     BE VERY CAREFUL WITH THIS FUNCTION
 
-    >>> import ibeis
-    >>> ibs = ibeis.opendb('PZ_Master1')
-    >>> infr = ibeis.AnnotInference(ibs, aids=ibs.get_valid_aids())
+    Example:
+        >>> # xdoctest: +SKIP
+        >>> import ibeis
+        >>> ibs = ibeis.opendb('PZ_Master1')
+        >>> infr = ibeis.AnnotInference(ibs, aids=ibs.get_valid_aids())
 
-    infr.reset_feedback('annotmatch', apply=True)
-    infr.status()
+        infr.reset_feedback('annotmatch', apply=True)
+        infr.status()
     """
     print('Finding entries in annotmatch that are missing in staging')
     reverse_df = infr.match_state_delta('annotmatch', 'staging')

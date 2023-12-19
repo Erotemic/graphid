@@ -1,9 +1,21 @@
 # flake8: noqa
-__version__ = '0.1.0'
+__version__ = '0.1.2'
 """
-mkinit ~/code/graphid/graphid --noattrs
+mkinit ~/code/graphid/graphid --noattrs --lazy_loader_typed
 """
-from graphid import api
-from graphid import core
-from graphid import demo
-from graphid import util
+import lazy_loader
+
+
+__getattr__, __dir__, __all__ = lazy_loader.attach(
+    __name__,
+    submodules={
+        'api',
+        'core',
+        'demo',
+        'ibeis',
+        'util',
+    },
+    submod_attrs={},
+)
+
+__all__ = ['api', 'core', 'demo', 'ibeis', 'util']
