@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Version 0.1.0] -
 
+### Added
+
+* Basic CLI with a `finish_install` command to help get correct dependencies
+
 ### Changed 
 
 * Requirement updates

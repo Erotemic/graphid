@@ -34,10 +34,10 @@ from graphid import util
 LARGE_GRAPH = 100
 
 
-def dump_nx_ondisk(graph, fpath):
+def dump_nx_ondisk(graph, fpath, prog='dot'):
     agraph = make_agraph(graph.copy())
     # agraph = nx.nx_agraph.to_agraph(graph)
-    agraph.layout(prog='dot')
+    agraph.layout(prog=prog)
     agraph.draw(ub.expandpath(fpath))
 
 
