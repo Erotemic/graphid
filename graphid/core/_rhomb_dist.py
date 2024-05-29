@@ -1,8 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 This is very ibeis-specific, and likely does not belong here.
+
+A Rhombicuboctahedron is used to model viewpoints of an object.
+It is not general, but it works well in many cases.
+
+References:
+    https://en.wikipedia.org/wiki/Rhombicuboctahedron
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import collections
 import networkx as nx
@@ -195,14 +199,10 @@ def RhombicuboctahedronDistanceDemo():
     """
     CommandLine:
         python -m graphid.core._rhomb_dist RhombicuboctahedronDistanceDemo --show
-    Returns:
-        ?: face
-
-    CommandLine:
-        python -m graphid.core._rhomb_dist RhombicuboctahedronDistanceDemo --show
 
     Example:
         >>> # xdoctest: +REQUIRES(module:pygraphviz)
+        >>> from graphid.core._rhomb_dist import *  # NOQA
         >>> from graphid import util
         >>> RhombicuboctahedronDistanceDemo()
         >>> util.show_if_requested()
