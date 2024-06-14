@@ -312,7 +312,7 @@ def RhombicuboctahedronDistanceDemo():
         node_to_label = {f: ''.join(util.take_column(f, 0)).upper() for f in faces}
         nx.set_node_attributes(G, name='label', values=node_to_label)
 
-        util.qtensure()
+        util.autompl()
         util.show_nx(G, prog='neato', groupby='groupid')
 
     visualize_connection_graph()

@@ -6,6 +6,10 @@ This uses a union-find-like algorithm (extended to support CC lookup) in the
 background, but could be implemented with another algorithm like Euler Tour
 Trees. UnionFind is good if you are mostly adding edges, but if you expect to
 remove edges a lot, then using a forest of ETTs may be better.
+
+
+SeeAlso:
+    .. [DyNetX] https://dynetx.readthedocs.io/en/latest/reference/classes/gtypes.html
 """
 import networkx as nx
 import itertools as it
@@ -22,6 +26,10 @@ class GraphHelperMixin(ub.NiceRepr):
             self.number_of_nodes(),
             self.number_of_edges(),
         )
+
+    def write(self, *kw):
+        import networkx as nx
+        nx.write_network_text(self)
 
     def has_nodes(self, nodes):
         return (self.has_node(node) for node in nodes)
@@ -151,6 +159,7 @@ class DynConnGraph(nx.Graph, GraphHelperMixin):
         https://en.wikipedia.org/wiki/Dynamic_connectivity#Fully_dynamic_connectivity
 
     Example:
+        >>> from graphid.util.nx_dynamic_graph import *  # NOQA
         >>> self = DynConnGraph()
         >>> self.add_edges_from([(1, 2), (2, 3), (4, 5), (6, 7), (7, 4)])
         >>> self.add_edges_from([(10, 20), (20, 30), (40, 50), (60, 70), (70, 40)])
@@ -165,6 +174,8 @@ class DynConnGraph(nx.Graph, GraphHelperMixin):
         >>> assert self.node_label(u) != self.node_label(v)
         >>> assert self.connected_to(u) != self.connected_to(v)
         >>> ccs = list(self.connected_components())
+        >>> print(f'ccs={ccs}')
+        >>> #self.write()
         >>> # xdoctest: +REQUIRES(--show)
         >>> import plottool_ibeis as pt
         >>> pt.qtensure()

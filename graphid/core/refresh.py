@@ -5,7 +5,7 @@ from graphid import util
 from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, NULL)  # NOQA
 
 
-class RefreshCriteria(object):
+class RefreshCriteria:
     """
     Determine when to re-query for candidate edges.
 
@@ -114,8 +114,10 @@ class RefreshCriteria(object):
             >>>     n_pred_list.append(n_pred)
             >>>     xdata.append(count + 1)
             >>> # xdoctest: +REQUIRES(--show)
+            >>> import kwplot
+            >>> kwplot.autompl()
             >>> import plottool_ibeis as pt
-            >>> pt.qtensure()
+            >>> #pt.qtensure()
             >>> n_pred_list = n_pred_list[10:]
             >>> n_real_list = n_real_list[10:]
             >>> xdata = xdata[10:]
@@ -153,6 +155,7 @@ class RefreshCriteria(object):
 
     def ave(refresh, method='exp'):
         """
+        Example:
             >>> from graphid import demo
             >>> infr = demo.demodata_infr(num_pccs=40, size=4, size_std=2, ignore_pair=True)
             >>> edges = list(infr.ranker.predict_candidate_edges(infr.aids, K=100))
@@ -248,7 +251,7 @@ def demo_refresh():
 
     # xdoctest: +REQUIRES(--show)
     from graphid import util
-    util.qtensure()
+    util.autompl()
     # from ibeis.scripts.thesis import TMP_RC
     # import matplotlib as mpl
     import matplotlib.pyplot as plt
