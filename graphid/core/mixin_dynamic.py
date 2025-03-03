@@ -34,7 +34,7 @@ from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN, UNINFERABLE)
 from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
 
 
-class DynamicUpdate(object):
+class DynamicUpdate:
     """
     # 12 total possible states
 
@@ -510,7 +510,7 @@ class DynamicUpdate(object):
         return action
 
 
-class Recovery(object):
+class Recovery:
     """ recovery funcs """
 
     def is_recovering(infr, edge=None):
@@ -696,7 +696,7 @@ class Recovery(object):
                     yield (edge, hypothesis)
 
 
-class NonDynamicUpdate(object):
+class NonDynamicUpdate:
 
     def apply_nondynamic_update(infr, graph=None):
         """

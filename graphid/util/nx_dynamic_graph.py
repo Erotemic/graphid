@@ -50,7 +50,7 @@ class NiceGraph(nx.Graph, GraphHelperMixin):
     pass
 
 
-class nx_UnionFind(object):
+class nx_UnionFind:
     """
     Based off code in networkx
     """

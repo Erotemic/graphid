@@ -9,7 +9,7 @@ from graphid.core.state import (POSTV, NEGTV, INCMP, NULL)
 from graphid.core.refresh import RefreshCriteria
 
 
-class InfrLoops(object):
+class InfrLoops:
     """
     Algorithm control flow loops
     """
@@ -427,7 +427,7 @@ class InfrLoops(object):
         infr._gen = None
 
 
-class InfrReviewers(object):
+class InfrReviewers:
     def try_auto_review(infr, edge):
         review = {
             'user_id': 'algo:auto_clf',

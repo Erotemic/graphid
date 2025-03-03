@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import networkx as nx
 import pandas as pd
 import ubelt as ub
@@ -11,7 +9,7 @@ from graphid.core.state import POSTV, NEGTV, INCMP, UNREV, UNKWN  # NOQA
 from graphid import util
 
 
-class IBEISIO(object):
+class IBEISIO:
     """
     Direct interface into ibeis tables and delta statistics
     """
@@ -848,7 +846,7 @@ class IBEISIO(object):
         """
         from graphid.core.annot_inference import AnnotInference
         import pandas as pd
-        from six.moves import reduce
+        from functools import reduce
         import operator as op
         # Ensure input is in the expected format
         new_index = new_feedback.index
@@ -969,7 +967,7 @@ class IBEISIO(object):
         print('____')
 
 
-class IBEISGroundtruth(object):
+class IBEISGroundtruth:
     """
     Methods for generating training labels for classifiers
     """

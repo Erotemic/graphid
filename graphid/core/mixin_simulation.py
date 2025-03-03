@@ -11,7 +11,7 @@ from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN, NULL)
 from graphid import util
 
 
-class SimulationHelpers(object):
+class SimulationHelpers:
     def init_simulation(infr, oracle_accuracy=1.0, k_redun=2,
                         enable_autoreview=True, enable_inference=True,
                         classifiers=None, match_state_thresh=None,
@@ -311,7 +311,7 @@ class SimulationHelpers(object):
         assert test_action is not None, 'what happened?'
 
 
-class UserOracle(object):
+class UserOracle:
     def __init__(oracle, accuracy, rng):
         if isinstance(rng, str):
             rng = sum(map(ord, rng))

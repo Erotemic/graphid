@@ -8,7 +8,7 @@ from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
 from graphid import util
 
 
-class GraphVisualization(object):
+class GraphVisualization:
     """ contains plotting related code """
 
     def _get_truth_colors(infr):

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import numpy as np
 import pandas as pd
 import itertools as it
@@ -11,7 +9,7 @@ from graphid.util.nx_utils import e_
 from graphid.core.state import POSTV, NEGTV, INCMP, UNREV  # NOQA
 
 
-class AnnotInfrMatching(object):
+class AnnotInfrMatching:
     """
     Methods for running matching algorithms
     """
@@ -342,7 +340,7 @@ class AnnotInfrMatching(object):
         infr.set_edge_attrs('normscore', dict(zip(edges, normscores)))
 
 
-class InfrLearning(object):
+class InfrLearning:
 
     def learn_deploy_verifiers(infr, publish=False):
         """
@@ -436,7 +434,7 @@ class InfrLearning(object):
         return pb_edges
 
 
-class _RedundancyAugmentation(object):
+class _RedundancyAugmentation:
 
     def find_neg_augment_edges(infr, cc1, cc2, k=None):
         """

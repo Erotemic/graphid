@@ -43,7 +43,7 @@ def _rectify_decision(evidence_decision, meta_decision):
     return decision
 
 
-class Consistency(object):
+class Consistency:
     def is_consistent(infr, cc):
         """
         Determines if a PCC contains inconsistencies
@@ -104,7 +104,7 @@ class Consistency(object):
                 yield cc
 
 
-class Feedback(object):
+class Feedback:
     def _check_edge(infr, edge):
         aid1, aid2 = edge
         if aid1 not in infr.aids_set:
@@ -515,7 +515,7 @@ class Feedback(object):
         infr.set_node_attrs('name_label', distinct_names)
 
 
-class NameRelabel(object):
+class NameRelabel:
 
     def node_label(infr, aid):
         return infr.pos_graph.node_label(aid)
@@ -674,7 +674,7 @@ class NameRelabel(object):
         return num_names, num_inconsistent
 
 
-class MiscHelpers(object):
+class MiscHelpers:
 
     def _rectify_nids(infr, aids, nids):
         if aids is None:
@@ -898,7 +898,7 @@ class MiscHelpers(object):
         print(r'--- </LOG DUMP> ---')
 
 
-class AltConstructors(object):
+class AltConstructors:
     _graph_cls = util.NiceGraph
     # _graph_cls = nx.Graph
     # _graph_cls = nx.DiGraph

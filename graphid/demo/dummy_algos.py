@@ -9,7 +9,7 @@ from graphid import util
 # from numpy.core.umath_tests import matrix_multiply  # NOQA
 
 
-class DummyRanker(object):
+class DummyRanker:
     """
     Generates dummy rankings
     """
@@ -85,7 +85,7 @@ class DummyRanker(object):
         return new_edges
 
 
-class DummyVerif(object):
+class DummyVerif:
     """
     Generates dummy scores between pairs of annotations.
     (not necesarilly existing edges in the graph)

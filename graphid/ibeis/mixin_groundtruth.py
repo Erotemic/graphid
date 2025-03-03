@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import ubelt as ub
 import numpy as np
 import pandas as pd
@@ -7,7 +5,7 @@ from graphid import util
 from graphid.core.state import POSTV, NEGTV, INCMP
 
 
-class Groundtruth(object):
+class Groundtruth:
 
     def is_comparable(infr, aid_pairs, allow_guess=True):
         """

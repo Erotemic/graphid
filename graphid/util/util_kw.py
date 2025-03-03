@@ -1,4 +1,4 @@
-class KWSpec(object):
+class KWSpec:
     """
     Safer keyword arguments with keyword specifications.
     """

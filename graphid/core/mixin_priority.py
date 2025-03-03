@@ -8,7 +8,7 @@ from graphid.core.state import (POSTV, NEGTV)
 from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
 
 
-class Priority(object):
+class Priority:
     """
     Handles prioritization of edges for review.
 

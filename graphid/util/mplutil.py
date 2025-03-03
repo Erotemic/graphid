@@ -1887,7 +1887,7 @@ def reverse_colormap(cmap):
         return cmap_reversed
 
 
-class PlotNums(object):
+class PlotNums:
     """
     Convinience class for dealing with plot numberings (pnums)
 
@@ -2513,7 +2513,7 @@ def pan_factory(ax=None):
     return self
 
 
-class PanEvents(object):
+class PanEvents:
     def __init__(self, ax=None):
         self.press = None
         self.cur_xlim = None

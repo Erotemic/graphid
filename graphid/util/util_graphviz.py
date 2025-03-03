@@ -283,7 +283,7 @@ def parse_html_graphviz_attrs():
     print((', '.join(neato_keys['G'])))
 
 
-class GRAPHVIZ_KEYS(object):
+class GRAPHVIZ_KEYS:
     N = {'URL', 'area', 'color', 'colorscheme', 'comment', 'distortion',
          'fillcolor', 'fixedsize', 'fontcolor', 'fontname', 'fontsize',
          'gradientangle', 'group', 'height', 'href', 'id', 'image', 'imagepos',

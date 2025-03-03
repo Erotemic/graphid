@@ -78,7 +78,7 @@ def do_infr_test(ccs, edges, new_edges):
         # if fig2 is not fig1:
         #     fig2.canvas.mpl_connect('pick_event', util.partial(on_pick, infr=infr2))
 
-    class Checker(object):
+    class Checker:
         """
         Asserts pre and post test properties of the graph
         """
