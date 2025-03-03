@@ -2,7 +2,6 @@
 Mixin functionality for experiments, tests, and simulations.
 This includes recordings measures used to generate plots in JC's thesis.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
 import ubelt as ub
 import pandas as pd
