@@ -8,7 +8,7 @@ def requirement_path(fname):
         xdoctest -m graphid.rc.registry requirement_path
 
     Example:
-        >>> from geowatch.rc.registry import requirement_path
+        >>> from graphid.rc.registry import requirement_path
         >>> fname = 'runtime.txt'
         >>> requirement_path(fname)
     """

@@ -401,7 +401,7 @@ class IBEISIO(object):
 
         Doctest:
             >>> # xdoctest: +REQUIRES(module:ibeis)
-            >>> from graphid.core.mixin_ibeis import *  # NOQA
+            >>> from graphid.ibeis.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
             >>>                             autoinit='annotmatch', verbose=4)
@@ -430,7 +430,7 @@ class IBEISIO(object):
 
         Doctest:
             >>> # xdoctest: +REQUIRES(module:ibeis)
-            >>> from graphid.core.mixin_ibeis import *  # NOQA
+            >>> from graphid.ibeis.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
             >>>                             autoinit='annotmatch', verbose=4)
@@ -447,7 +447,7 @@ class IBEISIO(object):
 
         Doctest:
             >>> # xdoctest: +REQUIRES(module:ibeis)
-            >>> from graphid.core.mixin_ibeis import *  # NOQA
+            >>> from graphid.ibeis.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> infr = ibeis.AnnotInference('PZ_MTEST', aids=list(range(1, 10)),
             >>>                             autoinit='annotmatch', verbose=4)
@@ -519,12 +519,12 @@ class IBEISIO(object):
             ?: feedback
 
         CommandLine:
-            python -m graphid.core.mixin_ibeis read_ibeis_staging_feedback
+            python -m graphid.ibeis.mixin_ibeis read_ibeis_staging_feedback
 
         Example:
             >>> # DISABLE_DOCTEST
             >>> # xdoctest: +REQUIRES(module:ibeis)
-            >>> from graphid.core.mixin_ibeis import *  # NOQA
+            >>> from graphid.ibeis.mixin_ibeis import *  # NOQA
             >>> import ibeis
             >>> ibs = ibeis.opendb('GZ_Master1')
             >>> infr = ibeis.AnnotInference(ibs=ibs, aids='all')
@@ -796,11 +796,11 @@ class IBEISIO(object):
     def _make_state_delta(AnnotInference, old_feedback, new_feedback):
         r"""
         CommandLine:
-            python -m graphid.core.ibeis.mixin_ibeis IBEISIO._make_state_delta
-            python -m graphid.core.ibeis.mixin_ibeis IBEISIO._make_state_delta:0
+            python -m graphid.ibeis.mixin_ibeis IBEISIO._make_state_delta
+            python -m graphid.ibeis.mixin_ibeis IBEISIO._make_state_delta:0
 
         Example:
-            >>> from graphid.core.annot_inference import *  # NOQA
+            >>> from graphid.ibeis.mixin_ibeis import *  # NOQA
             >>> columns = ['evidence_decision', 'aid1', 'aid2', 'am_rowid', 'tags']
             >>> new_feedback = old_feedback = pd.DataFrame([
             >>> ], columns=columns).set_index(['aid1', 'aid2'], drop=True)
@@ -814,7 +814,7 @@ class IBEISIO(object):
             Index: []
 
         Example:
-            >>> from graphid.core.annot_inference import *  # NOQA
+            >>> from graphid.ibeis.mixin_ibeis import *  # NOQA
             >>> columns = ['evidence_decision', 'meta_decision', 'aid1', 'aid2', 'am_rowid', 'tags']
             >>> old_feedback = pd.DataFrame([
             >>>     [NEGTV, 'diff', 100, 101, 1000, []],
@@ -832,6 +832,7 @@ class IBEISIO(object):
             >>> ], columns=columns).set_index(['aid1', 'aid2'], drop=True)
             >>> edge_delta_df = IBEISIO._make_state_delta(old_feedback,
             >>>                                                  new_feedback)
+            >>> edge_delta_df = edge_delta_df.sort_values('am_rowid')
             >>> result = ('edge_delta_df =\n%s' % (edge_delta_df.to_string(),))
             >>> print(result)
             edge_delta_df =
@@ -1202,7 +1203,7 @@ def needs_conversion(infr):
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/graphid/graphid.core/mixin_ibeis.py all
+        python ~/code/graphid/graphid/ibeis/mixin_ibeis.py all
     """
     import xdoctest
     xdoctest.doctest_module(__file__)
