@@ -383,8 +383,8 @@ jobs:
         $GPG_EXECUTABLE --list-keys
         VERSION=$(python -c "import setup; print(setup.VERSION)")
         python -m pip install pip uv -U
-        python -m uv pip install --system --break-system-packages packaging twine -U
-        python -m uv pip install --system --break-system-packages urllib3 requests[security]
+        python -m pip install packaging twine -U
+        python -m pip install urllib3 requests[security]
         GPG_KEYID=$(cat dev/public_gpg_key)
         echo "GPG_KEYID = '$GPG_KEYID'"
         GPG_SIGN_CMD="$GPG_EXECUTABLE --batch --yes --detach-sign --armor --local-user $GPG_KEYID"
@@ -400,7 +400,7 @@ jobs:
             $GPG_EXECUTABLE --verify $WHEEL_PATH.asc $WHEEL_PATH
         done
         ls -la wheelhouse
-        python -m uv pip install --system --break-system-packages opentimestamps-client
+        python -m pip install opentimestamps-client
         ots stamp wheelhouse/*.whl wheelhouse/*.tar.gz wheelhouse/*.asc
         ls -la wheelhouse
         twine upload --username __token__ --password "$TWINE_PASSWORD" --repository-url "$TWINE_REPOSITORY_URL" wheelhouse/*.whl wheelhouse/*.tar.gz --skip-existing --verbose || { echo "failed to twine upload" ; exit 1; }
@@ -459,8 +459,8 @@ jobs:
         $GPG_EXECUTABLE --list-keys
         VERSION=$(python -c "import setup; print(setup.VERSION)")
         python -m pip install pip uv -U
-        python -m uv pip install --system --break-system-packages packaging twine -U
-        python -m uv pip install --system --break-system-packages urllib3 requests[security]
+        python -m pip install packaging twine -U
+        python -m pip install urllib3 requests[security]
         GPG_KEYID=$(cat dev/public_gpg_key)
         echo "GPG_KEYID = '$GPG_KEYID'"
         GPG_SIGN_CMD="$GPG_EXECUTABLE --batch --yes --detach-sign --armor --local-user $GPG_KEYID"
@@ -476,7 +476,7 @@ jobs:
             $GPG_EXECUTABLE --verify $WHEEL_PATH.asc $WHEEL_PATH
         done
         ls -la wheelhouse
-        python -m uv pip install --system --break-system-packages opentimestamps-client
+        python -m pip install opentimestamps-client
         ots stamp wheelhouse/*.whl wheelhouse/*.tar.gz wheelhouse/*.asc
         ls -la wheelhouse
         twine upload --username __token__ --password "$TWINE_PASSWORD" --repository-url "$TWINE_REPOSITORY_URL" wheelhouse/*.whl wheelhouse/*.tar.gz --skip-existing --verbose || { echo "failed to twine upload" ; exit 1; }
