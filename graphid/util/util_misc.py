@@ -1,4 +1,4 @@
-import ubelt as ub  # NOQA
+import ubelt as ub
 import itertools as it
 import numpy as np
 

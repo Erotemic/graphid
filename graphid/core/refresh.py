@@ -2,7 +2,7 @@ import numpy as np
 import ubelt as ub
 import scipy as sp
 from graphid import util
-from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, NULL)  # NOQA
+from graphid.core.state import POSTV
 
 
 class RefreshCriteria:
@@ -216,9 +216,6 @@ def demo_refresh():
         >>> util.show_if_requested()
     """
     from graphid import demo
-    # import utool as ut
-    # demokw = ut.argparse_dict({'num_pccs': 50, 'size': 4})
-    # refreshkw = ut.argparse_funckw(RefreshCriteria)
     demokw = {'num_pccs': 50, 'size': 4}
     refreshkw = dict(window=20, patience=72, thresh=.1,
                      method='binomial')
@@ -252,13 +249,9 @@ def demo_refresh():
     # xdoctest: +REQUIRES(--show)
     from graphid import util
     util.autompl()
-    # from ibeis.scripts.thesis import TMP_RC
-    # import matplotlib as mpl
     import matplotlib.pyplot as plt
-    # mpl.rcParams.update(TMP_RC)
     util.multi_plot(
         xdata, ydatas, xlabel='# manual reviews',
-        # rcParams=TMP_RC,
         marker='',
         ylim=(0, 1), use_legend=False,
     )

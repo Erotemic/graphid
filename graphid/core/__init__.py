@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Regenerate Input Command
 mkinit graphid.core --lazy_loader_typed

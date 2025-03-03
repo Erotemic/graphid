@@ -1,11 +1,9 @@
 import numpy as np
 import networkx as nx
-import ubelt as ub  # NOQA
 from graphid import util
 from graphid.core import state as const
 from graphid.util import nx_utils as nxu
 from graphid.core.state import (POSTV, NEGTV)
-from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
 
 
 class Priority:
@@ -112,6 +110,8 @@ class Priority:
         Example:
             >>> from graphid.core.mixin_priority import *  # NOQA
             >>> from graphid import demo
+            >>> import ubelt as ub
+            >>> from graphid.core.state import SAME
             >>> infr = demo.demodata_infr(num_pccs=7, size=5)
             >>> infr.ensure_cliques(meta_decision=SAME)
             >>> # Add a negative edge inside a PCC

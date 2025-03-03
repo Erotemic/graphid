@@ -4,7 +4,7 @@ import ubelt as ub
 import networkx as nx
 from functools import partial
 from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN)
-from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
+from graphid.core.state import (SAME, DIFF, NULL)
 from graphid import util
 
 
