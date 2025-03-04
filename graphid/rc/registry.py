@@ -8,9 +8,10 @@ def requirement_path(fname):
         xdoctest -m graphid.rc.registry requirement_path
 
     Example:
-        >>> from geowatch.rc.registry import requirement_path
+        >>> from graphid.rc.registry import requirement_path
         >>> fname = 'runtime.txt'
-        >>> requirement_path(fname)
+        >>> fpath = requirement_path(fname)
+        >>> print(fpath)
     """
     with importlib_resources.path('graphid.rc.requirements', f'{fname}') as p:
         orig_pth = ub.Path(p)

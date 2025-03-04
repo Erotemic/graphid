@@ -48,15 +48,22 @@ def multi_plot(xdata=None, ydata=[], **kwargs):
     References:
         matplotlib.org/examples/api/barchart_demo.html
 
+    CommandLine:
+        xdoctest -m graphid.util.mplutil multi_plot
+
     Example:
         >>> xdata = [1, 2, 3, 4, 5]
         >>> ydata_list = [[1, 2, 3, 4, 5], [3, 3, 3, 3, 3], [5, 4, np.nan, 2, 1], [4, 3, np.nan, 1, 0]]
         >>> kwargs = {'label': ['spamΣ', 'eggs', 'jamµ', 'pram'],  'linestyle': '-'}
         >>> #fig = multi_plot(xdata, ydata_list, title='$\phi_1(\\vec{x})$', xlabel='\nfds', **kwargs)
+        >>> from graphid import util
+        >>> util.autompl()
         >>> fig = multi_plot(xdata, ydata_list, title='ΣΣΣµµµ', xlabel='\nfdsΣΣΣµµµ', **kwargs)
         >>> show_if_requested()
 
     Example:
+        >>> from graphid import util
+        >>> util.autompl()
         >>> fig1 = multi_plot([1, 2, 3], [4, 5, 6])
         >>> fig2 = multi_plot([1, 2, 3], [4, 5, 6], fnum=4)
         >>> show_if_requested()
@@ -1383,6 +1390,21 @@ def save_parts(fig, fpath, grouped_axes=None, dpi=None):
 _qtensured = False
 
 
+def autompl():
+    try:
+        # kwplot is better if available
+        import kwplot
+        return kwplot.autompl()
+    except Exception:
+        try:
+            import PyQt5
+        except Exception:
+            import matplotlib as mpl
+            mpl.use('Agg')
+        # fallback to old method
+        return qtensure()
+
+
 def qtensure():
     global _qtensured
     try:
@@ -1865,7 +1887,7 @@ def reverse_colormap(cmap):
         return cmap_reversed
 
 
-class PlotNums(object):
+class PlotNums:
     """
     Convinience class for dealing with plot numberings (pnums)
 
@@ -2491,7 +2513,7 @@ def pan_factory(ax=None):
     return self
 
 
-class PanEvents(object):
+class PanEvents:
     def __init__(self, ax=None):
         self.press = None
         self.cur_xlim = None

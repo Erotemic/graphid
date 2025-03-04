@@ -34,10 +34,10 @@ from graphid import util
 LARGE_GRAPH = 100
 
 
-def dump_nx_ondisk(graph, fpath, prog='dot'):
+def dump_nx_ondisk(graph, fpath, prog='dot', args=''):
     agraph = make_agraph(graph.copy())
     # agraph = nx.nx_agraph.to_agraph(graph)
-    agraph.layout(prog=prog)
+    agraph.layout(prog=prog, args=args)
     agraph.draw(ub.expandpath(fpath))
 
 
@@ -283,7 +283,7 @@ def parse_html_graphviz_attrs():
     print((', '.join(neato_keys['G'])))
 
 
-class GRAPHVIZ_KEYS(object):
+class GRAPHVIZ_KEYS:
     N = {'URL', 'area', 'color', 'colorscheme', 'comment', 'distortion',
          'fillcolor', 'fixedsize', 'fontcolor', 'fontname', 'fontsize',
          'gradientangle', 'group', 'height', 'href', 'id', 'image', 'imagepos',

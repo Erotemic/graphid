@@ -2,7 +2,6 @@
 Mixin functionality for experiments, tests, and simulations.
 This includes recordings measures used to generate plots in JC's thesis.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
 import ubelt as ub
 import pandas as pd
@@ -11,7 +10,7 @@ from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN, NULL)
 from graphid import util
 
 
-class SimulationHelpers(object):
+class SimulationHelpers:
     def init_simulation(infr, oracle_accuracy=1.0, k_redun=2,
                         enable_autoreview=True, enable_inference=True,
                         classifiers=None, match_state_thresh=None,
@@ -311,7 +310,7 @@ class SimulationHelpers(object):
         assert test_action is not None, 'what happened?'
 
 
-class UserOracle(object):
+class UserOracle:
     def __init__(oracle, accuracy, rng):
         if isinstance(rng, str):
             rng = sum(map(ord, rng))

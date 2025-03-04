@@ -43,7 +43,7 @@ def _rectify_decision(evidence_decision, meta_decision):
     return decision
 
 
-class Consistency(object):
+class Consistency:
     def is_consistent(infr, cc):
         """
         Determines if a PCC contains inconsistencies
@@ -104,7 +104,7 @@ class Consistency(object):
                 yield cc
 
 
-class Feedback(object):
+class Feedback:
     def _check_edge(infr, edge):
         aid1, aid2 = edge
         if aid1 not in infr.aids_set:
@@ -515,7 +515,7 @@ class Feedback(object):
         infr.set_node_attrs('name_label', distinct_names)
 
 
-class NameRelabel(object):
+class NameRelabel:
 
     def node_label(infr, aid):
         return infr.pos_graph.node_label(aid)
@@ -674,7 +674,7 @@ class NameRelabel(object):
         return num_names, num_inconsistent
 
 
-class MiscHelpers(object):
+class MiscHelpers:
 
     def _rectify_nids(infr, aids, nids):
         if aids is None:
@@ -708,8 +708,8 @@ class MiscHelpers(object):
             >>> splits = infr.remove_aids(aids)
             >>> assert len(splits['old']) > 0
             >>> infr.assert_invariants()
-            >>> # xdoc: +REQUIRES(--show)
-            >>> util.qtensure()
+            >>> # xdoctest: +REQUIRES(--show)
+            >>> util.autompl()
             >>> after = infr
             >>> before.show(fnum=1, pnum=(1, 2, 1), pickable=True)
             >>> after.show(fnum=1, pnum=(1, 2, 2), pickable=True)
@@ -898,7 +898,7 @@ class MiscHelpers(object):
         print(r'--- </LOG DUMP> ---')
 
 
-class AltConstructors(object):
+class AltConstructors:
     _graph_cls = util.NiceGraph
     # _graph_cls = nx.Graph
     # _graph_cls = nx.DiGraph
@@ -1090,7 +1090,7 @@ class AnnotInference(ub.NiceRepr,
         >>>     infr.add_feedback((11, 12), NEGTV)
         >>> print('infr = {}'.format(infr))
         infr = <AnnotInference(nNodes=5, nEdges=3, nCCs=4)>
-        >>> # xdoc: +REQUIRES(--show)
+        >>> # xdoctest: +REQUIRES(--show)
         >>> infr.show_graph()
         >>> util.show_if_requested()
     """

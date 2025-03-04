@@ -2,8 +2,6 @@
 These check for certain invariants that should be maintained by the dynamic
 data structure.
 """
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
 import networkx as nx
 import ubelt as ub
@@ -13,7 +11,7 @@ from graphid.util.nx_utils import e_
 DEBUG_INCON = True
 
 
-class AssertInvariants(object):
+class AssertInvariants:
 
     def assert_edge(infr, edge):
         assert edge[0] < edge[1], (

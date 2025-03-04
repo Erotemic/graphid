@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 import itertools as it
 import networkx as nx
 import operator
@@ -13,7 +12,7 @@ from graphid.util import nx_utils as nxu
 from graphid.util.nx_utils import e_
 
 
-class AttrAccess(object):
+class AttrAccess:
     """ Contains non-core helper functions """
 
     def gen_node_attrs(infr, key, nodes=None, default=ub.NoParam):
@@ -148,7 +147,7 @@ class AttrAccess(object):
         return df_str
 
 
-class Convenience(object):
+class Convenience:
     @staticmethod
     def e_(u, v):
         return e_(u, v)
@@ -400,7 +399,7 @@ class Convenience(object):
         return match_state_df
 
 
-class DummyEdges(object):
+class DummyEdges:
 
     def ensure_mst(infr, label='name_label', meta_decision=SAME):
         """

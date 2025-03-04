@@ -12,7 +12,7 @@ from graphid.core.state import (POSTV, NEGTV, INCMP, UNREV, UNKWN, UNINFERABLE) 
 from graphid.core.state import (SAME, DIFF, NULL)  # NOQA
 
 
-class _RedundancyComputers(object):
+class _RedundancyComputers:
     """
     methods for computing redundancy
 
@@ -241,7 +241,7 @@ class _RedundancyComputers(object):
                     yield nid1, nid2
 
 
-class _RedundancyAugmentation(object):
+class _RedundancyAugmentation:
 
     def find_neg_augment_edges(infr, cc1, cc2, k=None):
         """

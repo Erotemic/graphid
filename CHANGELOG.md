@@ -5,6 +5,14 @@ We are currently working on porting this changelog to the specifications in
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Version 0.1.2] -
+
+
+### Removed
+
+* Python 3.7 support
+
+
 ## [Version 0.1.0] -
 
 ### Added

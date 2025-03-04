@@ -11,7 +11,7 @@ mod_name = "graphid"
 repo_name = "graphid"
 rel_mod_parent_dpath = "."
 os = [ "linux", "osx", "win",]
-min_python = 3.7
+min_python = '3.8'
 version = "{mod_dpath}/__init__.py::__version__"
 author = "Jon Crall"
 author_email = "erotemic@gmail.com"
@@ -23,6 +23,7 @@ remote_host = "https://github.com"
 remote_group = "Erotemic"
 url = 'https://github.com/Erotemic/graphid'
 linter = false
+render_doc_images = true
 
 #packages=[
 #    'graphid',

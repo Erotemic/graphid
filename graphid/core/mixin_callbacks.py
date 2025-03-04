@@ -5,7 +5,7 @@ from graphid.core.state import (POSTV, NEGTV, INCMP, NULL)  # NOQA
 from graphid import util
 
 
-class InfrCallbacks(object):
+class InfrCallbacks:
     """
     Methods relating to callbacks that must be registered with the inference
     object for it to work properly.
@@ -72,7 +72,7 @@ class InfrCallbacks(object):
         infr.assert_consistency_invariant()
 
 
-class InfrCandidates(object):
+class InfrCandidates:
     """
     Methods that should be used by callbacks to add new edges to be considered
     as candidates in the priority queue.

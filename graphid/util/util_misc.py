@@ -1,4 +1,4 @@
-import ubelt as ub  # NOQA
+import ubelt as ub
 import itertools as it
 import numpy as np
 
@@ -280,19 +280,11 @@ def all_dict_combinations(varied_dict):
             {'logdist_weight': 1.0, 'pipeline_root': 'vsmany', 'sv_on': None},
         ]
     """
-    #tups_list = [[(key, val) for val in val_list]
-    #             if isinstance(val_list, (list, tuple))
-    #             else [(key, val_list)]
-    #             for (key, val_list) in six.iteritems(varied_dict)]
     tups_list = [[(key, val) for val in val_list]
                  if isinstance(val_list, (list))
-                 #if isinstance(val_list, (list, tuple))
                  else [(key, val_list)]
                  for (key, val_list) in iteritems_sorted(varied_dict)]
     dict_list = [dict(tups) for tups in it.product(*tups_list)]
-    #dict_list = [{key: val for (key, val) in tups} for tups in it.product(*tups_list)]
-    #from collections import OrderedDict
-    #dict_list = [OrderedDict([(key, val) for (key, val) in tups]) for tups in it.product(*tups_list)]
     return dict_list
 
 

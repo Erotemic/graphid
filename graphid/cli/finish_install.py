@@ -57,6 +57,7 @@ class FinishInstallCLI(scfg.DataConfig):
             # ]
             # print(f'requirements = {ub.urepr(requirements, nl=1)}')
             # ub.cmd([sys.executable, '-m', 'pip', 'install'] + options + requirements, verbose=3)
+            # TODO: use UV?
             ub.cmd([sys.executable, '-m', 'pip', 'install', 'pygraphviz'], verbose=3)
 
 
@@ -65,7 +66,7 @@ def debian_ensure_packages(pkgname_list):
     missing = [pkgname for pkgname in pkgname_list if not debian_has_package(pkgname)]
     if missing:
         pkgname_list_str = ' '.join(missing)
-        ub.cmd('sudo apt-get install ' + pkgname_list_str, shell=True, verbose=3)
+        ub.cmd('sudo apt-get install ' + pkgname_list_str, shell=True, verbose=3, system=True)
     else:
         print('Packages are already installed: ' + pkgname_list_str)
 
